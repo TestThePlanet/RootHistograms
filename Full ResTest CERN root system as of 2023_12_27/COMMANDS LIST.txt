@@ -1,0 +1,35 @@
+sudo apt install imagemagick
+Y
+
+
+
+
+Photo workflow
+Find the mask greenscreen/bluescreen photo
+Open in PDN for chroma
+Save as transparent PNG with filename that matches a PLOTS file, plus the suffix for the photo orientation
+Put these photos into the "_suffixed" folder
+Search for photos with the suffix tags to copy into suffix tags folders
+When copied in, use BULK RENAMER UTILITY to remove suffixes " inside", " front", " back", " open"  by replacing to ""
+Copy the Folder of Inside into a blank transparent_photos folder
+
+
+
+
+
+Updating the dataset
+Download FTtP.xlsx as a TSV file in google sheets
+Rename it to Main.tsv
+Drop it into the linux home directory to replace the previous file
+
+
+
+Populating the Plots
+
+1) open WSL
+2) sudo chmod a+x makeAllPlots*.sh
+3) ./makeAllPlots.sh
+
+
+Making the overlay
+1) python ./makeOverlays.py
