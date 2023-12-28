@@ -47,7 +47,9 @@ void makeAllPlots(){ //main
     static const bool use_only_analysis_grade = true;
     static const bool enable_save_plots = true;
 
-     /////////////////////////////////////////////////////////////
+    static const bool just_save_one  = true;
+    static const string which_one = "3M AFFM";
+    /////////////////////////////////////////////////////////////
 
     std::unordered_map<std::string, TH1F*> hMap;
 	CMSStyle(); 
@@ -115,13 +117,25 @@ void makeAllPlots(){ //main
     inputFile.close();
 
     //Now make all plots and save them to file.
+    bool something_was_found = false;
     for (const std::pair<const std::string, TH1F*>& pair : hMap) {
         const std::string& mask = pair.first;
         TH1F* histogram = pair.second;
+        if( just_save_one and mask != which_one ) continue;
+        something_was_found = true;
+
         if(enable_save_plots){
-std::cout<<"Plot and save "<<mask<<std::endl;
+            if(just_save_one){
+                std::cout<<"Plot and save "<<mask<<" just_save_one = true so no other plot get generated."<<std::endl;
+            } else {
+                std::cout<<"Plot and save "<<mask<<std::endl;
+            }
+
             PlotAndSave(histogram, grad, mask);
         }
+    }
+    if( just_save_one and not something_was_found ){
+        std::cout<<"Warning! No plots name No plot found that matched name which_one = "<<which_one<<std::endl;
     }
     
     for (auto& pair : hMap) {
@@ -319,7 +333,7 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     gPad->RedrawAxis();
 	//leg->Draw("same");
     string fname = "plots/"+fname_noext + ".png";
-    std::cout<<"    saving to "<<fname<<std::endl;
+    //std::cout<<"    saving to "<<fname<<std::endl;
 	canv->SaveAs(fname.c_str());
 
     for(int i=0;i<nbins;i++){
