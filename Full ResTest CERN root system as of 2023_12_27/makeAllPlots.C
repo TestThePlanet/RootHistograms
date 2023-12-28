@@ -47,10 +47,10 @@ void makeAllPlots(){ //main
     static const bool use_only_analysis_grade = true;
     static const bool enable_save_plots = true;
 
-    static const bool just_save_one  = true;
-    static const string which_one = "3M AFFM";
+    static const bool just_save_one  = false; //TRUE enables single plot mode 
+    static const string which_one = "3M AFFM"; //the mask name of the one plot to make.
     /////////////////////////////////////////////////////////////
-
+    if( just_save_one) std::cout<<"Single Plot Mode ENABLED, see just_save_one"<<std::endl;
     std::unordered_map<std::string, TH1F*> hMap;
 	CMSStyle(); 
 	float* linbinning = generateLinBinning();
@@ -135,7 +135,7 @@ void makeAllPlots(){ //main
         }
     }
     if( just_save_one and not something_was_found ){
-        std::cout<<"Warning! No plots name No plot found that matched name which_one = "<<which_one<<std::endl;
+        std::cout<<"Warning! No plot found that matched name which_one = "<<which_one<<std::endl;
     }
     
     for (auto& pair : hMap) {
@@ -264,7 +264,8 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     double mean = hist->GetMean();
     double stddev = hist->GetStdDev();
     //cout<<"    integral: "<<hist->Integral()<< " mean: "<<mean<<" stdev: "<<stddev<<endl;
-    for(int i=0;i<nbins;i++){
+    //Set Histogram Gradient Color Here
+    for(int i=0;i<nbins;i++){ 
         float bc = hist->GetBinCenter(i+1);
         float xxx = (bc - mean)/stddev;
         float gray = 1.0f/(1.0f + exp(-2.0*xxx));
