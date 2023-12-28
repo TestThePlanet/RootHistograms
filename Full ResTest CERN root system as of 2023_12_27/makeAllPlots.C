@@ -314,7 +314,7 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
 	canv->cd();
 	gStyle->SetOptStat(0);
 	hist->Draw();
-    grad->Draw("colzsame");
+    //grad->Draw("colzsame");
 	//hist->Draw("E1same");
 	//hist->Draw("same");
     for(int i=0;i<nbins;i++){
