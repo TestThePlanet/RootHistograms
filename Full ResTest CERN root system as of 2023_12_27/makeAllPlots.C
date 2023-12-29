@@ -264,16 +264,33 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     double mean = hist->GetMean();
     double stddev = hist->GetStdDev();
     //cout<<"    integral: "<<hist->Integral()<< " mean: "<<mean<<" stdev: "<<stddev<<endl;
-    //Set Histogram Gradient Color Here
+
     for(int i=0;i<nbins;i++){ 
         float bc = hist->GetBinCenter(i+1);
-        float xxx = (bc - mean)/stddev;
-        float gray = 1.0f/(1.0f + exp(-2.0*xxx));
 
+        /*float xxx = (bc - mean)/stddev;
+        float gray = 1.0f/(1.0f + exp(-2.0*xxx));
         if(gray > graymax) gray = graymax;
         //cout<<"i "<<i<<" bc "<<bc<<" x "<<xxx<<" gray "<<gray<<endl;
+        PrettyFillColor(histarr[i],TColor::GetColor( gray, gray, 1.0f) ); */
 
-        PrettyFillColor(histarr[i],TColor::GetColor( gray, gray, 1.0f) );
+        //Logic for Histogram Fill Color
+        /*
+           rgb(255,51,85) for 0..10]   TColor::GetColor(1.0f,0.2f, 0.3333f)           red
+           rgb(255,179,191) unused     TColor::GetColor(1.0f,0.70196f,0.7490196f)     light red
+           rgb(255,170,0) for (10..30] TColor::GetColor(1.0f,0.66667f,0.0f)           yellow
+           rgb(255,212,128) unused     TColor::GetColor(1.0f,0.83137f,0.5019608f)     light yellow
+           rgb(38,230,0) for >30       TColor::GetColor(0.1490196f,0.9019608f,0.0f)   green
+           rgb(149,255,128) unused     TColor::GetColor(0.5843137f,1.0f,0.5019608f)   light green
+           */
+        if(bc < 1.0f){ //<1og10(10)
+            PrettyFillColor(histarr[i],TColor::GetColor(1.0f,0.2f,0.3333333f) );
+        } else if(bc < 1.477121255f ){ //< log10(30)
+            PrettyFillColor(histarr[i], TColor::GetColor(1.0f,0.66667f,0.0f));
+        }
+        else{ // >= log10(30)
+            PrettyFillColor(histarr[i],TColor::GetColor( 0.1490196f,0.9019608f,0.0f) );
+        }
     }
 
     for(int i=0;i<nbins;i++){
