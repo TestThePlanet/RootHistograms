@@ -1,27 +1,26 @@
 #ifdef __CLING__
 #pragma cling optimize(0)
 #endif
-#include "TAxis.h"
-#include <TStyle.h>
-#include "TH2F.h"
-#include "TH1F.h"
-//#include "TRandom1.h"
-#include "TCanvas.h"
-#include <TImage.h>
-//#include "TTree.h"
-#include <TF2.h>
-#include "TLegend.h"
-#include "TColor.h"
-#include "CMSStyle.C"
-#include "TMath.h"
-#include <TPaveText.h>
+#include <string>
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <vector>
-#include <string>
 #include <unordered_map>
+#include "TMath.h"
+#include "TCanvas.h"
+#include "TH2F.h"
 #include "TH1F.h"
+#include "TAxis.h"
+#include <TStyle.h>
+#include <TImage.h>
+#include <TF2.h>
+#include "TLegend.h"
+#include "TColor.h"
+#include <TPaveText.h>
+//#include "TTree.h"
+//#include "TRandom1.h"
+#include "CMSStyle.C"
 
 #define nbins (60)
 
@@ -35,26 +34,45 @@ TF2* makeGrad(float ymax);
 void SetBinLabels(TH1F* hist);
 void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext);
 
-/////////////////////////////////////////////////////////////////
+enum FeatureState { enable = true, disable = false };
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+//     _____      __  __  _                 
+//    / ___/___  / /_/ /_(_)___  ____ ______
+//    \__ \/ _ \/ __/ __/ / __ \/ __ `/ ___/
+//   ___/ /  __/ /_/ /_/ / / / / /_/ (__  ) 
+//  /____/\___/\__/\__/_/_/ /_/\__, /____/  
+//                            /____/        @settings
+static const std::string tsv_filename = "Main.tsv";
+static const long unsigned int maskname_tsv_column_index = 2;
+static const long unsigned int exer1_tsv_column_index = 3;
+static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
+static const int analysis_grade_tsv_column_index = 20;
+static const bool use_only_analysis_grade = true;
+static const bool save_plots_enabled = enable;
+static const bool skip_first_line_of_tsv_file = true;
+
+static const bool single_plot_mode_enabled  = disable; 
+static const string which_one = "3M AFFM"; //the mask name of the one plot to make.
+
+static const std::string x_axis_title = "Exposure Reduction Factor               ";
+static const std::string y_axis_title = "Event Count";
+
+enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3}
+static const int ymax_setting = global_full_auto;
+static float histogram_ymax = 80.f;
+///////////////////////////////////////////////////////////////////
+///////////////////////// End Settings /////////////////////////////
+///////////////////////////////////////////////////////////////////
+
 void makeAllPlots(){ //main
 
-    /////////////// INTAKE PARAMETERS ///////////////////////////
-    static const std::string tsv_filename = "Main.tsv";
-    static const long unsigned int maskname_index = 2;
-    static const long unsigned int exer1_index = 3;
-    static const int nexer = 12; //says that there are 12 exercises going from indicies [exer1_index..exer1_index + nexer)
-    static const int analysis_grade_index = 20;
-    static const bool use_only_analysis_grade = true;
-    static const bool enable_save_plots = true;
-
-    static const bool just_save_one  = false; //TRUE enables single plot mode 
-    static const string which_one = "3M AFFM"; //the mask name of the one plot to make.
-    /////////////////////////////////////////////////////////////
-    if( just_save_one) std::cout<<"Single Plot Mode ENABLED, see just_save_one"<<std::endl;
+    if( single_plot_mode_enabled) std::cout<<"Single Plot Mode ENABLED, see single_plot_mode_enabled"<<std::endl;
     std::unordered_map<std::string, TH1F*> hMap;
 	CMSStyle(); 
 	float* linbinning = generateLinBinning();
-    TF2* grad = makeGrad(75.f); //the float argument (75) is the height that the gradient will go up to. anything pretty big is ok.
+    static const float grad_height = max(75.f,histogram_ymax+1.f);//the float argument (75) is the height that the gradient will go up to. anything pretty big is ok
+    TF2* grad = makeGrad(grad_height); 
 
     std::ifstream inputFile(tsv_filename);
     if (!inputFile.is_open()) {
@@ -66,67 +84,82 @@ void makeAllPlots(){ //main
     int jline=0; //tsv line number counter.
     while (std::getline(inputFile, tsv_line)) { //for every line
         jline++; 
+        if(skip_first_line_of_tsv_file and jline == 1) continue;
         // Parse the line into tokens
         std::vector<std::string> tokens = parseTSVLine(tsv_line);
 
-        if(tokens.size() < exer1_index)
+        if(tokens.size() < exer1_tsv_column_index)
             std::cout<<"ERROR nogo line "<<jline<<std::endl;
-        else if(tokens.size() < exer1_index + nexer) //
+        else if(tokens.size() < exer1_tsv_column_index + number_of_exercises) //
             std::cout<<"ERROR weird length line "<<jline<<std::endl;
         else{ //line not obviously invalid
             if(jline % 100 == 0) std::cout<<"readln "<<jline<<std::endl;
 
-            if(use_only_analysis_grade and tokens.size() < analysis_grade_index){
+            if(use_only_analysis_grade and tokens.size() < analysis_grade_tsv_column_index){
                 std::cout<<"Warning line too short for analysis grade "<<jline<<std::endl;
                 continue;
             }
-            bool is_analysis_grade = Str2bool(tokens[analysis_grade_index]);
+            bool is_analysis_grade = Str2bool(tokens[analysis_grade_tsv_column_index]);
             if(use_only_analysis_grade and not is_analysis_grade){
                 //std::cout<<"line rejected for non-analysis grade tag "<<jline<<std::endl;
                 continue;
             }
 
             //if the mask on this line has been seen before, find its entry in map. 
-            std::unordered_map<std::string, TH1F*>::iterator it = hMap.find(tokens[maskname_index]);
+            std::unordered_map<std::string, TH1F*>::iterator it = hMap.find(tokens[maskname_tsv_column_index]);
 
             if (it != hMap.end()) { //This mask has been seen already. Fill the existing histogram
                 //int i=0;
-                //for (;i<nexer;i++){
-                for (int i=0;i<nexer;i++){
-                    float x = Str2float(tokens[exer1_index + i]);
+                //for (;i<number_of_exercises;i++){
+                for (int i=0;i<number_of_exercises;i++){
+                    float x = Str2float(tokens[exer1_tsv_column_index + i]);
                     if(x<0.f) break;
                     else it->second->Fill(TMath::Log10(x));
                 }
-                //std::cout<<jline<<" "<<tokens[maskname_index]<<" old fill #="<<i<<std::endl;
+                //std::cout<<jline<<" "<<tokens[maskname_tsv_column_index]<<" old fill #="<<i<<std::endl;
             } else { //New mask, create a new histogram
-                TH1F* newHistogram = new TH1F(tokens[maskname_index].c_str(), 
-                        (tokens[maskname_index]+";Exposure Reduction Factor               ;Event Count").c_str(), 
+                TH1F* newHistogram = new TH1F(tokens[maskname_tsv_column_index].c_str(), 
+                        (tokens[maskname_tsv_column_index]+";"+x_axis_title+";"+y_axis_title).c_str(), 
                         nbins,linbinning);
+
                 //int i=0;
-                //for (;i<nexer;i++){
-                for (int i=0;i<nexer;i++){
-                    float x = Str2float(tokens[exer1_index + i]);
+                //for (;i<number_of_exercises;i++){
+                for (int i=0;i<number_of_exercises;i++){
+                    float x = Str2float(tokens[exer1_tsv_column_index + i]);
                     if(x<0.f) break;
                     else newHistogram->Fill(TMath::Log10(x));
                 }
-                //std::cout<<jline<<" "<<tokens[maskname_index]<<" new fill #="<<i<<std::endl;
-                hMap[tokens[maskname_index]] = newHistogram;
+                //std::cout<<jline<<" "<<tokens[maskname_tsv_column_index]<<" new fill #="<<i<<std::endl;
+                hMap[tokens[maskname_tsv_column_index]] = newHistogram;
             } //end else 
         } //end else ok line
     } //end while every tsv line
     inputFile.close();
+
+enum Ymax_state{auto_fit_each_histogram, manual, global_full_auto, global_auto_with_manual_min_ymax}
+    if(ymax_setting >= global_full_auto){
+        static const float ymax_margin = 1.10f;
+        //calculate the largest bin content of all histograms
+        float global_max_bin = 0.f;
+        for (const std::pair<const std::string, TH1F*>& pair : hMap) {
+            global_max_bin = max(global_max_bin, ((TH1F*) pair.second)->GetMaximum());
+        }
+        if(ymax_setting == global_full_auto or 
+                (ymax_setting == global_auto_with_manual_min_ymax and global_max_bin > histogram_ymax*ymax_margin))
+            histogram_ymax = global_max_bin*ymax_margin;
+    }
 
     //Now make all plots and save them to file.
     bool something_was_found = false;
     for (const std::pair<const std::string, TH1F*>& pair : hMap) {
         const std::string& mask = pair.first;
         TH1F* histogram = pair.second;
-        if( just_save_one and mask != which_one ) continue;
+        if( single_plot_mode_enabled and mask != which_one ) continue;
         something_was_found = true;
 
-        if(enable_save_plots){
-            if(just_save_one){
-                std::cout<<"Plot and save "<<mask<<" just_save_one = true so no other plot get generated."<<std::endl;
+        if(save_plots_enabled){
+            if(single_plot_mode_enabled){
+                std::cout<<"Plot and save "<<mask<<" single_plot_mode_enabled = true so no other plot get generated."<<std::endl;
             } else {
                 std::cout<<"Plot and save "<<mask<<std::endl;
             }
@@ -134,7 +167,7 @@ void makeAllPlots(){ //main
             PlotAndSave(histogram, grad, mask);
         }
     }
-    if( just_save_one and not something_was_found ){
+    if( single_plot_mode_enabled and not something_was_found ){
         std::cout<<"Warning! No plot found that matched name which_one = "<<which_one<<std::endl;
     }
     
@@ -210,6 +243,23 @@ float* generateLogBinning() {
 }
 
 TF2* makeGrad(float ymax){
+//      __  ___      __
+//     /  |/  /___ _/ /_____
+//    / /|_/ / __ `/ //_/ _ \
+//   / /  / / /_/ / ,< /  __/
+//  /_/  /_/\__,_/_/|_|\___/
+//      ____             __                                    __
+//     / __ )____ ______/ /______ __________  __  ______  ____/ /
+//    / __  / __ `/ ___/ //_/ __ `/ ___/ __ \/ / / / __ \/ __  /
+//   / /_/ / /_/ / /__/ ,< / /_/ / /  / /_/ / /_/ / / / / /_/ /
+//  /_____/\__,_/\___/_/|_|\__, /_/   \____/\__,_/_/ /_/\__,_/
+//                        /____/
+//     ______               ___            __
+//    / ____/________ _____/ (_)__  ____  / /_
+//   / / __/ ___/ __ `/ __  / / _ \/ __ \/ __/
+//  / /_/ / /  / /_/ / /_/ / /  __/ / / / /_
+//  \____/_/   \__,_/\__,_/_/\___/_/ /_/\__/
+//
     float* linbinning = generateLinBinning();
     TF2* grad = new TF2("grad","x/(4+x)",linbinning[0],linbinning[nbins],0,ymax);
     grad->SetNpx(300);
@@ -251,13 +301,15 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     static const float graymax = 0.95f; 
     //plot it and make it pretty
 	PrettyFillColor(hist, kAzure + 5);
-    //SetRange(hist,0,ymax);
     SetBinLabels(hist);
     float* linbinning = generateLinBinning();
 
     TH1F* histarr[nbins];
     for(int i=0;i<nbins;i++){
-        histarr[i] = new TH1F( (((string)hist->GetTitle())+std::to_string(i)).c_str(),";m41 Score;Relative Probability", nbins,linbinning);
+        histarr[i] = new TH1F( 
+                (((string)hist->GetTitle())+std::to_string(i)).c_str(),
+                (";"+x_axis_title+","+y_axis_title).c_str(),
+                nbins,linbinning);
     }
 
  //   UnitNorm(hist);
@@ -267,6 +319,17 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
 
     for(int i=0;i<nbins;i++){ 
         float bc = hist->GetBinCenter(i+1);
+//      __  ___      __
+//     / / / (_)____/ /_____  ____ __________ _____ ___
+//    / /_/ / / ___/ __/ __ \/ __ `/ ___/ __ `/ __ `__ \
+//   / __  / (__  ) /_/ /_/ / /_/ / /  / /_/ / / / / / /
+//  /_/ /_/_/____/\__/\____/\__, /_/   \__,_/_/ /_/ /_/
+//     ______      __      /____/     __  _
+//    / ____/___  / /___  _________ _/ /_(_)___  ____
+//   / /   / __ \/ / __ \/ ___/ __ `/ __/ / __ \/ __ \
+//  / /___/ /_/ / / /_/ / /  / /_/ / /_/ / /_/ / / / /
+//  \____/\____/_/\____/_/   \__,_/\__/_/\____/_/ /_/
+//
 
         /*float xxx = (bc - mean)/stddev;
         float gray = 1.0f/(1.0f + exp(-2.0*xxx));
@@ -301,9 +364,7 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     //and just set log x
     string newcanvname = 	((string)hist->GetTitle())+"thecanvas";
     string superfluousTitle = "asdf";
-
 	//TCanvas * C = newTCanvas(newcanvname.c_str(), superfluousTitle.c_str(),1660,989); //This line blows up.
-
     TCanvas * canv =new TCanvas( newcanvname.c_str(), superfluousTitle.c_str(),1660,989);
     canv->Range(-0.4507237,-11.42139,6.157133,74.97806);
     canv->SetFillColor(kWhite);
@@ -329,6 +390,9 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     ////PrettyLegend(leg);
 	////leg->AddEntry(h,"Super nice histogram");
 	PrettyHist(hist,kAzure + 5,3); //RETURN
+                                   //
+    if(ymax_setting > auto_fit_each_histogram) 
+        SetRange(hist,0,histogram_ymax);
 	canv->cd();
 	gStyle->SetOptStat(0);
 	hist->Draw();
