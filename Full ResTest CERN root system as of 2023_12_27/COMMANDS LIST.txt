@@ -1,9 +1,3 @@
-Updating the dataset
-Download FTtP.xlsx as a TSV file in google sheets
-Rename it to Main.tsv
-Drop it into the linux home directory to replace the previous file
-
-
 Populating the Plots
 
 1) open WSL
@@ -13,3 +7,9 @@ Populating the Plots
 
 Making the overlay
 1) python ./makeOverlays.py
+
+
+Updating the dataset
+Download FTtP.xlsx as a TSV file in google sheets
+Rename it to Main.tsv
+Drop it into the linux home directory to replace the previous file
