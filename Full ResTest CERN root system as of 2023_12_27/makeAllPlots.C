@@ -58,8 +58,8 @@ static const string which_one = "3M AFFM"; //the mask name of the one plot to ma
 static const std::string x_axis_title = "Exposure Reduction Factor               ";
 static const std::string y_axis_title = "Event Count";
 
-enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3}
-static const int ymax_setting = global_full_auto;
+enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
+static const Ymax_state ymax_setting = global_full_auto;
 static float histogram_ymax = 80.f;
 ///////////////////////////////////////////////////////////////////
 ///////////////////////// End Settings /////////////////////////////
@@ -136,13 +136,12 @@ void makeAllPlots(){ //main
     } //end while every tsv line
     inputFile.close();
 
-enum Ymax_state{auto_fit_each_histogram, manual, global_full_auto, global_auto_with_manual_min_ymax}
     if(ymax_setting >= global_full_auto){
         static const float ymax_margin = 1.10f;
         //calculate the largest bin content of all histograms
         float global_max_bin = 0.f;
         for (const std::pair<const std::string, TH1F*>& pair : hMap) {
-            global_max_bin = max(global_max_bin, ((TH1F*) pair.second)->GetMaximum());
+            global_max_bin = max(global_max_bin, (float)((TH1F*) pair.second)->GetMaximum());
         }
         if(ymax_setting == global_full_auto or 
                 (ymax_setting == global_auto_with_manual_min_ymax and global_max_bin > histogram_ymax*ymax_margin))
