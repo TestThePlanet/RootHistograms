@@ -59,7 +59,7 @@ static const std::string x_axis_title = "Exposure Reduction Factor              
 static const std::string y_axis_title = "Event Count";
 
 enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
-static const Ymax_state ymax_setting = global_full_auto;
+static const Ymax_state ymax_setting = auto_fit_each_histogram;
 static float histogram_ymax = 80.f;
 ///////////////////////////////////////////////////////////////////
 ///////////////////////// End Settings /////////////////////////////
@@ -316,6 +316,18 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     double stddev = hist->GetStdDev();
     //cout<<"    integral: "<<hist->Integral()<< " mean: "<<mean<<" stdev: "<<stddev<<endl;
 
+    //locate the bin center of the histogram peak
+    float hist_peak = 0.f;
+    float maxbinval = 0.f;
+    for(int i=0;i<nbins;i++){ 
+        float binval = hist->GetBinContent(i+1);
+        if(binval >= maxbinval){
+            maxbinval = binval;
+            hist_peak = hist->GetBinCenter(i+1);
+        }
+    }
+
+
     for(int i=0;i<nbins;i++){ 
         float bc = hist->GetBinCenter(i+1);
 //      __  ___      __
@@ -351,7 +363,11 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
             PrettyFillColor(histarr[i], TColor::GetColor(1.0f,0.66667f,0.0f));
         }
         else{ // >= log10(30)
-            PrettyFillColor(histarr[i],TColor::GetColor( 0.1490196f,0.9019608f,0.0f) );
+            if(bc < hist_peak)
+                PrettyFillColor(histarr[i],TColor::GetColor( 0.1490196f,0.9019608f,0.0f) );
+            else
+                PrettyFillColor(histarr[i],TColor::GetColor( 0.7f,0.7f,0.7f) );
+
         }
     }
 
