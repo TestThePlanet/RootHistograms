@@ -25,6 +25,38 @@
 
 #define nbins (60)
 
+enum FeatureState { enable = true, disable = false };
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+//     _____      __  __  _                 
+//    / ___/___  / /_/ /_(_)___  ____ ______
+//    \__ \/ _ \/ __/ __/ / __ \/ __ `/ ___/
+//   ___/ /  __/ /_/ /_/ / / / / /_/ (__  ) 
+//  /____/\___/\__/\__/_/_/ /_/\__, /____/  
+//                            /____/        @settings
+static const std::string tsv_filename = "Main.tsv";
+static const long unsigned int maskname_tsv_column_index = 2;
+static const long unsigned int exer1_tsv_column_index = 3;
+static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
+static const int analysis_grade_tsv_column_index = 20;
+static const bool use_only_analysis_grade = true;
+static const bool save_plots_enabled = enable;
+static const bool skip_first_line_of_tsv_file = true;
+
+static const bool single_plot_mode_enabled  = disable; 
+static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";//"3M AFFM"; //the mask name of the one plot to make.
+
+static const std::string x_axis_title = "Exposure Reduction Factor               ";
+static const std::string y_axis_title = "Event Count";
+
+enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
+static const Ymax_state ymax_setting = auto_fit_each_histogram;
+static float histogram_ymax = 80.f;
+///////////////////////////////////////////////////////////////////
+///////////////////////// End Settings /////////////////////////////
+///////////////////////////////////////////////////////////////////
+
+
 struct Hist{
     bool is_sorted;
     string title;
@@ -48,38 +80,6 @@ float* generateLogBinning();
 TF2* makeGrad(float ymax);
 void SetBinLabels(Hist* hist);
 void PlotAndSave(Hist* hist, TF2* grad, string fname_noext);
-
-enum FeatureState { enable = true, disable = false };
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-//     _____      __  __  _                 
-//    / ___/___  / /_/ /_(_)___  ____ ______
-//    \__ \/ _ \/ __/ __/ / __ \/ __ `/ ___/
-//   ___/ /  __/ /_/ /_/ / / / / /_/ (__  ) 
-//  /____/\___/\__/\__/_/_/ /_/\__, /____/  
-//                            /____/        @settings
-static const std::string tsv_filename = "Main.tsv";
-static const long unsigned int maskname_tsv_column_index = 2;
-static const long unsigned int exer1_tsv_column_index = 3;
-static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
-static const int analysis_grade_tsv_column_index = 20;
-static const bool use_only_analysis_grade = true;
-static const bool save_plots_enabled = enable;
-static const bool skip_first_line_of_tsv_file = true;
-
-static const bool single_plot_mode_enabled  = disable; 
-static const string which_one = "3M AFFM"; //the mask name of the one plot to make.
-
-static const std::string x_axis_title = "Exposure Reduction Factor               ";
-static const std::string y_axis_title = "Event Count";
-
-enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
-static const Ymax_state ymax_setting = auto_fit_each_histogram;
-static float histogram_ymax = 80.f;
-///////////////////////////////////////////////////////////////////
-///////////////////////// End Settings /////////////////////////////
-///////////////////////////////////////////////////////////////////
-
 
 Hist::Hist(string title, float* linbinning): is_sorted(false), title(title){
     hist = new TH1F(title.c_str(), 
@@ -456,7 +456,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 	////TLegend *leg = new TLegend(0.646985, 0.772727, 0.978643, 0.891608);
     ////PrettyLegend(leg);
 	////leg->AddEntry(h,"Super nice histogram");
-	PrettyHist(hist->hist,kAzure + 5,3); //RETURN
+	PrettyHist(hist->hist,kAzure + 5,0); //RETURN
                                    //
     if(ymax_setting > auto_fit_each_histogram) 
         SetRange(hist->hist,0,histogram_ymax);
