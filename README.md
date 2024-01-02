@@ -13,4 +13,4 @@ TODO:
     text color: TColor::GetColor(0.847f, 0.871f, 0.914f)
 - [ ] Make a strip mode for webpage integration
 - [x] Guard against '/' in histogram names.
-
+- [ ] Turn settings into a json config file to avoid compilation time.
