@@ -40,6 +40,9 @@ void DrawSame(TH1F* h0, TH1F* h1, TH1F* h2, TH1F* h3,TH1F* h4, char* ops=const_c
 void DrawSame(TH1F* h0, TH1F* h1, TH1F* h2, TH1F* h3,TH1F* h4,TH1F* h5, char* ops=const_cast<char*>(""));
 TCanvas * newTCanvas(char* rootname, char* title = const_cast<char*>(""), int x = 800, int y = 800);
 TCanvas * newTCanvas(string rootname, string title = "", int x = 800, int y = 800);
+//Versions of TColor::GetColor that use HLS and HSV
+Int_t GetColorHLS(Float_t hue,  Float_t lightness, Float_t saturation);
+Int_t GetColorHSV(Float_t hue, Float_t saturation, Float_t value);
 /*TPaveText AddPrettyTitle(string theTitle);
 
 TPaveText AddPrettyTitle(string theTitle){
@@ -71,7 +74,7 @@ void CMSStyle(){
   //  gStyle->SetMarkerSize(0.75);  // use smaller markers in a histogram with many bins
   //  gStyle->SetTitleOffset(0.65,"y");  // bring y axis label closer to narrow values
   
-  TStyle *cmsStyle= new TStyle("CMS","CMS approved plots style"); //This is enough to kill the title.
+  TStyle *cmsStyle= new TStyle("CMS","CMS approved plots style"); //This is enough to kill the title. See SetOptTitle(0) below...
   
   // use plain black on white colors
   cmsStyle->SetFrameBorderMode(0);
@@ -318,6 +321,20 @@ TCanvas * newTCanvas(string rootname, string title, int x, int y){
     return newTCanvas(rootname.c_str(), title.c_str());
 }
 
+Int_t GetColorHSV(Float_t hue, Float_t saturation, Float_t value){
+    //hue [0,360]
+    //saturation is 0..1, where 1 is most saturated
+    //value is 0..1 where 1 is black
+    Float_t r, g, b;
+    TColor::HSV2RGB(hue, saturation, value, r,g,b);
+    return TColor::GetColor(r, g, b);
+}
 
-
-
+Int_t GetColorHLS(Float_t hue,  Float_t lightness, Float_t saturation){
+    //hue [0,360]
+    //saturation is 0..1, where 1 is most saturated
+    //lightness is 0..1 where 1 is black
+    Float_t r, g, b;
+    TColor::HLS2RGB(hue, lightness, saturation, r,g,b);
+    return TColor::GetColor(r, g, b);
+}
