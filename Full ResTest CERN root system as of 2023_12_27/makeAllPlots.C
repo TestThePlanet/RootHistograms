@@ -3,6 +3,7 @@
 #endif
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -24,6 +25,20 @@
 
 #define nbins (60)
 
+struct Hist{
+    bool is_sorted;
+    string title;
+    TH1F* hist;
+    std::vector<float> all_vals;
+
+    Hist(string title, float* linbinning);
+    ~Hist(){ delete hist; }
+    void Fill(float val);
+    string GetTitle(){return title;}
+    float Get_Percentile(float percentile);
+    float Get_Median(){ return Get_Percentile(0.5f); }
+    float Get_HarmonicMean();
+};
 std::vector<std::string> parseTSVLine(const std::string& tsv_line);
 float Str2float(std::string& token);
 int   Str2int(std::string& token);
@@ -31,8 +46,8 @@ bool  Str2bool(std::string& token);
 float* generateLinBinning();
 float* generateLogBinning();
 TF2* makeGrad(float ymax);
-void SetBinLabels(TH1F* hist);
-void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext);
+void SetBinLabels(Hist* hist);
+void PlotAndSave(Hist* hist, TF2* grad, string fname_noext);
 
 enum FeatureState { enable = true, disable = false };
 ///////////////////////////////////////////////////////////////////
@@ -65,10 +80,46 @@ static float histogram_ymax = 80.f;
 ///////////////////////// End Settings /////////////////////////////
 ///////////////////////////////////////////////////////////////////
 
+
+Hist::Hist(string title, float* linbinning): is_sorted(false), title(title){
+    hist = new TH1F(title.c_str(), 
+            (title+";"+x_axis_title+";"+y_axis_title).c_str(), 
+            nbins,linbinning);
+}
+void Hist::Fill(float val){
+    hist->Fill(val);
+    all_vals.push_back(val);
+}
+float Hist::Get_Percentile(float percentile){
+    //Returns the interpolated position in the distribution at the given percentile. 
+    //percentile is between 0 and 1 inclusively.
+    std::size_t n = all_vals.size();
+    if(n <= 0) return 0.0f;
+    else if(n == 1) return all_vals[0];
+    if(not is_sorted){
+        std::sort(all_vals.begin(), all_vals.end()); 
+        is_sorted = true;
+    }
+    percentile = std::min(1.0f, std::max(0.0f, percentile ));
+    const float approxN = percentile*n - 0.5f; 
+    const float approxN_floor = std::floor(approxN );
+    const float x = approxN - approxN_floor;
+    const int ifloor = std::max(0,static_cast<int>(approxN_floor));
+    const int iceil = std::min((int)n-1,static_cast<int>(std::ceil( approxN )));
+    return x*all_vals[ifloor] + (1.0f-x)*all_vals[iceil];
+}
+float Hist::Get_HarmonicMean(){
+    float harmonicSum = 0.0;
+    for (float val : all_vals) {
+        harmonicSum += 1.0f / val;
+    }
+    return ((float)all_vals.size()) / harmonicSum;
+}
+
 void makeAllPlots(){ //main
 
     if( single_plot_mode_enabled) std::cout<<"Single Plot Mode ENABLED, see single_plot_mode_enabled"<<std::endl;
-    std::unordered_map<std::string, TH1F*> hMap;
+    std::unordered_map<std::string, Hist*> hMap;
 	CMSStyle(); 
 	float* linbinning = generateLinBinning();
     static const float grad_height = max(75.f,histogram_ymax+1.f);//the float argument (75) is the height that the gradient will go up to. anything pretty big is ok
@@ -106,7 +157,9 @@ void makeAllPlots(){ //main
             }
 
             //if the mask on this line has been seen before, find its entry in map. 
-            std::unordered_map<std::string, TH1F*>::iterator it = hMap.find(tokens[maskname_tsv_column_index]);
+            string maskname = tokens[maskname_tsv_column_index];
+            std::replace(maskname.begin(), maskname.end(),'/','_'); //Guard names against /
+            std::unordered_map<std::string, Hist*>::iterator it = hMap.find(maskname);
 
             if (it != hMap.end()) { //This mask has been seen already. Fill the existing histogram
                 //int i=0;
@@ -116,11 +169,9 @@ void makeAllPlots(){ //main
                     if(x<0.f) break;
                     else it->second->Fill(TMath::Log10(x));
                 }
-                //std::cout<<jline<<" "<<tokens[maskname_tsv_column_index]<<" old fill #="<<i<<std::endl;
+                //std::cout<<jline<<" "<<maskname<<" old fill #="<<i<<std::endl;
             } else { //New mask, create a new histogram
-                TH1F* newHistogram = new TH1F(tokens[maskname_tsv_column_index].c_str(), 
-                        (tokens[maskname_tsv_column_index]+";"+x_axis_title+";"+y_axis_title).c_str(), 
-                        nbins,linbinning);
+                Hist* newHistogram = new Hist(maskname,linbinning);
 
                 //int i=0;
                 //for (;i<number_of_exercises;i++){
@@ -129,8 +180,8 @@ void makeAllPlots(){ //main
                     if(x<0.f) break;
                     else newHistogram->Fill(TMath::Log10(x));
                 }
-                //std::cout<<jline<<" "<<tokens[maskname_tsv_column_index]<<" new fill #="<<i<<std::endl;
-                hMap[tokens[maskname_tsv_column_index]] = newHistogram;
+                //std::cout<<jline<<" "<<maskname<<" new fill #="<<i<<std::endl;
+                hMap[maskname] = newHistogram;
             } //end else 
         } //end else ok line
     } //end while every tsv line
@@ -140,8 +191,8 @@ void makeAllPlots(){ //main
         static const float ymax_margin = 1.10f;
         //calculate the largest bin content of all histograms
         float global_max_bin = 0.f;
-        for (const std::pair<const std::string, TH1F*>& pair : hMap) {
-            global_max_bin = max(global_max_bin, (float)((TH1F*) pair.second)->GetMaximum());
+        for (const std::pair<const std::string, Hist*>& pair : hMap) {
+            global_max_bin = max(global_max_bin, (float)((Hist*) pair.second)->hist->GetMaximum());
         }
         if(ymax_setting == global_full_auto or 
                 (ymax_setting == global_auto_with_manual_min_ymax and global_max_bin > histogram_ymax*ymax_margin))
@@ -150,18 +201,19 @@ void makeAllPlots(){ //main
 
     //Now make all plots and save them to file.
     bool something_was_found = false;
-    for (const std::pair<const std::string, TH1F*>& pair : hMap) {
+    for (const std::pair<const std::string, Hist*>& pair : hMap) {
         const std::string& mask = pair.first;
-        TH1F* histogram = pair.second;
+        Hist* histogram = pair.second;
         if( single_plot_mode_enabled and mask != which_one ) continue;
         something_was_found = true;
 
         if(save_plots_enabled){
             if(single_plot_mode_enabled){
                 std::cout<<"Plot and save "<<mask<<" single_plot_mode_enabled = true so no other plot get generated."<<std::endl;
-            } else {
+            } 
+            /*else {
                 std::cout<<"Plot and save "<<mask<<std::endl;
-            }
+            }*/
 
             PlotAndSave(histogram, grad, mask);
         }
@@ -277,9 +329,9 @@ TF2* makeGrad(float ymax){
     return grad;
 }
 
-void SetBinLabels(TH1F* hist){
+void SetBinLabels(Hist* hist){
     float* logbinning = generateLogBinning();
-	TAxis *x = hist->GetXaxis();
+	TAxis *x = hist->hist->GetXaxis();
 	for(int i=1;i<nbins+1;i++){
 		char label[20];
 		if(logbinning[i] < 100 && logbinning[i-1] < 100){
@@ -296,40 +348,40 @@ void SetBinLabels(TH1F* hist){
 }
 
 
-void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
+void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     static const float graymax = 0.95f; 
     //plot it and make it pretty
-	PrettyFillColor(hist, kAzure + 5);
+	PrettyFillColor(hist->hist, kAzure + 5);
     SetBinLabels(hist);
     float* linbinning = generateLinBinning();
 
     TH1F* histarr[nbins];
     for(int i=0;i<nbins;i++){
         histarr[i] = new TH1F( 
-                (((string)hist->GetTitle())+std::to_string(i)).c_str(),
+                (hist->GetTitle()+std::to_string(i)).c_str(),
                 (";"+x_axis_title+","+y_axis_title).c_str(),
                 nbins,linbinning);
     }
 
- //   UnitNorm(hist);
-    double mean = hist->GetMean();
-    double stddev = hist->GetStdDev();
-    //cout<<"    integral: "<<hist->Integral()<< " mean: "<<mean<<" stdev: "<<stddev<<endl;
+ //   UnitNorm(hist->hist);
+    double mean = hist->hist->GetMean();
+    double stddev = hist->hist->GetStdDev();
+    //cout<<"    integral: "<<hist->hist->Integral()<< " mean: "<<mean<<" stdev: "<<stddev<<endl;
 
     //locate the bin center of the histogram peak
     float hist_peak = 0.f;
     float maxbinval = 0.f;
     for(int i=0;i<nbins;i++){ 
-        float binval = hist->GetBinContent(i+1);
+        float binval = hist->hist->GetBinContent(i+1);
         if(binval >= maxbinval){
             maxbinval = binval;
-            hist_peak = hist->GetBinCenter(i+1);
+            hist_peak = hist->hist->GetBinCenter(i+1);
         }
     }
 
 
     for(int i=0;i<nbins;i++){ 
-        float bc = hist->GetBinCenter(i+1);
+        float bc = hist->hist->GetBinCenter(i+1);
 //      __  ___      __
 //     / / / (_)____/ /_____  ____ __________ _____ ___
 //    / /_/ / / ___/ __/ __ \/ __ `/ ___/ __ `/ __ `__ \
@@ -372,12 +424,12 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     }
 
     for(int i=0;i<nbins;i++){
-        histarr[i]->SetBinContent(i+1,hist->GetBinContent(i+1));
+        histarr[i]->SetBinContent(i+1,hist->hist->GetBinContent(i+1));
     }
     //ways to do this: either fill with log10 and have custom bin labels, or have custom binning and fill with regular nubmers. 
     //lets do the latter.
     //and just set log x
-    string newcanvname = 	((string)hist->GetTitle())+"thecanvas";
+    string newcanvname = hist->GetTitle()+"thecanvas";
     string superfluousTitle = "asdf";
 	//TCanvas * C = newTCanvas(newcanvname.c_str(), superfluousTitle.c_str(),1660,989); //This line blows up.
     TCanvas * canv =new TCanvas( newcanvname.c_str(), superfluousTitle.c_str(),1660,989);
@@ -400,20 +452,20 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     canv->SetFrameBorderMode(0);
     canv->cd();
                                                                              //
-	//TCanvas * C = newTCanvas(((string)hist->GetTitle())+"thecanvas", "Random Mask-Like Data",1660,989);
+	//TCanvas * C = newTCanvas(hist->GetTitle()+"thecanvas", "Random Mask-Like Data",1660,989);
 	////TLegend *leg = new TLegend(0.646985, 0.772727, 0.978643, 0.891608);
     ////PrettyLegend(leg);
 	////leg->AddEntry(h,"Super nice histogram");
-	PrettyHist(hist,kAzure + 5,3); //RETURN
+	PrettyHist(hist->hist,kAzure + 5,3); //RETURN
                                    //
     if(ymax_setting > auto_fit_each_histogram) 
-        SetRange(hist,0,histogram_ymax);
+        SetRange(hist->hist,0,histogram_ymax);
 	canv->cd();
 	gStyle->SetOptStat(0);
-	hist->Draw();
+	hist->hist->Draw();
     //grad->Draw("colzsame");
-	//hist->Draw("E1same");
-	//hist->Draw("same");
+	//hist->hist->Draw("E1same");
+	//hist->hist->Draw("same");
     for(int i=0;i<nbins;i++){
         histarr[i]->Draw("same");
     }
@@ -424,7 +476,7 @@ void PlotAndSave(TH1F* hist, TF2* grad, string fname_noext){
     pt->SetFillColor(0);
     pt->SetFillStyle(0);
     pt->SetTextFont(42);
-    TText *pt_LaTex = pt->AddText(hist->GetTitle());
+    TText *pt_LaTex = pt->AddText(hist->GetTitle().c_str());
     pt->Draw();
 
     gPad->RedrawAxis();
