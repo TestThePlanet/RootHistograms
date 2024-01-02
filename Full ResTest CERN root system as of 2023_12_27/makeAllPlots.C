@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include <map>
 #include "TMath.h"
 #include "TCanvas.h"
 #include "TH2F.h"
@@ -44,7 +45,11 @@ static const bool save_plots_enabled = enable;
 static const bool skip_first_line_of_tsv_file = true;
 
 static const bool single_plot_mode_enabled  = disable; 
-static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";//"3M AFFM"; //the mask name of the one plot to make.
+//static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
+//static const string which_one = "3M AFFM"; 
+static const string which_one = "3M 8862";
+//static const string which_one = "CanadaMasq Q100 Medium CA-N95F-100PA";
+//static const string which_one ="Drager1920ML_1950ML";
 
 static const std::string x_axis_title = "Exposure Reduction Factor               ";
 static const std::string y_axis_title = "Event Count";
@@ -52,13 +57,35 @@ static const std::string y_axis_title = "Event Count";
 enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
 static const Ymax_state ymax_setting = auto_fit_each_histogram;
 static float histogram_ymax = 80.f;
+
+//Color gradient controls
+enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
+static const float hue_red = -10.f;
+static const float hue_green = 110.f;
+static const float hue_transition_hardness = 0.36f; 
+static const SigmoidOption hue_func = S_abs;
+
+static const float satur_green = 0.15f;
+static const float satur_at_center = 0.7f;
+static const float satur_center_percential = 0.5f;
+static const float satur_transition_hardness = 6.0f;
+static const SigmoidOption satur_func = S_tanh;
+
+static const float value_red = 1.0f;
+static const float value_green = 0.9f;
+static const float value_transition_center = 1.17f;//1.17 = log10(25)
+static const float value_transition_hardness = 8.0f;
+static const SigmoidOption value_func = S_tanh;
 ///////////////////////////////////////////////////////////////////
 ///////////////////////// End Settings /////////////////////////////
 ///////////////////////////////////////////////////////////////////
 
+void readJsonFile(const std::string& filename, std::map<std::string, std::string>& jsonData) ;
 
 struct Hist{
     bool is_sorted;
+    bool has_cdf;
+    float cdf[nbins+1];
     string title;
     TH1F* hist;
     std::vector<float> all_vals;
@@ -67,8 +94,9 @@ struct Hist{
     ~Hist(){ delete hist; }
     void Fill(float val);
     string GetTitle(){return title;}
-    float Get_Percentile(float percentile);
-    float Get_Median(){ return Get_Percentile(0.5f); }
+    float Percentile2X(float percentile);
+    float X2Percentile(float x);
+    float Get_Median(){ return Percentile2X(0.5f); }
     float Get_HarmonicMean();
 };
 std::vector<std::string> parseTSVLine(const std::string& tsv_line);
@@ -81,7 +109,9 @@ TF2* makeGrad(float ymax);
 void SetBinLabels(Hist* hist);
 void PlotAndSave(Hist* hist, TF2* grad, string fname_noext);
 
-Hist::Hist(string title, float* linbinning): is_sorted(false), title(title){
+double sigmoid(double x, SigmoidOption softness);
+
+Hist::Hist(string title, float* linbinning): is_sorted(false), has_cdf(false), title(title){
     hist = new TH1F(title.c_str(), 
             (title+";"+x_axis_title+";"+y_axis_title).c_str(), 
             nbins,linbinning);
@@ -90,7 +120,22 @@ void Hist::Fill(float val){
     hist->Fill(val);
     all_vals.push_back(val);
 }
-float Hist::Get_Percentile(float percentile){
+float Hist::X2Percentile(float x){
+    if(not has_cdf){
+        cdf[0] = 0.;
+        for(int i=1;i<=nbins;i++){
+            cdf[i] = cdf[i-1] + hist->GetBinContent(i);
+        }
+        has_cdf = true;
+    }
+    int ibin = std::min(nbins,std::max(1,hist->FindBin(x))); // presumed to be a root binnumber, so starts at 1 unless underflow..
+    float low  = hist->GetXaxis()->GetBinLowEdge(ibin);
+    float high = hist->GetXaxis()->GetBinUpEdge(ibin);
+    float del = x - low;
+    float Delta = high-low;
+    return ((cdf[ibin-1]*del/Delta) + (cdf[ibin]*(Delta-del)/Delta))/cdf[nbins];
+}
+float Hist::Percentile2X(float percentile){
     //Returns the interpolated position in the distribution at the given percentile. 
     //percentile is between 0 and 1 inclusively.
     std::size_t n = all_vals.size();
@@ -379,7 +424,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         }
     }
 
-
+    float hue, saturation, value;
     for(int i=0;i<nbins;i++){ 
         float bc = hist->hist->GetBinCenter(i+1);
 //      __  ___      __
@@ -403,25 +448,43 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         //Logic for Histogram Fill Color
         /*
            rgb(255,51,85) for 0..10]   TColor::GetColor(1.0f,0.2f, 0.3333f)           red
+                hsv = 350, 80, 100
            rgb(255,179,191) unused     TColor::GetColor(1.0f,0.70196f,0.7490196f)     light red
            rgb(255,170,0) for (10..30] TColor::GetColor(1.0f,0.66667f,0.0f)           yellow
+                hsv = 40, 100, 100
            rgb(255,212,128) unused     TColor::GetColor(1.0f,0.83137f,0.5019608f)     light yellow
            rgb(38,230,0) for >30       TColor::GetColor(0.1490196f,0.9019608f,0.0f)   green
+                hsv = 110, 100, 90
            rgb(149,255,128) unused     TColor::GetColor(0.5843137f,1.0f,0.5019608f)   light green
            */
-        if(bc < 1.0f){ //<1og10(10)
+        /*if(bc < 1.0f){ //<1og10(10)
             PrettyFillColor(histarr[i],TColor::GetColor(1.0f,0.2f,0.3333333f) );
-        } else if(bc < 1.477121255f ){ //< log10(30)
+        } else if(bc < 1.477121255f ){ //< TMath::Log10(30)
             PrettyFillColor(histarr[i], TColor::GetColor(1.0f,0.66667f,0.0f));
         }
-        else{ // >= log10(30)
+        else{ // >= TMath::Log10(30)
             if(bc < hist_peak)
                 PrettyFillColor(histarr[i],TColor::GetColor( 0.1490196f,0.9019608f,0.0f) );
             else
                 PrettyFillColor(histarr[i],TColor::GetColor( 0.7f,0.7f,0.7f) );
 
-        }
-    }
+        }*/
+
+        //hue is on 0..360. 
+        hue = hue_red + (hue_green - hue_red)*sigmoid(hue_transition_hardness*bc,hue_func);//sigmoid(0.36*bc,S_tanh)
+
+        saturation = std::min(1.0,
+                satur_at_center + (satur_green - satur_at_center )*sigmoid(
+                    satur_transition_hardness*(hist->X2Percentile(bc) - satur_center_percential),satur_func )
+                    
+                );
+        //std::cout<<i<<" "<<saturation<<" "<<hist->X2Percentile(bc)<<std::endl;
+
+        float value_delta = 0.5*(value_red - value_green ); 
+        value = (1.0 - value_delta ) - value_delta*sigmoid(value_transition_hardness*(bc - value_transition_center),value_func); //darkens green
+
+        PrettyFillColor(histarr[i],GetColorHSV(hue, saturation, value) );
+    }//end for every bin.
 
     for(int i=0;i<nbins;i++){
         histarr[i]->SetBinContent(i+1,hist->hist->GetBinContent(i+1));
@@ -489,4 +552,53 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         delete histarr[i];
     }
 
+}
+
+double sigmoid(double x, SigmoidOption softness){
+    //enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
+    //should all be -1 at -inf, 0 at 0, and 1 at inf. Around 0 should have y=x
+    //softness is in range of [0,6], with lower numbers having harder corners.
+    switch(softness){
+        case S_abs:
+                return std::min(1.0,std::max(-1.0,x));
+        case S_erf: 
+            return TMath::Erf(x*0.8862269254527580);
+        case S_tanh: 
+             return TMath::TanH(x);
+        case S_gd: 
+               return 2.0* TMath::ATan(TMath::TanH(0.5*x));
+        case S_algeb: 
+                return x/sqrt(1.0+x*x);
+        case S_atan: 
+                return TMath::ATan(x);
+        case S_absalgeb: 
+        default:
+                return x/(1+abs(x));
+    }
+}
+
+void readJsonFile(const std::string& filename, std::map<std::string, std::string>& jsonData) {
+    std::ifstream file(filename);
+
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        // Process each line as needed, for simplicity, we assume key-value pairs separated by colon
+        std::istringstream iss(line);
+        std::string key, value;
+        if (std::getline(iss, key, ':') && std::getline(iss, value)) {
+            // Trim leading and trailing whitespaces
+            key.erase(0, key.find_first_not_of(" \t\n\r\f\v"));
+            key.erase(key.find_last_not_of(" \t\n\r\f\v") + 1);
+            value.erase(0, value.find_first_not_of(" \t\n\r\f\v"));
+            value.erase(value.find_last_not_of(" \t\n\r\f\v") + 1);
+
+            // Add to the map
+            jsonData[key] = value;
+        }
+    }
 }
