@@ -47,7 +47,8 @@ static const bool skip_first_line_of_tsv_file = true;
 static const bool single_plot_mode_enabled  = disable; 
 //static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM"; 
-static const string which_one = "3M 8862";
+static const string which_one = "3M 9542";
+//static const string which_one = "3M 8862";
 //static const string which_one = "CanadaMasq Q100 Medium CA-N95F-100PA";
 //static const string which_one ="Drager1920ML_1950ML";
 
@@ -60,15 +61,21 @@ static float histogram_ymax = 80.f;
 
 //Color gradient controls
 enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
-static const float hue_red = -10.f;
+/*static const float hue_red = -10.f;
 static const float hue_yellow = 40.f;
-static const float hue_green = 110.f;
+static const float hue_green = 110.f;*/
+static const char* red_hex = "#FF3355";
+static const char* yellow_hex = "#FFAA00";
+//static const float greeness = 0.9019608f;
+static const float hue_green = 120.f;
+static const float value_green = 0.682f;
 static const float red_end = TMath::Log10(10.);
+
 static const float yellow_end = TMath::Log10(30.);
 //static const float hue_transition_hardness = 0.36f; 
 //static const SigmoidOption hue_func = S_abs;
 
-static const float satur_green = 0.15f;
+/*static const float satur_green = 0.15f;
 static const float satur_at_center = 0.7f;
 static const float satur_center_percential = 0.5f;
 static const float satur_transition_hardness = 6.0f;
@@ -79,6 +86,7 @@ static const float value_green = 0.9f;
 static const float value_transition_center = 1.17f;//1.17 = log10(25)
 static const float value_transition_hardness = 8.0f;
 static const SigmoidOption value_func = S_tanh;
+*/
 ///////////////////////////////////////////////////////////////////
 ///////////////////////// End Settings /////////////////////////////
 ///////////////////////////////////////////////////////////////////
@@ -443,32 +451,39 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 //
         //Logic for Histogram Fill Color
         /*
-           rgb(255,51,85) for 0..10]   TColor::GetColor(1.0f,0.2f, 0.3333f)           red
+           rgb(255,51,85) for 0..10]   TColor::GetColor(1.0f,0.2f, 0.3333f)           red "#FF3355"
                 hsv = 350, 80, 100     TColor::GetColor(255,51,85)
 
-           rgb(255,179,191) unused     TColor::GetColor(1.0f,0.70196f,0.7490196f)     light red
+           rgb(255,179,191) unused     TColor::GetColor(1.0f,0.70196f,0.7490196f)     light red "#FFB3BF"
 
-           rgb(255,170,0) for (10..30] TColor::GetColor(1.0f,0.66667f,0.0f)           yellow
+           rgb(255,170,0) for (10..30] TColor::GetColor(1.0f,0.66667f,0.0f)           yellow "#FFAA00"
                 hsv = 40, 100, 100     TColor::GetColor(255,170,0)
 
-           rgb(255,212,128) unused     TColor::GetColor(1.0f,0.83137f,0.5019608f)     light yellow
+           rgb(255,212,128) unused     TColor::GetColor(1.0f,0.83137f,0.5019608f)     light yellow "#FFD480"
 
-           rgb(38,230,0) for >30       TColor::GetColor(0.1490196f,0.9019608f,0.0f)   green
+           rgb(38,230,0) for >30       TColor::GetColor(0.1490196f,0.9019608f,0.0f)   green "#26E600"
                 hsv = 110, 100, 90     TColor::GetColor(38,230,0)
 
-           rgb(149,255,128) unused     TColor::GetColor(0.5843137f,1.0f,0.5019608f)   light green
+           rgb(149,255,128) unused     TColor::GetColor(0.5843137f,1.0f,0.5019608f)   light green "#95FF80"
            */
         if(bc < red_end){ 
-            PrettyFillColor(histarr[i],TColor::GetColor(255,51,85));
+            PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
+            //PrettyFillColor(histarr[i],TColor::GetColor(255,51,85));
         } else if(bc < yellow_end){ //< TMath::Log10(30)
-            PrettyFillColor(histarr[i], TColor::GetColor(255,170,0));
+            PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
+            //PrettyFillColor(histarr[i], TColor::GetColor(255,170,0));
         }
         else{ // >= TMath::Log10(30)
-            float xxx = (bc - mean)/stddev;
-            float gray = 1.0f/(1.0f + exp(-2.0*xxx));
-            if(gray > graymax) gray = graymax;
+            //float xxx = (bc - mean)/stddev;
+            float xxx = (bc - hist->Get_Median())/stddev;
+            //float xxx = (bc - hist->Get_HarmonicMean())/stddev;
+            //float xxx = 3.0f*(hist->X2Percentile(bc) - 0.5f);
+            float saturation = 1.0f/(1.0f + exp(2.0*xxx));
+            //float gray = 1.0f/(1.0f + exp(-2.0*xxx));
+            //if(gray > graymax) gray = graymax;
             //cout<<"i "<<i<<" bc "<<bc<<" x "<<xxx<<" gray "<<gray<<endl;
-            PrettyFillColor(histarr[i],TColor::GetColor( gray, 0.9019608f,gray) );
+            //PrettyFillColor(histarr[i],TColor::GetColor( gray, greeness,gray) );
+            PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value_green) );
         }
 
         //hue is on 0..360, mod 360
