@@ -77,13 +77,14 @@ static const float red_end = TMath::Log10(10.);
 static const float yellow_end = TMath::Log10(30.);
 //Additional constants for traffic light fade
 static const float hue_green = 120.f;//overrides green_hex
-static const float value_green = 0.682f;//overrides green_hex
-static const float percentile_hardness = 6.0;
+static const float value_green = 0.274;//0.682f;//overrides green_hex
+static const float percentile_hardness = 5.0;
 static const float percentile_corner = 0.5;
+static const SigmoidOption satur_func = S_tanh;
 
 //Blueberry constants 
 static const float blueness = 1.0;
-static const float graymax = 0.961;//0.95f; 
+static const float graymax = 0.945;//0.961;//0.95f; 
 
 //Dark Mode Colors
 static const char* red_hex_dark = "#FF3355";
@@ -103,7 +104,7 @@ static const float satur_green = 0.15f;
 static const float satur_at_center = 0.7f;
 static const float satur_center_percential = 0.5f;
 static const float satur_transition_hardness = 6.0f;
-static const SigmoidOption satur_func = S_tanh;
+
 
 static const float value_red = 1.0f;
 static const float value_green = 0.9f;
@@ -202,13 +203,13 @@ void makeAllPlots(){ //main
         BkgColor = kWhite; //255, 255, 255
         FontColor = kBlack;
     } else if(bkgColorScheme  == OffWhite){ 
-        BkgColor = 10; // 254, 254, 254
-        //BkgColor = 19; // very light gray
-        //BkgColor = TColor::GetColor(0.976f, 0.98f, 0.984f);
+        //BkgColor = 10; // 254, 254, 254
+        BkgColor = 19; // very light gray
+        //BkgColor = TColor::GetColor(248,248,248);
         FontColor = kBlack;
     } else if(bkgColorScheme  == Dark ){
-        BkgColor = TColor::GetColor(0.188f, 0.22f, 0.255f);//dark gray
-        FontColor = TColor::GetColor(0.847f, 0.871f, 0.914f);
+        BkgColor = TColor::GetColor(0.188f, 0.22f, 0.255f);//dark gray #303841
+        FontColor = TColor::GetColor(0.847f, 0.871f, 0.914f);//#D8DEE9
     }
                      
     if( single_plot_mode_enabled) std::cout<<"Single Plot Mode ENABLED, see single_plot_mode_enabled"<<std::endl;
@@ -513,8 +514,10 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
                 //float xxx = (bc - hist->Get_Median())/stddev;
                 //float xxx = (bc - hist->Get_HarmonicMean())/stddev;
                 float xxx = percentile_hardness*(hist->X2Percentile(bc) - percentile_corner );
+                //float saturation = 1.0 - std::max(0, sigmoid(xxx, satur_func ));
                 float saturation = 1.0f/(1.0f + exp(2.0*xxx));
                 float value = graymax - (graymax - value_green)*saturation;
+                if(bc > 2.19 and bc < 2.3) std::cout<<hist->X2Percentile(bc)<<" x "<<xxx<<" s "<<saturation<<" v "<<value<<std::endl;
                 PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value) );
                 //PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value_green) );
             }
