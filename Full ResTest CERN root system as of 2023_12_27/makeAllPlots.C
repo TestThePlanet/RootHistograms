@@ -47,10 +47,11 @@ static const bool use_only_analysis_grade = true;
 static const bool save_plots_enabled = enable;
 static const bool skip_first_line_of_tsv_file = true;
 
-static const bool single_plot_mode_enabled  = disable; 
+static const bool single_plot_mode_enabled  = enable; 
 //static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM"; 
-static const string which_one = "3M 9542";
+//static const string which_one = "3M 9542";
+static const string which_one = "Vitacore CAN99 model 9500";
 //static const string which_one = "3M 8862";
 //static const string which_one = "CanadaMasq Q100 Medium CA-N95F-100PA";
 //static const string which_one ="Drager1920ML_1950ML";
@@ -72,14 +73,24 @@ static const ColorScheme colorScheme = trafficLightFaded;
 static const char* red_hex = "#FF3355";
 static const char* yellow_hex = "#FFAA00";
 static const char* green_hex = "#26E600";
-static const float hue_green = 120.f;
-static const float value_green = 0.682f;
 static const float red_end = TMath::Log10(10.);
 static const float yellow_end = TMath::Log10(30.);
+//Additional constants for traffic light fade
+static const float hue_green = 120.f;//overrides green_hex
+static const float value_green = 0.682f;//overrides green_hex
+static const float percentile_hardness = 6.0;
+static const float percentile_corner = 0.5;
 
 //Blueberry constants 
 static const float blueness = 1.0;
-static const float graymax = 0.95f; 
+static const float graymax = 0.961;//0.95f; 
+
+//Dark Mode Colors
+static const char* red_hex_dark = "#FF3355";
+static const char* yellow_hex_dark = "#FFAA00";
+static const char* green_hex_dark = "#26E600";
+static const float value_green_dark = 0.682f;//overrides green_hex_dark
+
 
 //Sigmoid scheme constants
 /*static const float hue_red = -10.f;
@@ -188,15 +199,15 @@ float Hist::Get_HarmonicMean(){
 void makeAllPlots(){ //main
 
     if(bkgColorScheme  == White){
-        MyWhite = kWhite; //255, 255, 255
+        BkgColor = kWhite; //255, 255, 255
         FontColor = kBlack;
     } else if(bkgColorScheme  == OffWhite){ 
-        MyWhite = 10; // 254, 254, 254
-        //MyWhite = 19; // very light gray
-        //MyWhite = TColor::GetColor(0.976f, 0.98f, 0.984f);
+        BkgColor = 10; // 254, 254, 254
+        //BkgColor = 19; // very light gray
+        //BkgColor = TColor::GetColor(0.976f, 0.98f, 0.984f);
         FontColor = kBlack;
     } else if(bkgColorScheme  == Dark ){
-        MyWhite = TColor::GetColor(0.188f, 0.22f, 0.255f);//dark gray
+        BkgColor = TColor::GetColor(0.188f, 0.22f, 0.255f);//dark gray
         FontColor = TColor::GetColor(0.847f, 0.871f, 0.914f);
     }
                      
@@ -499,9 +510,9 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
             }
             else{ // >= TMath::Log10(30)
                   //float xxx = (bc - mean)/stddev;
-                float xxx = (bc - hist->Get_Median())/stddev;
+                //float xxx = (bc - hist->Get_Median())/stddev;
                 //float xxx = (bc - hist->Get_HarmonicMean())/stddev;
-                //float xxx = 3.0f*(hist->X2Percentile(bc) - 0.5f);
+                float xxx = percentile_hardness*(hist->X2Percentile(bc) - percentile_corner );
                 float saturation = 1.0f/(1.0f + exp(2.0*xxx));
                 float value = graymax - (graymax - value_green)*saturation;
                 PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value) );
@@ -557,30 +568,14 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     string superfluousTitle = "asdf";
 	//TCanvas * C = newTCanvas(newcanvname.c_str(), superfluousTitle.c_str(),1660,989); //This line blows up.
     TCanvas * canv =new TCanvas( newcanvname.c_str(), superfluousTitle.c_str(),1660,989);
-    canv->Range(-0.4507237,-11.42139,6.157133,74.97806);
-    canv->SetFillColor(MyWhite);
-    canv->SetFrameFillColor(MyWhite);
-    canv->SetFrameFillStyle(0);
-    canv->SetFrameLineColor(MyWhite);
-    canv->SetBorderMode(0);
-    canv->SetBorderSize(2);
-    canv->SetTickx(1);
-    canv->SetTicky(1);
-    canv->SetLeftMargin(0.0);
-    canv->SetLeftMargin(0.10659831);
-    //canv->SetLeftMargin(0.07659831);
-    canv->SetRightMargin(0.0331725);
-    canv->SetTopMargin(0.06438214);
-    canv->SetBottomMargin(0.2321929);
-    canv->SetFrameBorderMode(0);
-    canv->SetFrameBorderMode(0);
+    PrettyCanvas(canv);
     canv->cd();
                                                                              //
 	//TCanvas * C = newTCanvas(hist->GetTitle()+"thecanvas", "Random Mask-Like Data",1660,989);
 	////TLegend *leg = new TLegend(0.646985, 0.772727, 0.978643, 0.891608);
     ////PrettyLegend(leg);
 	////leg->AddEntry(h,"Super nice histogram");
-	PrettyHist(hist->hist,kAzure + 5,0); //RETURN
+	PrettyHist(hist->hist,BkgColor,0); //RETURN
                                    //
     if(ymax_setting > auto_fit_each_histogram) 
         SetRange(hist->hist,0,histogram_ymax);
@@ -596,10 +591,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 
     TPaveText *pt = new TPaveText(0.05,0.94,0.95,0.995,"blNDC");
     //TPaveText *pt = new TPaveText(0.4432569,0.94,0.5567431,0.995,"blNDC");
-    pt->SetBorderSize(0);
-    pt->SetFillColor(MyWhite);
-    pt->SetFillStyle(0);
-    pt->SetTextFont(42);
+    PrettyPaveText(pt);
     TText *pt_LaTex = pt->AddText(hist->GetTitle().c_str());
     pt->Draw();
 

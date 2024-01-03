@@ -19,7 +19,7 @@
 //using namespace std;
  
 
-int MyWhite = 19; //10;
+int BkgColor = 19; //10;
 int FontColor = kBlack; //10;
 void CMSStyle();
 void PrettyLegend(TLegend* leg, float fontSize = 0.05);
@@ -40,8 +40,10 @@ void DrawSame(TH1F* h0, TH1F* h1, TH1F* h2, char* ops=const_cast<char*>(""));
 void DrawSame(TH1F* h0, TH1F* h1, TH1F* h2, TH1F* h3, char* ops=const_cast<char*>(""));
 void DrawSame(TH1F* h0, TH1F* h1, TH1F* h2, TH1F* h3,TH1F* h4, char* ops=const_cast<char*>(""));
 void DrawSame(TH1F* h0, TH1F* h1, TH1F* h2, TH1F* h3,TH1F* h4,TH1F* h5, char* ops=const_cast<char*>(""));
-TCanvas * newTCanvas(char* rootname, char* title = const_cast<char*>(""), int x = 800, int y = 800);
+void PrettyCanvas(TCanvas* canv);
+TCanvas * newTCanvas(char* rootname, char* title = const_cast<char*>(""), int x = 800, int y = 800); //TODO needs repair.
 TCanvas * newTCanvas(string rootname, string title = "", int x = 800, int y = 800);
+void PrettyPaveText(TPaveText* pt);
 //Versions of TColor::GetColor that use HLS and HSV
 Int_t GetColorHLS(Float_t hue,  Float_t lightness, Float_t saturation);
 Int_t GetColorHSV(Float_t hue, Float_t saturation, Float_t value);
@@ -82,11 +84,11 @@ void CMSStyle(){
   cmsStyle->SetFrameBorderMode(0);
   cmsStyle->SetCanvasBorderMode(0);
   cmsStyle->SetPadBorderMode(0);
-  cmsStyle->SetPadColor(MyWhite); 
-  cmsStyle->SetCanvasColor(MyWhite);
+  cmsStyle->SetPadColor(BkgColor); 
+  cmsStyle->SetCanvasColor(BkgColor);
   cmsStyle->SetTitleColor(FontColor);
-  cmsStyle->SetStatColor(MyWhite);
-  cmsStyle->SetFrameFillColor(MyWhite); 
+  cmsStyle->SetStatColor(BkgColor);
+  cmsStyle->SetFrameFillColor(BkgColor); 
 
   // set the paper & margin sizes
   cmsStyle->SetPaperSize(20,26);
@@ -142,7 +144,7 @@ void CMSStyle(){
 void PrettyLegend(TLegend* leg, float fontSize){
 	//default fontSize = 0.05;
         leg->SetTextFont(42);
-        leg->SetFillColor(MyWhite);
+        leg->SetFillColor(BkgColor);
         leg->SetBorderSize(0);
         leg->SetTextSize(fontSize);
 }
@@ -182,6 +184,12 @@ void PrettyFonts(TH1F* h){
         y->SetLabelFont(42);
         x->SetLabelSize(0.04);
         y->SetLabelSize(0.06);
+        x->SetAxisColor(FontColor);
+        y->SetAxisColor(FontColor);
+        x->SetLabelColor(FontColor);
+        y->SetLabelColor(FontColor);
+        x->SetTitleColor(FontColor);
+        y->SetTitleColor(FontColor);
 }
 
 void PrettyFillColor(TH1F* h, int color){
@@ -291,36 +299,43 @@ void DrawSame(TH1F* h0, TH1F* h1, TH1F* h2, TH1F* h3,TH1F* h4,TH1F* h5, char* op
 	h5->Draw((same+ops).c_str());
 }
 
-
-
-TCanvas * newTCanvas(char* rootname, char* title, int x, int y){
-	TCanvas * canv =new TCanvas( rootname, title, x, y);
+void PrettyCanvas(TCanvas* canv){
     canv->Range(-0.4507237,-11.42139,6.157133,74.97806);
-
-    canv->SetFillColor(MyWhite);
-    canv->SetFrameFillColor(MyWhite);
+    canv->SetFillColor(BkgColor);
+    canv->SetFrameFillColor(BkgColor);
     canv->SetFrameFillStyle(0);
-    canv->SetFrameLineColor(MyWhite);
+    canv->SetFrameLineColor(BkgColor);//? shouldn't this be fontcolor?
     canv->SetBorderMode(0);
     canv->SetBorderSize(2);
     canv->SetTickx(1);
     canv->SetTicky(1);
-     canv->SetLeftMargin(0.0);
-     canv->SetLeftMargin(0.10659831);
-     //canv->SetLeftMargin(0.07659831);
-   canv->SetRightMargin(0.0331725);
+    canv->SetLeftMargin(0.0);
+    canv->SetLeftMargin(0.10659831);
+    //canv->SetLeftMargin(0.07659831);
+    canv->SetRightMargin(0.0331725);
     canv->SetTopMargin(0.06438214);
     canv->SetBottomMargin(0.2321929);
-
-
     canv->SetFrameBorderMode(0);
     canv->SetFrameBorderMode(0);
+}
+
+TCanvas * newTCanvas(char* rootname, char* title, int x, int y){ //TODO needs repair.
+	TCanvas * canv =new TCanvas( rootname, title, x, y);
+    PrettyCanvas(canv);
 	canv->cd();
 	return canv;
 }
 
 TCanvas * newTCanvas(string rootname, string title, int x, int y){
     return newTCanvas(rootname.c_str(), title.c_str());
+}
+
+void PrettyPaveText(TPaveText* pt){
+    pt->SetBorderSize(0);
+    pt->SetFillColor(BkgColor);
+    pt->SetTextColor(FontColor);
+    pt->SetFillStyle(0);
+    pt->SetTextFont(42);
 }
 
 Int_t GetColorHSV(Float_t hue, Float_t saturation, Float_t value){
