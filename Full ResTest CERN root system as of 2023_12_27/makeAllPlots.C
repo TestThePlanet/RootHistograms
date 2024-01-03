@@ -61,9 +61,12 @@ static float histogram_ymax = 80.f;
 //Color gradient controls
 enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
 static const float hue_red = -10.f;
+static const float hue_yellow = 40.f;
 static const float hue_green = 110.f;
-static const float hue_transition_hardness = 0.36f; 
-static const SigmoidOption hue_func = S_abs;
+static const float red_end = TMath::Log10(10.);
+static const float yellow_end = TMath::Log10(30.);
+//static const float hue_transition_hardness = 0.36f; 
+//static const SigmoidOption hue_func = S_abs;
 
 static const float satur_green = 0.15f;
 static const float satur_at_center = 0.7f;
@@ -424,7 +427,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         }
     }
 
-    float hue, saturation, value;
+    //float hue, saturation, value;
     for(int i=0;i<nbins;i++){ 
         float bc = hist->hist->GetBinCenter(i+1);
 //      __  ___      __
@@ -438,52 +441,58 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 //  / /___/ /_/ / / /_/ / /  / /_/ / /_/ / /_/ / / / /
 //  \____/\____/_/\____/_/   \__,_/\__/_/\____/_/ /_/
 //
-
-        /*float xxx = (bc - mean)/stddev;
-        float gray = 1.0f/(1.0f + exp(-2.0*xxx));
-        if(gray > graymax) gray = graymax;
-        //cout<<"i "<<i<<" bc "<<bc<<" x "<<xxx<<" gray "<<gray<<endl;
-        PrettyFillColor(histarr[i],TColor::GetColor( gray, gray, 1.0f) ); */
-
         //Logic for Histogram Fill Color
         /*
            rgb(255,51,85) for 0..10]   TColor::GetColor(1.0f,0.2f, 0.3333f)           red
-                hsv = 350, 80, 100
+                hsv = 350, 80, 100     TColor::GetColor(255,51,85)
+
            rgb(255,179,191) unused     TColor::GetColor(1.0f,0.70196f,0.7490196f)     light red
+
            rgb(255,170,0) for (10..30] TColor::GetColor(1.0f,0.66667f,0.0f)           yellow
-                hsv = 40, 100, 100
+                hsv = 40, 100, 100     TColor::GetColor(255,170,0)
+
            rgb(255,212,128) unused     TColor::GetColor(1.0f,0.83137f,0.5019608f)     light yellow
+
            rgb(38,230,0) for >30       TColor::GetColor(0.1490196f,0.9019608f,0.0f)   green
-                hsv = 110, 100, 90
+                hsv = 110, 100, 90     TColor::GetColor(38,230,0)
+
            rgb(149,255,128) unused     TColor::GetColor(0.5843137f,1.0f,0.5019608f)   light green
            */
-        /*if(bc < 1.0f){ //<1og10(10)
-            PrettyFillColor(histarr[i],TColor::GetColor(1.0f,0.2f,0.3333333f) );
-        } else if(bc < 1.477121255f ){ //< TMath::Log10(30)
-            PrettyFillColor(histarr[i], TColor::GetColor(1.0f,0.66667f,0.0f));
+        if(bc < red_end){ 
+            PrettyFillColor(histarr[i],TColor::GetColor(255,51,85));
+        } else if(bc < yellow_end){ //< TMath::Log10(30)
+            PrettyFillColor(histarr[i], TColor::GetColor(255,170,0));
         }
         else{ // >= TMath::Log10(30)
-            if(bc < hist_peak)
-                PrettyFillColor(histarr[i],TColor::GetColor( 0.1490196f,0.9019608f,0.0f) );
-            else
-                PrettyFillColor(histarr[i],TColor::GetColor( 0.7f,0.7f,0.7f) );
+            float xxx = (bc - mean)/stddev;
+            float gray = 1.0f/(1.0f + exp(-2.0*xxx));
+            if(gray > graymax) gray = graymax;
+            //cout<<"i "<<i<<" bc "<<bc<<" x "<<xxx<<" gray "<<gray<<endl;
+            PrettyFillColor(histarr[i],TColor::GetColor( gray, 0.9019608f,gray) );
+        }
 
-        }*/
-
-        //hue is on 0..360. 
-        hue = hue_red + (hue_green - hue_red)*sigmoid(hue_transition_hardness*bc,hue_func);//sigmoid(0.36*bc,S_tanh)
+        //hue is on 0..360, mod 360
+        /*hue = hue_red + (hue_green - hue_red)*sigmoid(hue_transition_hardness*bc,hue_func);//sigmoid(0.36*bc,S_tanh)
+        if(bc < red_end){
+            hue = hue_red;
+        } else if(bc <  yellow_end ){
+            hue = hue_yellow;
+        }
+        else{ 
+            hue = hue_green;
+        }
 
         saturation = std::min(1.0,
                 satur_at_center + (satur_green - satur_at_center )*sigmoid(
                     satur_transition_hardness*(hist->X2Percentile(bc) - satur_center_percential),satur_func )
                     
                 );
-        //std::cout<<i<<" "<<saturation<<" "<<hist->X2Percentile(bc)<<std::endl;
 
         float value_delta = 0.5*(value_red - value_green ); 
         value = (1.0 - value_delta ) - value_delta*sigmoid(value_transition_hardness*(bc - value_transition_center),value_func); //darkens green
 
         PrettyFillColor(histarr[i],GetColorHSV(hue, saturation, value) );
+        */
     }//end for every bin.
 
     for(int i=0;i<nbins;i++){
