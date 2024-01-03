@@ -27,6 +27,8 @@
 #define nbins (60)
 
 enum FeatureState { enable = true, disable = false };
+enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
+enum ColorScheme { trafficLight, trafficLightFaded, blueberry };
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 //     _____      __  __  _                 
@@ -44,7 +46,7 @@ static const bool use_only_analysis_grade = true;
 static const bool save_plots_enabled = enable;
 static const bool skip_first_line_of_tsv_file = true;
 
-static const bool single_plot_mode_enabled  = disable; 
+static const bool single_plot_mode_enabled  = enable; 
 //static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM"; 
 static const string which_one = "3M 9542";
@@ -60,22 +62,29 @@ static const Ymax_state ymax_setting = auto_fit_each_histogram;
 static float histogram_ymax = 80.f;
 
 //Color gradient controls
-enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
-/*static const float hue_red = -10.f;
-static const float hue_yellow = 40.f;
-static const float hue_green = 110.f;*/
+static const ColorScheme colorScheme = trafficLightFaded;
+
+//Traffic light constants
 static const char* red_hex = "#FF3355";
 static const char* yellow_hex = "#FFAA00";
-//static const float greeness = 0.9019608f;
+static const char* green_hex = "#26E600";
 static const float hue_green = 120.f;
 static const float value_green = 0.682f;
 static const float red_end = TMath::Log10(10.);
-
 static const float yellow_end = TMath::Log10(30.);
+
+//Blueberry constants 
+static const float blueness = 1.0;
+static const float graymax = 0.95f; 
+
+//Sigmoid scheme constants
+/*static const float hue_red = -10.f;
+static const float hue_yellow = 40.f;
+static const float hue_green = 110.f;
 //static const float hue_transition_hardness = 0.36f; 
 //static const SigmoidOption hue_func = S_abs;
 
-/*static const float satur_green = 0.15f;
+static const float satur_green = 0.15f;
 static const float satur_at_center = 0.7f;
 static const float satur_center_percential = 0.5f;
 static const float satur_transition_hardness = 6.0f;
@@ -405,7 +414,6 @@ void SetBinLabels(Hist* hist){
 
 
 void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
-    static const float graymax = 0.95f; 
     //plot it and make it pretty
 	PrettyFillColor(hist->hist, kAzure + 5);
     SetBinLabels(hist);
@@ -466,24 +474,36 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 
            rgb(149,255,128) unused     TColor::GetColor(0.5843137f,1.0f,0.5019608f)   light green "#95FF80"
            */
-        if(bc < red_end){ 
-            PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
-            //PrettyFillColor(histarr[i],TColor::GetColor(255,51,85));
-        } else if(bc < yellow_end){ //< TMath::Log10(30)
-            PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
-            //PrettyFillColor(histarr[i], TColor::GetColor(255,170,0));
-        }
-        else{ // >= TMath::Log10(30)
-            //float xxx = (bc - mean)/stddev;
-            float xxx = (bc - hist->Get_Median())/stddev;
-            //float xxx = (bc - hist->Get_HarmonicMean())/stddev;
-            //float xxx = 3.0f*(hist->X2Percentile(bc) - 0.5f);
-            float saturation = 1.0f/(1.0f + exp(2.0*xxx));
-            //float gray = 1.0f/(1.0f + exp(-2.0*xxx));
-            //if(gray > graymax) gray = graymax;
-            //cout<<"i "<<i<<" bc "<<bc<<" x "<<xxx<<" gray "<<gray<<endl;
-            //PrettyFillColor(histarr[i],TColor::GetColor( gray, greeness,gray) );
-            PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value_green) );
+        if(colorScheme == trafficLightFaded){
+            if(bc < red_end){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
+            } else if(bc < yellow_end){ //< TMath::Log10(30)
+                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
+            }
+            else{ // >= TMath::Log10(30)
+                  //float xxx = (bc - mean)/stddev;
+                float xxx = (bc - hist->Get_Median())/stddev;
+                //float xxx = (bc - hist->Get_HarmonicMean())/stddev;
+                //float xxx = 3.0f*(hist->X2Percentile(bc) - 0.5f);
+                float saturation = 1.0f/(1.0f + exp(2.0*xxx));
+                float value = graymax - (graymax - value_green)*saturation;
+                PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value) );
+                //PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value_green) );
+            }
+        } else if( colorScheme == trafficLight){
+            if(bc < red_end){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
+            } else if(bc < yellow_end){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
+            }
+            else{ 
+                PrettyFillColor(histarr[i], TColor::GetColor(green_hex));
+            }
+        } else if( colorScheme == blueberry ){
+                float xxx = (bc - hist->Get_Median())/stddev;
+                float gray = 1.0f/(1.0f + exp(-2.0*xxx));
+                if(gray > graymax) gray = graymax;
+                PrettyFillColor(histarr[i],TColor::GetColor( gray, gray, blueness) );
         }
 
         //hue is on 0..360, mod 360
