@@ -47,7 +47,7 @@ static const bool use_only_analysis_grade = true;
 static const bool save_plots_enabled = enable;
 static const bool skip_first_line_of_tsv_file = true;
 
-static const bool single_plot_mode_enabled  = enable; 
+static const bool single_plot_mode_enabled  = disable; 
 //static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM"; 
 static const string which_one = "3M 9542";
