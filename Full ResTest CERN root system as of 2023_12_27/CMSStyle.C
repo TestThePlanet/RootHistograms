@@ -19,6 +19,8 @@
 //using namespace std;
  
 
+int MyWhite = 19; //10;
+int FontColor = kBlack; //10;
 void CMSStyle();
 void PrettyLegend(TLegend* leg, float fontSize = 0.05);
 void PrettyHist(TH1F* h, int color = 1, int width = 3, int linestyle = 0);
@@ -80,11 +82,11 @@ void CMSStyle(){
   cmsStyle->SetFrameBorderMode(0);
   cmsStyle->SetCanvasBorderMode(0);
   cmsStyle->SetPadBorderMode(0);
-  cmsStyle->SetPadColor(0);
-  cmsStyle->SetCanvasColor(0);
-  cmsStyle->SetTitleColor(kBlack);
-  cmsStyle->SetStatColor(0);
-  cmsStyle->SetFrameFillColor(0); 
+  cmsStyle->SetPadColor(MyWhite); 
+  cmsStyle->SetCanvasColor(MyWhite);
+  cmsStyle->SetTitleColor(FontColor);
+  cmsStyle->SetStatColor(MyWhite);
+  cmsStyle->SetFrameFillColor(MyWhite); 
 
   // set the paper & margin sizes
   cmsStyle->SetPaperSize(20,26);
@@ -140,7 +142,7 @@ void CMSStyle(){
 void PrettyLegend(TLegend* leg, float fontSize){
 	//default fontSize = 0.05;
         leg->SetTextFont(42);
-        leg->SetFillColor(0);
+        leg->SetFillColor(MyWhite);
         leg->SetBorderSize(0);
         leg->SetTextSize(fontSize);
 }
@@ -295,10 +297,10 @@ TCanvas * newTCanvas(char* rootname, char* title, int x, int y){
 	TCanvas * canv =new TCanvas( rootname, title, x, y);
     canv->Range(-0.4507237,-11.42139,6.157133,74.97806);
 
-    canv->SetFillColor(kWhite);
-    canv->SetFrameFillColor(kWhite);
+    canv->SetFillColor(MyWhite);
+    canv->SetFrameFillColor(MyWhite);
     canv->SetFrameFillStyle(0);
-    canv->SetFrameLineColor(kWhite);
+    canv->SetFrameLineColor(MyWhite);
     canv->SetBorderMode(0);
     canv->SetBorderSize(2);
     canv->SetTickx(1);

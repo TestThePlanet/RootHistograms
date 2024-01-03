@@ -29,6 +29,7 @@
 enum FeatureState { enable = true, disable = false };
 enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
 enum ColorScheme { trafficLight, trafficLightFaded, blueberry };
+enum BkgColorScheme { White, OffWhite, Dark };
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 //     _____      __  __  _                 
@@ -61,7 +62,10 @@ enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_
 static const Ymax_state ymax_setting = auto_fit_each_histogram;
 static float histogram_ymax = 80.f;
 
-//Color gradient controls
+//Background Color Scheme Control
+static const BkgColorScheme bkgColorScheme = OffWhite;
+
+//Histogram Gradient Color Controls
 static const ColorScheme colorScheme = trafficLightFaded;
 
 //Traffic light constants
@@ -183,6 +187,19 @@ float Hist::Get_HarmonicMean(){
 
 void makeAllPlots(){ //main
 
+    if(bkgColorScheme  == White){
+        MyWhite = kWhite; //255, 255, 255
+        FontColor = kBlack;
+    } else if(bkgColorScheme  == OffWhite){ 
+        MyWhite = 10; // 254, 254, 254
+        //MyWhite = 19; // very light gray
+        //MyWhite = TColor::GetColor(0.976f, 0.98f, 0.984f);
+        FontColor = kBlack;
+    } else if(bkgColorScheme  == Dark ){
+        MyWhite = TColor::GetColor(0.188f, 0.22f, 0.255f);//dark gray
+        FontColor = TColor::GetColor(0.847f, 0.871f, 0.914f);
+    }
+                     
     if( single_plot_mode_enabled) std::cout<<"Single Plot Mode ENABLED, see single_plot_mode_enabled"<<std::endl;
     std::unordered_map<std::string, Hist*> hMap;
 	CMSStyle(); 
@@ -541,10 +558,10 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 	//TCanvas * C = newTCanvas(newcanvname.c_str(), superfluousTitle.c_str(),1660,989); //This line blows up.
     TCanvas * canv =new TCanvas( newcanvname.c_str(), superfluousTitle.c_str(),1660,989);
     canv->Range(-0.4507237,-11.42139,6.157133,74.97806);
-    canv->SetFillColor(kWhite);
-    canv->SetFrameFillColor(kWhite);
+    canv->SetFillColor(MyWhite);
+    canv->SetFrameFillColor(MyWhite);
     canv->SetFrameFillStyle(0);
-    canv->SetFrameLineColor(kWhite);
+    canv->SetFrameLineColor(MyWhite);
     canv->SetBorderMode(0);
     canv->SetBorderSize(2);
     canv->SetTickx(1);
@@ -580,7 +597,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     TPaveText *pt = new TPaveText(0.05,0.94,0.95,0.995,"blNDC");
     //TPaveText *pt = new TPaveText(0.4432569,0.94,0.5567431,0.995,"blNDC");
     pt->SetBorderSize(0);
-    pt->SetFillColor(0);
+    pt->SetFillColor(MyWhite);
     pt->SetFillStyle(0);
     pt->SetTextFont(42);
     TText *pt_LaTex = pt->AddText(hist->GetTitle().c_str());
