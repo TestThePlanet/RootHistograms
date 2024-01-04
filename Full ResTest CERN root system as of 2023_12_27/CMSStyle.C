@@ -7,6 +7,9 @@
 #include "TROOT.h"
 #include <TCanvas.h>
 #include "TLegend.h"
+#include "TColor.h"
+#include "TROOT.h"
+#include "TObjArray.h"
 
 #include <TPaveText.h>
 //##########################################################################
@@ -47,6 +50,7 @@ void PrettyPaveText(TPaveText* pt);
 //Versions of TColor::GetColor that use HLS and HSV
 Int_t GetColorHLS(Float_t hue,  Float_t lightness, Float_t saturation);
 Int_t GetColorHSV(Float_t hue, Float_t saturation, Float_t value);
+Int_t GetColorForced(Int_t r, Int_t g, Int_t b, Float_t a= 1.0f);
 /*TPaveText AddPrettyTitle(string theTitle);
 
 TPaveText AddPrettyTitle(string theTitle){
@@ -354,4 +358,48 @@ Int_t GetColorHLS(Float_t hue,  Float_t lightness, Float_t saturation){
     Float_t r, g, b;
     TColor::HLS2RGB(hue, lightness, saturation, r,g,b);
     return TColor::GetColor(r, g, b);
+}
+
+Int_t GetColorForced(Int_t r, Int_t g, Int_t b, Float_t a){
+   TColor::InitializeColors();
+   if (r < 0)
+      r = 0;
+   else if (r > 255)
+      r = 255;
+   if (g < 0)
+      g = 0;
+   else if (g > 255)
+      g = 255;
+   if (b < 0)
+      b = 0;
+   else if (b > 255)
+      b = 255;
+   if (a > 1.f)
+      a = 1.f;
+   else if (a < 0.f)
+      a = 0.f;
+ 
+   // Get list of all defined colors
+   TObjArray *colors = (TObjArray*) gROOT->GetListOfColors();
+ 
+   TString name = TString::Format("#%02x%02x%02x", r, g, b);
+   if (a != 1.)
+      name.Append(TString::Format("%02x", Int_t(a*255)));
+ 
+   // Look for color by name
+   if (auto color = static_cast<TColor *>(colors->FindObject(name.Data())))
+      // We found the color by name, so we use that right away
+      return color->GetNumber();
+ 
+   Float_t rr, gg, bb;
+   rr = Float_t(r)/255.0f;
+   gg = Float_t(g)/255.0f;
+   bb = Float_t(b)/255.0f;
+ 
+   // We didn't find a matching color in the color table, so we
+   // add it. Note name is of the form "#rrggbb" where rr, etc. are
+   // hexadecimal numbers.
+   auto color = new TColor(colors->GetLast()+1, rr, gg, bb, name.Data(), a);
+ 
+   return color->GetNumber();
 }

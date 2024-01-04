@@ -47,11 +47,11 @@ static const bool use_only_analysis_grade = true;
 static const bool save_plots_enabled = enable;
 static const bool skip_first_line_of_tsv_file = true;
 
-static const bool single_plot_mode_enabled  = enable; 
+static const bool single_plot_mode_enabled  = disable; 
 //static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM"; 
-//static const string which_one = "3M 9542";
-static const string which_one = "Vitacore CAN99 model 9500";
+static const string which_one = "3M Aura 9205+";
+//static const string which_one = "Vitacore CAN99 model 9500";
 //static const string which_one = "3M 8862";
 //static const string which_one = "CanadaMasq Q100 Medium CA-N95F-100PA";
 //static const string which_one ="Drager1920ML_1950ML";
@@ -64,7 +64,7 @@ static const Ymax_state ymax_setting = auto_fit_each_histogram;
 static float histogram_ymax = 80.f;
 
 //Background Color Scheme Control
-static const BkgColorScheme bkgColorScheme = OffWhite;
+static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
 //Histogram Gradient Color Controls
 static const ColorScheme colorScheme = LUT1;
@@ -74,8 +74,7 @@ static const int lut1_len = 8;
 static const int r[lut1_len] = { 10, 180, 220, 230, 235, 240, 242, 242}; 
 static const int g[lut1_len] = {230, 242, 242, 242, 242, 242, 242, 242}; 
 static const int b[lut1_len] = { 10, 180, 220, 230, 235, 240, 242, 242}; 
-bool lut1_uses_harmean = false; //false = uses median.
-int lut1_stride = 6;
+bool lut1_uses_harmean = true; //false = uses median.
 //also uses red_hex and yellow_hex
 
 //Traffic light constants
@@ -213,8 +212,9 @@ void makeAllPlots(){ //main
         FontColor = kBlack;
     } else if(bkgColorScheme  == OffWhite){ 
         //BkgColor = 10; // 254, 254, 254
-        BkgColor = 19; // very light gray
-        //BkgColor = TColor::GetColor(248,248,248);
+        //BkgColor = 19; // very light gray
+        BkgColor = GetColorForced(248,248,248);
+        std::cout<<"Bkg color "<<BkgColor <<std::endl;//DEBUG
         FontColor = kBlack;
     } else if(bkgColorScheme  == Dark ){
         BkgColor = TColor::GetColor(0.188f, 0.22f, 0.255f);//dark gray #303841
@@ -556,11 +556,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
             } else if(bc < yellow_end){ 
                 PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
             } else { //Green lut
-                int j = 0; 
-                if(i - i_middle <= 0) j = 0;
-                else{
-                    j = std::min(lut1_len-1, ((-1 + i-i_middle)/lut1_stride) + 1);
-                } 
+                int j = std::max(0,std::min(lut1_len-1, i-i_middle));
                 PrettyFillColor(histarr[i], TColor::GetColor(r[j],g[j],b[j]));
             } 
 
