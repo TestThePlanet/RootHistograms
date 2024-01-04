@@ -28,7 +28,7 @@
 
 enum FeatureState { enable = true, disable = false };
 enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
-enum ColorScheme { trafficLight, trafficLightFaded, blueberry };
+enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1 };
 enum BkgColorScheme { White, OffWhite, Dark };
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
@@ -67,7 +67,16 @@ static float histogram_ymax = 80.f;
 static const BkgColorScheme bkgColorScheme = OffWhite;
 
 //Histogram Gradient Color Controls
-static const ColorScheme colorScheme = trafficLightFaded;
+static const ColorScheme colorScheme = LUT1;
+
+//LUT1 color controls
+static const int lut1_len = 8;
+static const int r[lut1_len] = { 10, 180, 220, 230, 235, 240, 242, 242}; 
+static const int g[lut1_len] = {230, 242, 242, 242, 242, 242, 242, 242}; 
+static const int b[lut1_len] = { 10, 180, 220, 230, 235, 240, 242, 242}; 
+bool lut1_uses_harmean = false; //false = uses median.
+int lut1_stride = 6;
+//also uses red_hex and yellow_hex
 
 //Traffic light constants
 static const char* red_hex = "#FF3355";
@@ -473,6 +482,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     }
 
     //float hue, saturation, value;
+    int i_middle;
     for(int i=0;i<nbins;i++){ 
         float bc = hist->hist->GetBinCenter(i+1);
 //      __  ___      __
@@ -506,7 +516,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         if(colorScheme == trafficLightFaded){
             if(bc < red_end){ 
                 PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
-            } else if(bc < yellow_end){ //< TMath::Log10(30)
+            } else if(bc < yellow_end){ 
                 PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
             }
             else{ // >= TMath::Log10(30)
@@ -535,6 +545,25 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
                 float gray = 1.0f/(1.0f + exp(-2.0*xxx));
                 if(gray > graymax) gray = graymax;
                 PrettyFillColor(histarr[i],TColor::GetColor( gray, gray, blueness) );
+        } else if(colorScheme == LUT1){
+            //float bc_middle = hist->Get_Median();
+            float bc_middle; 
+            if(lut1_uses_harmean) bc_middle = hist->Get_HarmonicMean();
+            else bc_middle = hist->Get_Median();
+            i_middle = hist->hist->FindBin(bc_middle);
+            if(bc < red_end){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
+            } else if(bc < yellow_end){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
+            } else { //Green lut
+                int j = 0; 
+                if(i - i_middle <= 0) j = 0;
+                else{
+                    j = std::min(lut1_len-1, ((-1 + i-i_middle)/lut1_stride) + 1);
+                } 
+                PrettyFillColor(histarr[i], TColor::GetColor(r[j],g[j],b[j]));
+            } 
+
         }
 
         //hue is on 0..360, mod 360
