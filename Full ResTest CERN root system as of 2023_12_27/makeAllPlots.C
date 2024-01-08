@@ -262,6 +262,7 @@ void makeAllPlots(){ //main
             //if the mask on this line has been seen before, find its entry in map. 
             string maskname = tokens[maskname_tsv_column_index];
             std::replace(maskname.begin(), maskname.end(),'/','_'); //Guard names against /
+            std::replace(maskname.begin(), maskname.end(),'\'','_'); //Guard names against '
             std::unordered_map<std::string, Hist*>::iterator it = hMap.find(maskname);
 
             if (it != hMap.end()) { //This mask has been seen already. Fill the existing histogram
