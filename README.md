@@ -13,3 +13,6 @@ TODO:
 - [ ] Make a strip mode for webpage integration
 - [x] Guard against '/' in histogram names.
 - [ ] Turn settings into a json config file to avoid compilation time.
+
+
+woohoo
