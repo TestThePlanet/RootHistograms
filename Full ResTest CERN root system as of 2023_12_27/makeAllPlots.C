@@ -71,20 +71,20 @@ static const ColorScheme colorScheme = LUT1;
 
 //LUT1 color controls
 static const int lut1_len = 8;
-static const int r[lut1_len] = { 10, 180, 220, 230, 235, 240, 242, 242}; 
-static const int g[lut1_len] = {230, 242, 242, 242, 242, 242, 242, 242}; 
-static const int b[lut1_len] = { 10, 180, 220, 230, 235, 240, 242, 242}; 
+static const int r[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
+static const int g[lut1_len] = {230, 242, 242, 242, 242, 242, 242, 242}; //ilya
+static const int b[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
 bool lut1_uses_harmean = true; //false = uses median.
 //also uses red_hex and yellow_hex
 
 //Traffic light constants
-static const char* red_hex = "#FF3355";
-static const char* yellow_hex = "#FFAA00";
-static const char* green_hex = "#26E600";
+static const char* red_hex = "#FF8A80"; // formerly "#FF3355"; // ilya
+static const char* yellow_hex = "#FFCDAB";// formerly "#FFAA00"; // ilya
+static const char* green_hex = "##AFFFAB";// formerly "#26E600"; // but doesn't work
 static const float red_end = TMath::Log10(10.);
 static const float yellow_end = TMath::Log10(30.);
 //Additional constants for traffic light fade
-static const float hue_green = 120.f;//overrides green_hex
+static const float hue_green = 120.f;//overrides green_hex 
 static const float value_green = 0.274;//0.682f;//overrides green_hex
 static const float percentile_hardness = 5.0;
 static const float percentile_corner = 0.5;
@@ -262,7 +262,6 @@ void makeAllPlots(){ //main
             //if the mask on this line has been seen before, find its entry in map. 
             string maskname = tokens[maskname_tsv_column_index];
             std::replace(maskname.begin(), maskname.end(),'/','_'); //Guard names against /
-            std::replace(maskname.begin(), maskname.end(),'\'','_'); //Guard names against '
             std::unordered_map<std::string, Hist*>::iterator it = hMap.find(maskname);
 
             if (it != hMap.end()) { //This mask has been seen already. Fill the existing histogram
