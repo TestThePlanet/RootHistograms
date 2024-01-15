@@ -20,6 +20,8 @@
 #include "TLegend.h"
 #include "TColor.h"
 #include <TPaveText.h>
+#include <TArrow.h>
+#include <TPad.h>
 //#include "TTree.h"
 //#include "TRandom1.h"
 #include "CMSStyle.C"
@@ -55,6 +57,7 @@ static const string which_one = "3M Aura 9205+";
 //static const string which_one = "3M 8862";
 //static const string which_one = "CanadaMasq Q100 Medium CA-N95F-100PA";
 //static const string which_one ="Drager1920ML_1950ML";
+static const bool X11_persistence  = true; 
 
 static const std::string x_axis_title = "Exposure Reduction Factor               ";
 static const std::string y_axis_title = "Event Count";
@@ -63,13 +66,22 @@ enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_
 static const Ymax_state ymax_setting = auto_fit_each_histogram;
 static float histogram_ymax = 80.f;
 
-//Background Color Scheme Control
+//Arrow
+static const bool UseHarmMeanArrow = true;
+static const int ArrowColor = kBlack;
+
+//Background Color Scheme Selection Control
 static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
-//Histogram Gradient Color Controls
+//Histogram Gradient Color Selection Control
 static const ColorScheme colorScheme = LUT1;
 
-//LUT1 color controls
+//LUT1 Color Scheme Controls
+//To set light green, set r[0],b[0], g[0] here:
+static const char* red_hex_LUT1 = "#FF3355";
+static const char* yellow_hex_LUT1 = "#FFAA00";
+static const float red_end_LUT1 = TMath::Log10(10.);
+static const float yellow_end_LUT1 = TMath::Log10(30.);
 static const int lut1_len = 8;
 static const int r[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
 static const int g[lut1_len] = {230, 242, 242, 242, 242, 242, 242, 242}; //ilya
@@ -77,20 +89,26 @@ static const int b[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
 bool lut1_uses_harmean = true; //false = uses median.
 //also uses red_hex and yellow_hex
 
-//Traffic light constants
+//trafficLight Color Scheme Constants
 static const char* red_hex = "#FF8A80"; // formerly "#FF3355"; // ilya
 static const char* yellow_hex = "#FFCDAB";// formerly "#FFAA00"; // ilya
 static const char* green_hex = "##AFFFAB";// formerly "#26E600"; // but doesn't work
 static const float red_end = TMath::Log10(10.);
 static const float yellow_end = TMath::Log10(30.);
-//Additional constants for traffic light fade
-static const float hue_green = 120.f;//overrides green_hex 
+
+//trafficLightFaded Color Scheme Constants 
+static const char* red_hex_TLF = "#FF3355";
+static const char* yellow_hex_TLF = "#FFAA00";
+static const char* green_hex_TLF = "#26E600";
+static const float red_end_TLF = TMath::Log10(10.);
+static const float yellow_end_TLF = TMath::Log10(30.);
+static const float hue_green = 120.f;//overrides green_hex
 static const float value_green = 0.274;//0.682f;//overrides green_hex
 static const float percentile_hardness = 5.0;
 static const float percentile_corner = 0.5;
 static const SigmoidOption satur_func = S_tanh;
 
-//Blueberry constants 
+//blueberry Color Scheme Constants 
 static const float blueness = 1.0;
 static const float graymax = 0.945;//0.961;//0.95f; 
 
@@ -262,6 +280,7 @@ void makeAllPlots(){ //main
             //if the mask on this line has been seen before, find its entry in map. 
             string maskname = tokens[maskname_tsv_column_index];
             std::replace(maskname.begin(), maskname.end(),'/','_'); //Guard names against /
+            std::replace(maskname.begin(), maskname.end(),'\'','_'); //Guard names against '
             std::unordered_map<std::string, Hist*>::iterator it = hMap.find(maskname);
 
             if (it != hMap.end()) { //This mask has been seen already. Fill the existing histogram
@@ -325,8 +344,10 @@ void makeAllPlots(){ //main
         std::cout<<"Warning! No plot found that matched name which_one = "<<which_one<<std::endl;
     }
     
-    for (auto& pair : hMap) {
-        delete pair.second;
+    if(not (single_plot_mode_enabled and X11_persistence)){
+        for (auto& pair : hMap) {
+            delete pair.second;
+        }
     }
 } //end main
 
@@ -485,17 +506,17 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     int i_middle;
     for(int i=0;i<nbins;i++){ 
         float bc = hist->hist->GetBinCenter(i+1);
-//      __  ___      __
-//     / / / (_)____/ /_____  ____ __________ _____ ___
-//    / /_/ / / ___/ __/ __ \/ __ `/ ___/ __ `/ __ `__ \
-//   / __  / (__  ) /_/ /_/ / /_/ / /  / /_/ / / / / / /
-//  /_/ /_/_/____/\__/\____/\__, /_/   \__,_/_/ /_/ /_/
-//     ______      __      /____/     __  _
-//    / ____/___  / /___  _________ _/ /_(_)___  ____
-//   / /   / __ \/ / __ \/ ___/ __ `/ __/ / __ \/ __ \
-//  / /___/ /_/ / / /_/ / /  / /_/ / /_/ / /_/ / / / /
-//  \____/\____/_/\____/_/   \__,_/\__/_/\____/_/ /_/
-//
+        //      __  ___      __
+        //     / / / (_)____/ /_____  ____ __________ _____ ___
+        //    / /_/ / / ___/ __/ __ \/ __ `/ ___/ __ `/ __ `__ \
+        //   / __  / (__  ) /_/ /_/ / /_/ / /  / /_/ / / / / / /
+        //  /_/ /_/_/____/\__/\____/\__, /_/   \__,_/_/ /_/ /_/
+        //     ______      __      /____/     __  _
+        //    / ____/___  / /___  _________ _/ /_(_)___  ____
+        //   / /   / __ \/ / __ \/ ___/ __ `/ __/ / __ \/ __ \
+        //  / /___/ /_/ / / /_/ / /  / /_/ / /_/ / /_/ / / / /
+        //  \____/\____/_/\____/_/   \__,_/\__/_/\____/_/ /_/
+        //
         //Logic for Histogram Fill Color
         /*
            rgb(255,51,85) for 0..10]   TColor::GetColor(1.0f,0.2f, 0.3333f)           red "#FF3355"
@@ -514,20 +535,19 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
            rgb(149,255,128) unused     TColor::GetColor(0.5843137f,1.0f,0.5019608f)   light green "#95FF80"
            */
         if(colorScheme == trafficLightFaded){
-            if(bc < red_end){ 
-                PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
-            } else if(bc < yellow_end){ 
-                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
+            if(bc < red_end_TLF){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(red_hex_TLF));
+            } else if(bc < yellow_end_TLF){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex_TLF));
             }
             else{ // >= TMath::Log10(30)
-                  //float xxx = (bc - mean)/stddev;
+                //float xxx = (bc - mean)/stddev;
                 //float xxx = (bc - hist->Get_Median())/stddev;
                 //float xxx = (bc - hist->Get_HarmonicMean())/stddev;
                 float xxx = percentile_hardness*(hist->X2Percentile(bc) - percentile_corner );
                 //float saturation = 1.0 - std::max(0, sigmoid(xxx, satur_func ));
                 float saturation = 1.0f/(1.0f + exp(2.0*xxx));
                 float value = graymax - (graymax - value_green)*saturation;
-                if(bc > 2.19 and bc < 2.3) std::cout<<hist->X2Percentile(bc)<<" x "<<xxx<<" s "<<saturation<<" v "<<value<<std::endl;
                 PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value) );
                 //PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value_green) );
             }
@@ -551,10 +571,10 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
             if(lut1_uses_harmean) bc_middle = hist->Get_HarmonicMean();
             else bc_middle = hist->Get_Median();
             i_middle = hist->hist->FindBin(bc_middle);
-            if(bc < red_end){ 
-                PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
-            } else if(bc < yellow_end){ 
-                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
+            if(bc < red_end_LUT1){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(red_hex_LUT1));
+            } else if(bc < yellow_end_LUT1){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex_LUT1));
             } else { //Green lut
                 int j = std::max(0,std::min(lut1_len-1, i-i_middle));
                 PrettyFillColor(histarr[i], TColor::GetColor(r[j],g[j],b[j]));
@@ -592,12 +612,15 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     //ways to do this: either fill with log10 and have custom bin labels, or have custom binning and fill with regular nubmers. 
     //lets do the latter.
     //and just set log x
+
     string newcanvname = hist->GetTitle()+"thecanvas";
     string superfluousTitle = "asdf";
 	//TCanvas * C = newTCanvas(newcanvname.c_str(), superfluousTitle.c_str(),1660,989); //This line blows up.
     TCanvas * canv =new TCanvas( newcanvname.c_str(), superfluousTitle.c_str(),1660,989);
     PrettyCanvas(canv);
     canv->cd();
+
+    //Arrow
                                                                              //
 	//TCanvas * C = newTCanvas(hist->GetTitle()+"thecanvas", "Random Mask-Like Data",1660,989);
 	////TLegend *leg = new TLegend(0.646985, 0.772727, 0.978643, 0.891608);
@@ -610,15 +633,36 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 	canv->cd();
 	gStyle->SetOptStat(0);
 	hist->hist->Draw();
-    //grad->Draw("colzsame");
-	//hist->hist->Draw("E1same");
-	//hist->hist->Draw("same");
     for(int i=0;i<nbins;i++){
         histarr[i]->Draw("same");
     }
 
+    Double_t arrowX = hist->Get_HarmonicMean();
+    TPad* thepad = (TPad*) gPad;
+    Double_t ymax = hist->hist->GetMaximum()/0.95; //Top of the y-axis. TH1->GetYaxis()->GetXmax() incorrectly returns 1
+    Double_t ymin = ymax*0.74;
+    std::cout<<"ymax_init "<< ymax<<std::endl; //comes out 1 every time F*CK
+    ymax *= 0.886;
+    TArrow* arrow = new TArrow(arrowX, ymax, arrowX, ymin, 0.015, "|>");//x1,y1 and x2,y2 the arrowsize is in percentage of the pad heigh
+                                                          //
+    //HM
+    Double_t textX = arrowX/hist->hist->GetXaxis()->GetXmax();
+    //Double_t textX = thepad->PadtoX(arrowX);
+    std::cout<<"Tarrow x: "<<arrowX<<" ymin "<<ymin<<" ymax "<<ymax<<" histogram_ymax "<<histogram_ymax<< " textX "<<textX<<std::endl;
+    TPaveText *arrpt = new TPaveText(textX-0.015,0.865145,textX+0.15,0.910788,"blNDC");
+
+    if(UseHarmMeanArrow){
+        arrow->SetLineWidth(4);
+        arrow->SetFillColor(ArrowColor);
+        arrow->SetLineColor(ArrowColor);
+        arrow->Draw();
+
+        PrettyPaveText(arrpt);
+        TText *apt_LaTex = arrpt->AddText("HM");
+        arrpt->Draw();
+    } 
+
     TPaveText *pt = new TPaveText(0.05,0.94,0.95,0.995,"blNDC");
-    //TPaveText *pt = new TPaveText(0.4432569,0.94,0.5567431,0.995,"blNDC");
     PrettyPaveText(pt);
     TText *pt_LaTex = pt->AddText(hist->GetTitle().c_str());
     pt->Draw();
@@ -626,13 +670,13 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     gPad->RedrawAxis();
 	//leg->Draw("same");
     string fname = "plots/"+fname_noext + ".png";
-    //std::cout<<"    saving to "<<fname<<std::endl;
 	canv->SaveAs(fname.c_str());
 
-    for(int i=0;i<nbins;i++){
-        delete histarr[i];
+    if(not (single_plot_mode_enabled and X11_persistence)){ //This memory leaks, but who cares.
+        for(int i=0;i<nbins;i++){
+            delete histarr[i];
+        }
     }
-
 }
 
 double sigmoid(double x, SigmoidOption softness){
