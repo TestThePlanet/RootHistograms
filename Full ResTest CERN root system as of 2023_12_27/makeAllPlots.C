@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -47,6 +48,7 @@ static const int number_of_exercises = 12; //says that there are 12 exercises go
 static const int analysis_grade_tsv_column_index = 20;
 static const bool use_only_analysis_grade = true;
 static const bool save_plots_enabled = enable;
+static const bool save_with_HMFF_prefix = enable;
 static const bool skip_first_line_of_tsv_file = true;
 
 static const bool single_plot_mode_enabled  = disable; 
@@ -669,7 +671,14 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 
     gPad->RedrawAxis();
 	//leg->Draw("same");
-    string fname = "plots/"+fname_noext + ".png";
+    string fname;
+    if(save_with_HMFF_prefix){
+        std::ostringstream prefix;
+        prefix << std::fixed << std::setw(6) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean());
+        fname = "plots/"+prefix.str()+"_"+fname_noext + ".png";
+    } else{
+        fname = "plots/"+fname_noext + ".png";
+    }
 	canv->SaveAs(fname.c_str());
 
     if(not (single_plot_mode_enabled and X11_persistence)){ //This memory leaks, but who cares.
