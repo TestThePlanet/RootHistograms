@@ -10,6 +10,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <map>
+#include <set>
 #include "TMath.h"
 #include "TCanvas.h"
 #include "TH2F.h"
@@ -51,7 +52,9 @@ static const bool save_plots_enabled = enable;
 static const bool save_with_HMFF_prefix = enable;
 static const bool skip_first_line_of_tsv_file = true;
 
-static const bool single_plot_mode_enabled  = disable; 
+static const int testerID_tsv_column_index = 16;
+
+static const bool single_plot_mode_enabled  = enable; 
 //static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM";  //missalighend left
 //static const string which_one = "3M Aura 9205+"; //mid
@@ -155,6 +158,7 @@ struct Hist{
     string title;
     TH1F* hist;
     std::vector<float> all_vals;
+    std::set<std::string> unique_testers;
 
     Hist(string title, float* linbinning);
     ~Hist(){ delete hist; }
@@ -174,6 +178,7 @@ float* generateLogBinning();
 TF2* makeGrad(float ymax);
 void SetBinLabels(Hist* hist);
 void PlotAndSave(Hist* hist, TF2* grad, string fname_noext);
+bool isALlWhiteSpace(const std::string& str);
 
 double sigmoid(double x, SigmoidOption softness);
 
@@ -309,6 +314,11 @@ void makeAllPlots(){ //main
                 //std::cout<<jline<<" "<<maskname<<" new fill #="<<i<<std::endl;
                 hMap[maskname] = newHistogram;
             } //end else 
+
+            string testerID = tokens[testerID_tsv_column_index];
+            if(not isALlWhiteSpace(testerID))
+                hMap[maskname]->unique_testers.insert(testerID);
+
         } //end else ok line
     } //end while every tsv line
     inputFile.close();
@@ -489,6 +499,8 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
                 (";"+x_axis_title+","+y_axis_title).c_str(),
                 nbins,linbinning);
     }
+
+    std::cout<<"unique testers: "<<hist->unique_testers.size()<<" #samples "<<hist->hist->Integral()<<std::endl;
 
  //   UnitNorm(hist->hist);
     double mean = hist->hist->GetMean();
@@ -735,4 +747,13 @@ void readJsonFile(const std::string& filename, std::map<std::string, std::string
             jsonData[key] = value;
         }
     }
+}
+
+bool isALlWhiteSpace(const std::string& str) {
+    for (char c : str) {
+        if (!std::isspace(static_cast<unsigned char>(c))) {
+            return false;
+        }
+    }
+    return true;
 }
