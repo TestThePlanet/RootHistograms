@@ -36,7 +36,7 @@ TLegend* newTLegend();
 void UnitNorm(TH1F* hist);
 void MatchArea(TH1F* toScale, TH1F* toMatch);
 void SameRange(TH1F* hist1, TH1F* hist2);
-void SetRange(TH1F* hist, float min = 0.0f, float max = -1.15);
+void NSetRange(TH1F* hist, float min = 0.0f, float max = -1.15);
 
 void DrawSame(TH1F* h0, TH1F* h1, char* ops=const_cast<char*>(""));
 void DrawSame(TH1F* h0, TH1F* h1, TH1F* h2, char* ops=const_cast<char*>(""));

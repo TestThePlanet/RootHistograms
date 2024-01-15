@@ -51,8 +51,10 @@ static const bool skip_first_line_of_tsv_file = true;
 
 static const bool single_plot_mode_enabled  = disable; 
 //static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
-//static const string which_one = "3M AFFM"; 
-static const string which_one = "3M Aura 9205+";
+//static const string which_one = "3M AFFM";  //missalighend left
+//static const string which_one = "3M Aura 9205+"; //mid
+static const string which_one = "Easimask FSM18";  //missalighend right 
+
 //static const string which_one = "Vitacore CAN99 model 9500";
 //static const string which_one = "3M 8862";
 //static const string which_one = "CanadaMasq Q100 Medium CA-N95F-100PA";
@@ -638,18 +640,29 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     }
 
     Double_t arrowX = hist->Get_HarmonicMean();
-    TPad* thepad = (TPad*) gPad;
+    //TPad* thepad = (TPad*) gPad;
     Double_t ymax = hist->hist->GetMaximum()/0.95; //Top of the y-axis. TH1->GetYaxis()->GetXmax() incorrectly returns 1
     Double_t ymin = ymax*0.74;
     std::cout<<"ymax_init "<< ymax<<std::endl; //comes out 1 every time F*CK
     ymax *= 0.886;
-    TArrow* arrow = new TArrow(arrowX, ymax, arrowX, ymin, 0.015, "|>");//x1,y1 and x2,y2 the arrowsize is in percentage of the pad heigh
-                                                          //
+    TArrow* arrow = new TArrow(arrowX, ymax, arrowX, ymin, 0.015, "|>");//x1,y1 and x2,y2 the arrowsize in regular coordinates
+
     //HM
-    Double_t textX = arrowX/hist->hist->GetXaxis()->GetXmax();
-    //Double_t textX = thepad->PadtoX(arrowX);
-    std::cout<<"Tarrow x: "<<arrowX<<" ymin "<<ymin<<" ymax "<<ymax<<" histogram_ymax "<<histogram_ymax<< " textX "<<textX<<std::endl;
+    Double_t textX = -0.0644+((arrowX+0.7435)/6.9749); //Should work when hist->hist->GetXaxis()->GetXmax() = 6
+    //Double_t textX = -0.1288+((arrowX+0.7435)/6.9749); //Should work when hist->hist->GetXaxis()->GetXmax() = 6
+    
+    //arrowX-=0.1288;
+    std::cout<<"XaxisMax "<<hist->hist->GetXaxis()->GetXmax()<<std::endl;
+    std::cout<<"Tarrow x: "<<arrowX<<" ymin "<<ymin<<" ymax "<<ymax<<" histogram_ymax "<<histogram_ymax<< " textX "<<textX<<std::endl<<std::endl;
+
     TPaveText *arrpt = new TPaveText(textX-0.015,0.865145,textX+0.15,0.910788,"blNDC");
+
+    //Double_t textHM_ymin_NDC = 0.865145;
+    //Double_t textHM_ymax_NDC = 0.906639;
+    //Double_t textHM_ymin = textHM_ymin_NDC*(hist->hist->GetMaximum()/0.95 + 4.8411) - 3.8126;
+    //Double_t textHM_ymax = textHM_ymax_NDC*(hist->hist->GetMaximum()/0.95 + 4.8411) - 3.8126;
+    //std::cout<<"Y NDC: "<<textHM_ymin_NDC <<".."<<textHM_ymax_NDC <<" Y: "<<textHM_ymin <<".."<<textHM_ymax <<std::endl;
+    //TPaveText *arrpt = new TPaveText(arrowX,textHM_ymin,arrowX+0.25,textHM_ymax,"bl");
 
     if(UseHarmMeanArrow){
         arrow->SetLineWidth(4);
