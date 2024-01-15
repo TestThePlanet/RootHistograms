@@ -5,7 +5,10 @@ TODO:
 - [x] Get rid of the blue histogram outlines, see line 459 PrettyHist
 - [x] Use Gradients
     See any that you like? https://root.cern/doc/master/classTColor.html#C06
-- [ ] Tune Gradients
+- [x] Tune Gradients
+- [ ] Refrase color bars for low N unique testers.
+- [ ] Display N unique testers
+- [ ] Display sample N
 - [x] Make white not actually be white. See newTCanvas in CMSStyle.C
 - [ ] Make a dark mode
     bkg color: TColor::GetColor(0.188f, 0.22f, 0.255f)
@@ -13,6 +16,7 @@ TODO:
 - [ ] Make a strip mode for webpage integration
 - [x] Guard against '/' in histogram names.
 - [ ] Turn settings into a json config file to avoid compilation time.
-
-
-woohoo
+- [x] Add TArrow to harmonic mean
+- [ ] Add datetime stamp -- what?
+- [ ] history sequence
+- [ ] making the option for the output files have a zero padded six digit prefix of the hmff of the whole dataset.
