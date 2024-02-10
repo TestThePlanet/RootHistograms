@@ -54,7 +54,7 @@ static const bool skip_first_line_of_tsv_file = true;
 
 static const int testerID_tsv_column_index = 16;
 
-static const bool single_plot_mode_enabled  = enable; 
+static const bool single_plot_mode_enabled  = disable; 
 //static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM";  //missalighend left
 //static const string which_one = "3M Aura 9205+"; //mid
