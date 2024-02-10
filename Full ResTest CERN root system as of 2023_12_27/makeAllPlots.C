@@ -55,10 +55,10 @@ static const bool skip_first_line_of_tsv_file = true;
 static const int testerID_tsv_column_index = 16;
 
 static const bool single_plot_mode_enabled  = disable; 
-//static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
+static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM";  //missalighend left
 //static const string which_one = "3M Aura 9205+"; //mid
-static const string which_one = "Easimask FSM18";  //missalighend right 
+//static const string which_one = "Easimask FSM18";  //missalighend right 
 
 //static const string which_one = "Vitacore CAN99 model 9500";
 //static const string which_one = "3M 8862";
@@ -91,7 +91,7 @@ static const float red_end_LUT1 = TMath::Log10(10.);
 static const float yellow_end_LUT1 = TMath::Log10(30.);
 static const int lut1_len = 8;
 static const int r[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
-static const int g[lut1_len] = {230, 242, 242, 242, 242, 242, 242, 242}; //ilya
+static const int g[lut1_len] = { 230, 242, 242, 242, 242, 242, 242, 242}; //ilya
 static const int b[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
 bool lut1_uses_harmean = true; //false = uses median.
 //also uses red_hex and yellow_hex
@@ -587,12 +587,16 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
             if(lut1_uses_harmean) bc_middle = hist->Get_HarmonicMean();
             else bc_middle = hist->Get_Median();
             i_middle = hist->hist->FindBin(bc_middle);
+            //std::cout<<"bini="<<i+1<<" ["<<hist->hist->GetXaxis()->GetBinLowEdge(i+1)<<"-"<<
+            //    hist->hist->GetXaxis()->GetBinUpEdge(i+1)<<
+            //    "] LUT1: use harmean = "<<lut1_uses_harmean<<" harmean/bc_middle: "<<bc_middle <<" i_middle "<<i_middle<<std::endl;//DEBUG
             if(bc < red_end_LUT1){ 
                 PrettyFillColor(histarr[i],TColor::GetColor(red_hex_LUT1));
             } else if(bc < yellow_end_LUT1){ 
                 PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex_LUT1));
             } else { //Green lut
-                int j = std::max(0,std::min(lut1_len-1, i-i_middle));
+                int j = std::max(0,std::min(lut1_len-1, i+1-i_middle));
+            //    std::cout<<"green j="<<j<<" di="<<i+1-i_middle<<" r "<<r[j]<<" b "<<b[j]<<std::endl;//DEBUG
                 PrettyFillColor(histarr[i], TColor::GetColor(r[j],g[j],b[j]));
             } 
 
