@@ -2,6 +2,10 @@
 folder="plots"
 mkdir -p $folder
 
+echo "\nDownloading Google Sheet tsv file"
+source download_google_sheet.sh
+echo "\nMaking Plots"
+
 #root -q makeAllPlots.C+
 root -b -q makeAllPlots.C+
 
@@ -12,4 +16,9 @@ echo "Plots made, do not crop"
 #find "$folder" -type f -name "*.png" | while read -r file; do
 #    convert "$file" -crop -50x "$file"
 #done
+if command -v eog > /dev/null; then
+    eog plots/"$(ls -t plots/| head -n1)"
+else
+    echo "eog is not installed. On WSLg, do sudo apt-get -y install eog"
+fi
 echo "End"
