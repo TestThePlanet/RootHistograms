@@ -6,7 +6,7 @@
 if [ $# -eq 1 ]; then
     commitMessage=$1
 else
-    commitMessage=echo "Alterations committed `date` by Ilya"
+    commitMessage="Alterations committed `date` by Ilya"
 fi
 
 git add go.sh
