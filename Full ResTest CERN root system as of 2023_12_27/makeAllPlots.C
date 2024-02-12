@@ -163,6 +163,7 @@ struct Hist{
     Hist(string title, float* linbinning);
     ~Hist(){ delete hist; }
     void Fill(float val);
+    void FillLog10(float val);
     string GetTitle(){return title;}
     float Percentile2X(float percentile);
     float X2Percentile(float x);
@@ -188,7 +189,13 @@ Hist::Hist(string title, float* linbinning): is_sorted(false), has_cdf(false), t
             nbins,linbinning);
 }
 void Hist::Fill(float val){
+    //Fill for linear axis
     hist->Fill(val);
+    all_vals.push_back(val);
+}
+void Hist::FillLog10(float val){
+    //Correctly handles fill for artificial log axis
+    hist->Fill(TMath::Log10(val));
     all_vals.push_back(val);
 }
 float Hist::X2Percentile(float x){
@@ -298,7 +305,7 @@ void makeAllPlots(){ //main
                 for (int i=0;i<number_of_exercises;i++){
                     float x = Str2float(tokens[exer1_tsv_column_index + i]);
                     if(x<0.f) break;
-                    else it->second->Fill(TMath::Log10(x));
+                    else it->second->FillLog10(x);
                 }
                 //std::cout<<jline<<" "<<maskname<<" old fill #="<<i<<std::endl;
             } else { //New mask, create a new histogram
@@ -309,7 +316,7 @@ void makeAllPlots(){ //main
                 for (int i=0;i<number_of_exercises;i++){
                     float x = Str2float(tokens[exer1_tsv_column_index + i]);
                     if(x<0.f) break;
-                    else newHistogram->Fill(TMath::Log10(x));
+                    else newHistogram->FillLog10(x);
                 }
                 //std::cout<<jline<<" "<<maskname<<" new fill #="<<i<<std::endl;
                 hMap[maskname] = newHistogram;
@@ -559,7 +566,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
             else{ // >= TMath::Log10(30)
                 //float xxx = (bc - mean)/stddev;
                 //float xxx = (bc - hist->Get_Median())/stddev;
-                //float xxx = (bc - hist->Get_HarmonicMean())/stddev;
+                //float xxx = (bc - TMath::Log10(hist->Get_HarmonicMean()))/stddev;
                 float xxx = percentile_hardness*(hist->X2Percentile(bc) - percentile_corner );
                 //float saturation = 1.0 - std::max(0, sigmoid(xxx, satur_func ));
                 float saturation = 1.0f/(1.0f + exp(2.0*xxx));
@@ -584,7 +591,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         } else if(colorScheme == LUT1){
             //float bc_middle = hist->Get_Median();
             float bc_middle; 
-            if(lut1_uses_harmean) bc_middle = hist->Get_HarmonicMean();
+            if(lut1_uses_harmean) bc_middle = TMath::Log10(hist->Get_HarmonicMean());
             else bc_middle = hist->Get_Median();
             i_middle = hist->hist->FindBin(bc_middle);
             //std::cout<<"bini="<<i+1<<" ["<<hist->hist->GetXaxis()->GetBinLowEdge(i+1)<<"-"<<
@@ -658,7 +665,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     }
 
     //CODE TO SHOW THE ARROW and "HM"
-    Double_t arrowX = hist->Get_HarmonicMean();
+    Double_t arrowX = TMath::Log10(hist->Get_HarmonicMean());
     Double_t ymax = hist->hist->GetMaximum()/0.95; //Top of the y-axis. TH1->GetYaxis()->GetXmax() incorrectly returns 1
     Double_t ymin = ymax*0.74;
     //std::cout<<"ymax_init "<< ymax<<std::endl; //comes out 1 every time F*CK
@@ -690,7 +697,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     string fname;
     if(save_with_HMFF_prefix){
         std::ostringstream prefix;
-        prefix << std::fixed << std::setw(6) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean());
+        prefix << std::fixed << std::setw(7) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean()*10);
         fname = "plots/"+prefix.str()+"_"+fname_noext + ".png";
     } else{
         fname = "plots/"+fname_noext + ".png";
