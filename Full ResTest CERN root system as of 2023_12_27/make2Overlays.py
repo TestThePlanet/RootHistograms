@@ -16,8 +16,8 @@ If the output directory doesn't exist, it is created.
 
 #Default Directories
 plots_dir = "./plots" 
-transphotos_dir = "./_transparent_photos"
-transphotos_dir = "./_transparent_photos2"
+transphotos_dir = "./transparent_photos_front"
+transphotos_dir2 = "./transparent_photos_inside"
 output_dir = "./_final"
 
 inlen = len(sys.argv)
@@ -26,7 +26,7 @@ if inlen > 1:
 if inlen > 2:
     transphotos_dir = sys.argv[2]
 if inlen > 3:
-    transphotos_dir = sys.argv[3]
+    transphotos_dir2 = sys.argv[3]
 if inlen > 4: 
     plots_dir = sys.argv[4]
 if inlen > 5:
