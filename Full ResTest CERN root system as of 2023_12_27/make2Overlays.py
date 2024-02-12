@@ -55,17 +55,29 @@ def backslashify_brackets(fname): #str -> str
     return fname 
 
 #Read in lists of images in the plots and transphotos dirs
-plots      = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {plots_dir}/*.png")]
+ls_result = os.popen(f"ls -b {plots_dir}/*.png")
+plots      = [backslashify_brackets(plot.strip()) for plot in ls_result]
+plot_stems  = [backslashify_brackets(plot.strip()[8:]) for plot in ls_result]
 transphotos = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir}/*.png")]
 transphotos2 = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir2}/*.png")]
 
-for plot in plots:
-    plotmorph = plot.replace(plots_dir, transphotos_dir)
-    plotmorph2 = plot.replace(plots_dir, transphotos_dir2)
+for plot,plot_stem in zip(plots,plot_stems):
+    plotmorph = plot_stem.replace(plots_dir, transphotos_dir)
+    plotmorph2 = plot_stem.replace(plots_dir, transphotos_dir2)
     plotmorphout = plot.replace(plots_dir, output_dir)
-    if plotmorph in transphotos:
+    if plotmorph in transphotos and plotmorph2 in transphotos2:
         make_command = f"convert {plot} \( {plotmorph} -resize 700x500 \) -geometry +900+50 -compose over -composite \( {plotmorph2} -resize 700x500 \) -geometry +900+150 -compose over -composite {plotmorphout}" 
         print(make_command)
         #print(f"Making overlay:{plot}")
+        os.system(make_command)
+    elif plotmorph in transphotos:
+        make_command = f"convert {plot} \( {plotmorph} -resize 700x500 \) -geometry +900+50 -compose over -composite {plotmorphout}" 
+        print(f"No plot for {plot_stem} found in {transphotos_dir2}")
+        print(make_command)
+        os.system(make_command)
+    elif plotmorph2 in transphotos2
+        make_command = f"convert {plot} \( {plotmorph2} -resize 700x500 \) -geometry +900+150 -compose over -composite {plotmorphout}" 
+        print(f"No plot for {plot_stem} found in {transphotos_dir}")
+        print(make_command)
         os.system(make_command)
 print("end")
