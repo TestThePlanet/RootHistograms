@@ -3,7 +3,7 @@ folder="plots"
 mkdir -p $folder
 
 echo "\nDownloading Google Sheet tsv file"
-source download_google_sheet.sh
+source Download_Google_Sheet.sh
 echo "\nMaking Plots"
 
 #root -q makeAllPlots.C+
