@@ -75,7 +75,7 @@ for plot,plot_stem in zip(plots,plot_stems):
         print(f"No plot for {plot_stem} found in {transphotos_dir2}")
         print(make_command)
         os.system(make_command)
-    elif plotmorph2 in transphotos2
+    elif plotmorph2 in transphotos2:
         make_command = f"convert {plot} \( {plotmorph2} -resize 700x500 \) -geometry +900+150 -compose over -composite {plotmorphout}" 
         print(f"No plot for {plot_stem} found in {transphotos_dir}")
         print(make_command)
