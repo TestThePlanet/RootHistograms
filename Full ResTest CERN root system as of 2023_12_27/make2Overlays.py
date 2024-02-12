@@ -23,9 +23,9 @@ transphotos_dir2 = "./transparent_photos_inside"
 output_dir = "./_final"
 
 #Parameters for the convert commands
-overlay_size = "600x400"
-top_overlay_location = "+1000+50"
-bottom_overlay_location = "+1000+350"
+overlay_size = "500x300" # 
+top_overlay_location = "+1100+50" # 1000+50
+bottom_overlay_location = "+1100+350" 
 
 ####################################################
 
