@@ -18,5 +18,6 @@ git add makeAllPlots.sh
 git add makeAllPlots_nocrop.sh
 git add makeOverlays.py
 git add make2Overlays.py
+git add ../README.md
 git commit -m "$commitMessage"
 git push
