@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <map>
 #include <set>
+#include <chrono>
+#include <ctime>
 #include "TMath.h"
 #include "TCanvas.h"
 #include "TH2F.h"
@@ -180,6 +182,7 @@ TF2* makeGrad(float ymax);
 void SetBinLabels(Hist* hist);
 void PlotAndSave(Hist* hist, TF2* grad, string fname_noext);
 bool isALlWhiteSpace(const std::string& str);
+std::string getCurrentDateTime();
 
 double sigmoid(double x, SigmoidOption softness);
 
@@ -687,10 +690,36 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         arrpt->Draw();
     } 
 
-    TPaveText *pt = new TPaveText(0.05,0.94,0.95,0.995,"blNDC");
+    TPaveText *pt = new TPaveText(0.16,0.94,0.84,0.995,"NDC");
+    //TPaveText *pt = new TPaveText(0.05,0.94,0.95,0.995,"blNDC");
     PrettyPaveText(pt);
     TText *pt_LaTex = pt->AddText(hist->GetTitle().c_str());
     pt->Draw();
+
+    //Display timestamp
+    TPaveText *timestamp1= new TPaveText( 
+            0.00120627, 0.939834, 0.124246, 0.997925,
+            "NDC");
+    timestamp1->AddText("Created");
+    timestamp1->AddText(getCurrentDateTime().c_str());
+    PrettyPaveText(timestamp1);
+    timestamp1->SetTextAlign(12); //Align to top left
+    timestamp1->Draw();
+    canv->Update();
+
+    //Display #Contributers and Samples
+    TPaveText *nc = new TPaveText( 0.857057, 0.936722, 0.994572, 0.997925,"NDC");
+    PrettyPaveText(nc);
+    nc->SetTextAlign(12); 
+    nc->AddText("Contributers:");
+    nc->AddText("Samples:");
+    nc->Draw();
+    TPaveText *sc = new TPaveText( 0.936068, 0.936722, 0.974668, 0.997925,"NDC"); 
+    PrettyPaveText(sc);
+    sc->SetTextAlign(32); 
+    sc->AddText(std::to_string( static_cast<int>(hist->hist->Integral())).c_str());
+    sc->AddText(std::to_string(hist->unique_testers.size() ).c_str());
+    sc->Draw();
 
     gPad->RedrawAxis();
 	//leg->Draw("same");
@@ -767,4 +796,24 @@ bool isALlWhiteSpace(const std::string& str) {
         }
     }
     return true;
+}
+
+std::string getCurrentDateTime() {
+    // Get the current time point
+    auto now = std::chrono::system_clock::now();
+
+    // Convert the time point to a time_t object
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+
+    // Convert the time_t object to a tm struct
+    std::tm* tm_now = std::localtime(&now_time);
+
+    // Create a string stream to build the formatted date-time string
+    std::stringstream ss;
+
+    // Set the format flags for the month to display 3-letter month name
+    ss << std::put_time(tm_now, "%Y-%b-%d %H:%M");
+
+    // Return the formatted date-time string
+    return ss.str();
 }
