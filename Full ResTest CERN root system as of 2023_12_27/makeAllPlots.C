@@ -812,7 +812,8 @@ std::string getCurrentDateTime() {
     std::stringstream ss;
 
     // Set the format flags for the month to display 3-letter month name
-    ss << std::put_time(tm_now, "%Y-%b-%d %H:%M");
+    ss << std::put_time(tm_now, "%Y-%m-%d %H:%M");
+    //ss << std::put_time(tm_now, "%Y-%b-%d %H:%M");
 
     // Return the formatted date-time string
     return ss.str();
