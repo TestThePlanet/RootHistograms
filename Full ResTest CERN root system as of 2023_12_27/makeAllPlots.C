@@ -711,7 +711,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     TPaveText *nc = new TPaveText( 0.857057, 0.936722, 0.994572, 0.997925,"NDC");
     PrettyPaveText(nc);
     nc->SetTextAlign(12); 
-    nc->AddText("Contributers:");
+    nc->AddText("Contributors:");
     nc->AddText("Samples:");
     nc->Draw();
     TPaveText *sc = new TPaveText( 0.936068, 0.936722, 0.974668, 0.997925,"NDC"); 
