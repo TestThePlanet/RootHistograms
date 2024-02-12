@@ -14,11 +14,20 @@ If plots and transphotos directories must exist, terminate early.
 If the output directory doesn't exist, it is created.
 """
 
+####################################################
+
 #Default Directories
 plots_dir = "./plots" 
 transphotos_dir = "./transparent_photos_front"
 transphotos_dir2 = "./transparent_photos_inside"
 output_dir = "./_final"
+
+#Parameters for the convert commands
+overlay_size = "600x400"
+top_overlay_location = "+1000+50"
+bottom_overlay_location = "+1000+350"
+
+####################################################
 
 inlen = len(sys.argv)
 if inlen > 1:
@@ -55,29 +64,48 @@ def backslashify_brackets(fname): #str -> str
     return fname 
 
 #Read in lists of images in the plots and transphotos dirs
-ls_result = os.popen(f"ls -b {plots_dir}/*.png")
-plots      = [backslashify_brackets(plot.strip()) for plot in ls_result]
-plot_stems  = [backslashify_brackets(plot.strip()[8:]) for plot in ls_result]
+#ls_result = os.popen(f"ls -b {plots_dir}/*.png").read().splitlines()
+#plots      = [backslashify_brackets(plot.strip()) for plot in ls_result]
+plots      = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {plots_dir}/*.png")]
+#plot_stems  = [backslashify_brackets(plot.strip()[8:]) for plot in ls_result]
 transphotos = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir}/*.png")]
 transphotos2 = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir2}/*.png")]
 
-for plot,plot_stem in zip(plots,plot_stems):
-    plotmorph = plot_stem.replace(plots_dir, transphotos_dir)
-    plotmorph2 = plot_stem.replace(plots_dir, transphotos_dir2)
-    plotmorphout = plot.replace(plots_dir, output_dir)
+i = 0
+cnt_both= 0
+cnt_1st = 0
+cnt_2nd = 0
+for plot in plots:
+    plot_stem = plot[len(plots_dir)+9:]
+    plotmorph = transphotos_dir+'/'+plot_stem 
+    plotmorph2 = transphotos_dir2+'/'+plot_stem 
+    plotmorphout = output_dir + '/' + plot_stem 
     if plotmorph in transphotos and plotmorph2 in transphotos2:
-        make_command = f"convert {plot} \( {plotmorph} -resize 700x500 \) -geometry +900+50 -compose over -composite \( {plotmorph2} -resize 700x500 \) -geometry +900+150 -compose over -composite {plotmorphout}" 
-        print(make_command)
-        #print(f"Making overlay:{plot}")
+        make_command = f"convert {plot} \( {plotmorph} -resize {overlay_size} \) -geometry {top_overlay_location} -compose over -composite \( {plotmorph2} -resize {overlay_size} \) -geometry {bottom_overlay_location} -compose over -composite {plotmorphout}"
+        #print(make_command)
+        print("Making overlay",plotmorphout)
         os.system(make_command)
+        cnt_both += 1
     elif plotmorph in transphotos:
-        make_command = f"convert {plot} \( {plotmorph} -resize 700x500 \) -geometry +900+50 -compose over -composite {plotmorphout}" 
+        make_command = f"convert {plot} \( {plotmorph} -resize {overlay_size} \) -geometry {top_overlay_location} -compose over -composite {plotmorphout}" 
         print(f"No plot for {plot_stem} found in {transphotos_dir2}")
-        print(make_command)
+        print("Making overlay",plotmorphout)
+        #print(make_command)
         os.system(make_command)
+        cnt_1st  += 1
     elif plotmorph2 in transphotos2:
-        make_command = f"convert {plot} \( {plotmorph2} -resize 700x500 \) -geometry +900+150 -compose over -composite {plotmorphout}" 
+        make_command = f"convert {plot} \( {plotmorph2} -resize {overlay_size} \) -geometry {bottom_overlay_location} -compose over -composite {plotmorphout}" 
         print(f"No plot for {plot_stem} found in {transphotos_dir}")
-        print(make_command)
+        print("Making overlay",plotmorphout)
+        #print(make_command)
         os.system(make_command)
-print("end")
+        cnt_2nd += 1
+    i += 1
+
+print(f"Out of {len(plots)} histograms in {plots_dir}")
+print(f"{cnt_both} had matches for both overlays")
+print(f"{cnt_1st} only had a match in {transphotos_dir}")
+print(f"{cnt_2nd} only had a match in {transphotos_dir2}")
+print(f"{len(plots) - cnt_both - cnt_1st - cnt_2nd} had no matches anywhere.")
+print(f"{len(transphotos) - cnt_both - cnt_1st} unused files in {transphotos_dir}")
+print(f"{len(transphotos2) -cnt_both - cnt_2nd} unused files in {transphotos_dir2}")
