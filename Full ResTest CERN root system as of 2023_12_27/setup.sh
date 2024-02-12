@@ -6,15 +6,15 @@ if [ -d ".git" ]; then
     alias go='source "$(pwd)"/go.sh'
     alias save='source "$(pwd)"/send.sh'
     alias send='source "$(pwd)"/send.sh'
-    if [ $(grep -c "^[^#]alias go=[^#]go.sh" ~/.bashrc) -eq 1 ]; then
+    if [ $(grep -c "^[^#]alias go=[^#]go.sh" ~/.bashrc) -eq 0 ]; then
         echo "alias go='source \"$(pwd)\"/go.sh'" >> ~/.bashrc
     fi
-    if [ $(grep -c "^[^#]alias save=[^#]send.sh" ~/.bashrc) -eq 1 ]; then
+    if [ $(grep -c "^[^#]alias save=[^#]send.sh" ~/.bashrc) -eq 0 ]; then
         echo "alias save='source \"$(pwd)\"/send.sh'" >> ~/.bashrc
     fi
-    if [ $(grep -c "^[^#]alias send=[^#]send.sh" ~/.bashrc) -eq 1 ]; then
+    if [ $(grep -c "^[^#]alias send=[^#]send.sh" ~/.bashrc) -eq 0 ]; then
         echo "alias send='source \"$(pwd)\"/send.sh'" >> ~/.bashrc
     fi
 else
-    echo "Current directory is not attached to a Git repository. Move this to the Git Repo area"
+    echo "Current directory is correct. Move this code to the Git Repo area RootHistograms/Full ResTest CERN root system as of 2023_12_27"
 fi
