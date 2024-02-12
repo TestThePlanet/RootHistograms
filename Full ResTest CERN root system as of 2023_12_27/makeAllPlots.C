@@ -717,8 +717,8 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     TPaveText *sc = new TPaveText( 0.936068, 0.936722, 0.974668, 0.997925,"NDC"); 
     PrettyPaveText(sc);
     sc->SetTextAlign(32); 
-    sc->AddText(std::to_string( static_cast<int>(hist->hist->Integral())).c_str());
     sc->AddText(std::to_string(hist->unique_testers.size() ).c_str());
+    sc->AddText(std::to_string( static_cast<int>(hist->hist->Integral())).c_str());
     sc->Draw();
 
     gPad->RedrawAxis();
