@@ -10,12 +10,12 @@ echo "\nMaking Plots"
 root -b -q makeAllPlots.C+
 
 sleep 1
-echo "Plots made, do crop"
+echo "Plots made, do not crop"
 
 # Perform the image crop using imagemagick convert
-find "$folder" -type f -name "*.png" | while read -r file; do
-    convert "$file" -crop -50x "$file"
-done
+#find "$folder" -type f -name "*.png" | while read -r file; do
+#    convert "$file" -crop -50x "$file"
+#done
 if command -v eog > /dev/null; then
     eog plots/"$(ls -t plots/| head -n1)"
 else
