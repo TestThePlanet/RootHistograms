@@ -1,4 +1,3 @@
-if [ -d ".git" ]; then
     chmod +x ./go.sh
     chmod +x ./makeAllPlots_nocrop.sh
     chmod +x ./makeAllPlots.sh
@@ -15,6 +14,3 @@ if [ -d ".git" ]; then
     if [ $(grep -c "^[^#]alias send=[^#]send.sh" ~/.bashrc) -eq 0 ]; then
         echo "alias send='source \"$(pwd)\"/send.sh'" >> ~/.bashrc
     fi
-else
-    echo "Current directory is correct. Move this code to the Git Repo area RootHistograms/Full ResTest CERN root system as of 2023_12_27"
-fi
