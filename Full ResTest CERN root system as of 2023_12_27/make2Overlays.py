@@ -24,7 +24,7 @@ output_dir = "./_final"
 
 #Parameters for the convert commands
 overlay_size = "400x300" # 
-top_overlay_location = "+1100+50" # 1000+50
+top_overlay_location = "+1100+80" # 1000+50
 bottom_overlay_location = "+1100+350" 
 
 ####################################################
