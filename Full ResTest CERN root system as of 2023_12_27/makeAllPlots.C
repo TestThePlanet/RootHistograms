@@ -704,8 +704,8 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     TPaveText *timestamp1= new TPaveText( 
             0.00120627, 0.939834, 0.124246, 0.997925,
             "NDC");
-    timestamp1->AddText("Created");
-    timestamp1->AddText(getCurrentDateTime().c_str());
+   // timestamp1->AddText("TIL score distribution as of ");
+    timestamp1->AddText("TIL score distribution as of " getCurrentDateTime().c_str());
     PrettyPaveText(timestamp1);
     timestamp1->SetTextAlign(12); //Align to top left
     timestamp1->Draw();
