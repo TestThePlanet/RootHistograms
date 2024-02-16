@@ -56,7 +56,7 @@ static const bool skip_first_line_of_tsv_file = true;
 
 static const int testerID_tsv_column_index = 16;
 
-static const bool single_plot_mode_enabled = disable; 
+static const bool single_plot_mode_enabled = enable; 
 static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM";  //missalighend left
 //static const string which_one = "3M Aura 9205+"; //mid
@@ -669,15 +669,19 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 
     //CODE TO SHOW THE ARROW and "HM"
     Double_t arrowX = TMath::Log10(hist->Get_HarmonicMean());
-    Double_t ymax = hist->hist->GetMaximum()/0.95; //Top of the y-axis. TH1->GetYaxis()->GetXmax() incorrectly returns 1
-    Double_t ymin = ymax*0.74;
+    Double_t ytop = hist->hist->GetMaximum()/0.95; //Top of the y-axis. TH1->GetYaxis()->GetXmax() incorrectly returns 1
+    Double_t ymin = ytop*0.06;
+    //Double_t ymin = ytop*0.74;
     //std::cout<<"ymax_init "<< ymax<<std::endl; //comes out 1 every time F*CK
-    ymax *= 0.886;
-    TArrow* arrow = new TArrow(arrowX, ymax, arrowX, ymin, 0.015, "|>");//x1,y1 and x2,y2 the arrowsize in regular coordinates
+    //Double_t ymax *= ytop*0.886;
+    Double_t arrow_length = ytop*0.146;
+    TArrow* arrow = new TArrow(arrowX, ymin + arrow_length, arrowX, ymin, 0.015, "|>");//x1,y1 and x2,y2 the arrowsize in regular coordinates
 
     //HM
     Double_t textX = -0.0644+((arrowX+0.7435)/6.9749); //Should work when hist->hist->GetXaxis()->GetXmax() = 6
-    TPaveText *arrpt = new TPaveText(textX-0.015,0.865145,textX+0.15,0.910788,"blNDC");
+    Double_t text_ymin_ndc = 0.383817;// 0.865145;
+    Double_t text_dy_NDC = 0.910788-0.865145;
+    TPaveText *arrpt = new TPaveText(textX-0.015,text_ymin_ndc,textX+0.15,text_ymin_ndc + text_dy_NDC,"NDC");
     //std::cout<<"Tarrow x: "<<arrowX<<" ymin "<<ymin<<" ymax "<<ymax<<" histogram_ymax "<<histogram_ymax<< " textX "<<textX<<std::endl<<std::endl;
     if(UseHarmMeanArrow){
         arrow->SetLineWidth(4);
