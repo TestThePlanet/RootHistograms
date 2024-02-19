@@ -705,7 +705,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
             0.00120627, 0.965768, 0.179131, 0.997925,
             "NDC");
    // timestamp1->AddText("TIL score distribution as of ");
-    timestamp1->AddText(("TIL as of " + getCurrentDateTime()).c_str());
+    timestamp1->AddText(("TIL distribution as of " + getCurrentDateTime()).c_str());
     PrettyPaveText(timestamp1);
     timestamp1->SetTextAlign(12); //Align to top left
     timestamp1->Draw();
