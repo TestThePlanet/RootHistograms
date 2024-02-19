@@ -79,7 +79,8 @@ for plot in plots:
     plot_stem = plot[len(plots_dir)+9:]
     plotmorph = transphotos_dir+'/'+plot_stem 
     plotmorph2 = transphotos_dir2+'/'+plot_stem 
-    plotmorphout = output_dir + '/' + plot_stem 
+    plotmorphout = output_dir + '/' + plot[len(plots_dir)+1:]
+    #plotmorphout = output_dir + '/' + plot_stem 
     if plotmorph in transphotos and plotmorph2 in transphotos2:
         make_command = f"convert {plot} \( {plotmorph} -resize {overlay_size} \) -geometry {top_overlay_location} -compose over -composite \( {plotmorph2} -resize {overlay_size} \) -geometry {bottom_overlay_location} -compose over -composite {plotmorphout}"
         #print(make_command)
