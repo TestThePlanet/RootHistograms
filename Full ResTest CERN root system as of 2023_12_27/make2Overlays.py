@@ -103,7 +103,7 @@ for plot in plots:
         cnt_2nd += 1
     i += 1
 
-print(f"Out of {len(plots)} histograms in {plots_dir}")
+print(f"\nOut of {len(plots)} histograms in {plots_dir}")
 print(f"{cnt_both} had matches for both overlays")
 print(f"{cnt_1st} only had a match in {transphotos_dir}")
 print(f"{cnt_2nd} only had a match in {transphotos_dir2}")

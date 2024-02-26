@@ -244,6 +244,14 @@ float Hist::Get_HarmonicMean(){
 
 void makeAllPlots(){ //main
 
+    { //Check if there's an error flag, and if so, don't run.
+        std::ifstream flag_file(error_flag_file);
+        if (flag_file.good()){
+            std::cout << "Error flag was raised, so the TSV file must be no good. Root exits without generating plots." << std::endl;
+            return;
+        }
+    }
+
     if(bkgColorScheme  == White){
         BkgColor = kWhite; //255, 255, 255
         FontColor = kBlack;
