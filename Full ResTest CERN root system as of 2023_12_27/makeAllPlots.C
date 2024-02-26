@@ -45,6 +45,7 @@ enum BkgColorScheme { White, OffWhite, Dark };
 //  /____/\___/\__/\__/_/_/ /_/\__, /____/  
 //                            /____/        @settings
 static const std::string tsv_filename = "Main.tsv";
+static const std::string error_flag_file = "error.flag";
 static const long unsigned int maskname_tsv_column_index = 2;
 static const long unsigned int exer1_tsv_column_index = 3;
 static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
@@ -279,6 +280,12 @@ void makeAllPlots(){ //main
         return;
     }
 
+    //      ____  _________    ____     ____________
+    //     / __ \/ ____/   |  / __ \   / ____/  _/ /__
+    //    / /_/ / __/ / /| | / / / /  / /_   / // / _ \
+    //   / _, _/ /___/ ___ |/ /_/ /  / __/ _/ // /  __/
+    //  /_/ |_/_____/_/  |_/_____/  /_/   /___/_/\___/
+    //  READFILE
     std::string tsv_line;
     int jline=0; //tsv line number counter.
     while (std::getline(inputFile, tsv_line)) { //for every line
