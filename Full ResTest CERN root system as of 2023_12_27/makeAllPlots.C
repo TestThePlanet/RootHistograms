@@ -727,7 +727,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     canv->Update();
 
     //Display #Contributers and Samples
-    TPaveText *nc = new TPaveText( 0.857057, 0.936722, 0.994572, 0.997925,"NDC");
+    TPaveText *nc = new TPaveText( 0.750000, 0.936722, 0.994572, 0.997925,"NDC");//0.857057
     PrettyPaveText(nc);
     nc->SetTextAlign(12); 
     nc->AddText("M41 Exercise Samples:");
