@@ -744,7 +744,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 
 
 
-TPaveText *lowCountWarning = new TPaveText( 0.500000, 0.936722, 0.974668, 0.997925,"NDC"); 
+TPaveText *lowCountWarning = new TPaveText( 0.500000, 0.500000, 0.974668, 0.997925,"NDC"); //( 0.500000, 0.936722, 0.974668, 0.997925,"NDC")
     PrettyPaveText(lowCountWarning);
     lowCountWarning->SetTextAlign(32); 
 if (hist->unique_testers.size() < 4)
