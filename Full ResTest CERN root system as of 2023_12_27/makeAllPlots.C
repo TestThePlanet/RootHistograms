@@ -709,7 +709,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         arrpt->Draw();
     } 
 
-    TPaveText *pt = new TPaveText(0.16,0.94,0.7,0.995,"NDC");
+    TPaveText *pt = new TPaveText(0.16,0.94,0.75,0.995,"NDC");
     //TPaveText *pt = new TPaveText(0.16,0.94,0.84,0.995,"NDC");
     //TPaveText *pt = new TPaveText(0.05,0.94,0.95,0.995,"blNDC");
     PrettyPaveText(pt);
