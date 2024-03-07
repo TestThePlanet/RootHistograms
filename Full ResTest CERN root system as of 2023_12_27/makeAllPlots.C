@@ -747,7 +747,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 
 TPaveText *lowCountWarning = new TPaveText( 0.300000, 0.700000, 0.800000, 0.997925,"NDC"); //( 0.300000, 0.100000, 0.800000, 0.997925,"NDC");
     PrettyPaveText(lowCountWarning);
-    lowCountWarning->SetTextAlign(32); 
+    lowCountWarning->SetTextAlign(12); 
     lowCountWarning->SetTextColor(kGray);
 if (hist->unique_testers.size() < 4)
     lowCountWarning->AddText("Low Adversarial Contributor Count");
