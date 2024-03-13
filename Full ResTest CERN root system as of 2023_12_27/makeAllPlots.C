@@ -58,10 +58,11 @@ static const bool skip_first_line_of_tsv_file = true;
 static const int testerID_tsv_column_index = 16;
 
 static const bool single_plot_mode_enabled = disable; 
+//static const bool single_plot_mode_enabled = enable;// ilya undo
 static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
 //static const string which_one = "3M AFFM";  //missalighend left
 //static const string which_one = "3M Aura 9205+"; //mid
-//static const string which_one = "Easimask FSM18";  //missalighend right 
+//static const string which_one = "Easimask FSM18";  //misalighend right 
 
 //static const string which_one = "Vitacore CAN99 model 9500";
 //static const string which_one = "3M 8862";
@@ -745,7 +746,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 
 
 
-TPaveText *lowCountWarning = new TPaveText( 0.700000, 0.700000, 0.95, 0.999,"NDC"); //( 0.300000, 0.100000, 0.800000, 0.997925,"NDC");
+TPaveText *lowCountWarning = new TPaveText( 0.900000, 0.700000, 0.95, 0.999,"NDC"); //( 0.300000, 0.100000, 0.800000, 0.997925,"NDC");
     PrettyPaveText(lowCountWarning);
     lowCountWarning->SetTextAlign(12); 
     lowCountWarning->SetTextColor(kGray);
