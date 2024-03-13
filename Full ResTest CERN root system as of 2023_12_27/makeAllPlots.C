@@ -745,7 +745,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 
 
 
-TPaveText *lowCountWarning = new TPaveText( 0.700000, 0.700000, 0.95, 0.95,"NDC"); //( 0.300000, 0.100000, 0.800000, 0.997925,"NDC");
+TPaveText *lowCountWarning = new TPaveText( 0.700000, 0.700000, 0.95, 0.99,"NDC"); //( 0.300000, 0.100000, 0.800000, 0.997925,"NDC");
     PrettyPaveText(lowCountWarning);
     lowCountWarning->SetTextAlign(12); 
     lowCountWarning->SetTextColor(kGray);
