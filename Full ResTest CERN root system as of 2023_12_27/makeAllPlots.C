@@ -712,8 +712,8 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         PrettyLegend(leg);
 
         //Format main histogram for legend // ilya
-        legendCol = GetColorForced(242,242,242); // label legend color
-        PrettyMarker(hist->hist,legendCol, 20,0);
+      //  legendCol = GetColorForced(242,242,242); // label legend color
+        PrettyMarker(hist->hist,GetColorForced(242,242,242), 20,0);
         leg->AddEntry(hist->hist,"All sizes");
 
         //Large size histogram
