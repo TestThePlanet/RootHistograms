@@ -314,6 +314,9 @@ void makeAllPlots(){ //main
         jline++; 
         if(skip_first_line_of_tsv_file and jline == 1) continue;
         // Parse the line into tokens
+        //std::replace(tsv_line.begin(), tsv_line.end(),',',''); //Guard names against ,
+        tsv_line.erase(std::remove(tsv_line.begin(), tsv_line.end(), ','), tsv_line.end());
+
         std::vector<std::string> tokens = parseTSVLine(tsv_line);
 
         if(tokens.size() <= exer1_tsv_column_index){
