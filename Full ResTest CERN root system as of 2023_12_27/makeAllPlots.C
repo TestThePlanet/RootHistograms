@@ -94,13 +94,13 @@ static const ColorScheme colorScheme = LUT1;
 //LUT1 Color Scheme Controls
 //To set light green, set r[0],b[0], g[0] here:
 static const char* red_hex_LUT1 = "#E6E6E6";      /////// ACTIVE
-static const char* yellow_hex_LUT1 = "#E6E6E6";  //////// DEAD
+static const char* yellow_hex_LUT1 = "#E6E6E6";  //////// ACTIVE
 static const float red_end_LUT1 = TMath::Log10(10.);
 static const float yellow_end_LUT1 = TMath::Log10(30.);
 static const int lut1_len = 8;
-static const int r[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
-static const int g[lut1_len] = { 230, 242, 242, 242, 242, 242, 242, 242}; //ilya
-static const int b[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
+static const int r[lut1_len] = { 230, 230, 230, 230, 230, 230, 230, 230}; //ilya
+static const int g[lut1_len] = { 230, 230, 230, 230, 230, 230, 230, 230}; //ilya
+static const int b[lut1_len] = { 230, 230, 230, 230, 230, 230, 230, 230}; //ilya
 bool lut1_uses_harmean = true; //false = uses median.
 //also uses red_hex and yellow_hex
 
