@@ -538,7 +538,7 @@ void SetBinLabels(Hist* hist){
 
 void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     //plot it and make it pretty
-	PrettyFillColor(hist->hist, kAzure + 5);
+	PrettyFillColor(hist->hist, kGray);  // ilya - formerly kAzure + 5
     SetBinLabels(hist);
     float* linbinning = generateLinBinning();
 
@@ -723,7 +723,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         TH1F* Alegendfill = hist->histBySize[Lg].Clone( (((string)hist->histBySize[Lg]) + "legendfill").c_str()  );
         PrettyHist(Aoutline, kBlack, 3,0);
         PrettyHist(Alegendfill, kBlack, 3,0);*/
-        PrettyFillColor(hist->histBySize[Lg], kGray); // ilya tinkering legend
+        PrettyFillColor(hist->histBySize[Lg], kCyan);
         //hist->histBySize[Lg]->SetFillStyle(4050);//translucent fill
         
         hist->histBySize[Lg]->Draw("samehist");
