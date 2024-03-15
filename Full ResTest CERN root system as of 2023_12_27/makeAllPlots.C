@@ -112,8 +112,8 @@ static const float red_end = TMath::Log10(10.);
 static const float yellow_end = TMath::Log10(30.);
 
 //trafficLightFaded Color Scheme Constants 
-static const char* red_hex_TLF = "#FF3355";
-static const char* yellow_hex_TLF = "#FFAA00";
+static const char* red_hex_TLF = "#7F7F7F";
+static const char* yellow_hex_TLF = "#C3C3C3";
 static const char* green_hex_TLF = "#26E600";
 static const float red_end_TLF = TMath::Log10(10.);
 static const float yellow_end_TLF = TMath::Log10(30.);
