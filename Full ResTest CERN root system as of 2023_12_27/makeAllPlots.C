@@ -538,7 +538,7 @@ void SetBinLabels(Hist* hist){
 
 void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     //plot it and make it pretty
-	PrettyFillColor(hist->hist, kGray);  // ilya - formerly kAzure + 5
+	PrettyFillColor(hist->hist, TColor::GetColor(242, 242, 242));  // ilya - formerly kAzure + 5
     SetBinLabels(hist);
     float* linbinning = generateLinBinning();
 
