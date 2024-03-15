@@ -105,9 +105,9 @@ bool lut1_uses_harmean = true; //false = uses median.
 //also uses red_hex and yellow_hex
 
 //trafficLight Color Scheme Constants
-static const char* red_hex = "#FF8A80"; // formerly "#FF3355"; // ilya
-static const char* yellow_hex = "#FFCDAB";// formerly "#FFAA00"; // ilya
-static const char* green_hex = "##AFFFAB";// formerly "#26E600"; // but doesn't work
+static const char* red_hex = "#7F7F7F"; // formerly "#FF3355"; then, "#FF8A80" // ilya //#7F7F7F
+static const char* yellow_hex = "#C3C3C3";// formerly "#FFAA00"; then #FFCDAB // ilya 
+static const char* green_hex = "#AFFFAB";// formerly "#26E600"; // "##AFFFAB";
 static const float red_end = TMath::Log10(10.);
 static const float yellow_end = TMath::Log10(30.);
 
