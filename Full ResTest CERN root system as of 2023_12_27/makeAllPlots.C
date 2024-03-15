@@ -723,7 +723,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         TH1F* Alegendfill = hist->histBySize[Lg].Clone( (((string)hist->histBySize[Lg]) + "legendfill").c_str()  );
         PrettyHist(Aoutline, kBlack, 3,0);
         PrettyHist(Alegendfill, kBlack, 3,0);*/
-        PrettyFillColor(hist->histBySize[Lg], kCyan);
+        PrettyFillColor(hist->histBySize[Lg], kGray); // ilya tinkering legend
         //hist->histBySize[Lg]->SetFillStyle(4050);//translucent fill
         
         hist->histBySize[Lg]->Draw("samehist");
