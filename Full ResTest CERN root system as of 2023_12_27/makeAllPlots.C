@@ -94,7 +94,7 @@ static const ColorScheme colorScheme = LUT1;
 //LUT1 Color Scheme Controls
 //To set light green, set r[0],b[0], g[0] here:
 static const char* red_hex_LUT1 = "#E6E6E6";      /////// ACTIVE
-static const char* yellow_hex_LUT1 = "#C3C3C3";
+static const char* yellow_hex_LUT1 = "#E6E6E6";  //////// DEAD
 static const float red_end_LUT1 = TMath::Log10(10.);
 static const float yellow_end_LUT1 = TMath::Log10(30.);
 static const int lut1_len = 8;
