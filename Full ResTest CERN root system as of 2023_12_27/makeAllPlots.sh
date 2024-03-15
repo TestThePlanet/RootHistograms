@@ -2,11 +2,9 @@
 folder="plots"
 mkdir -p $folder
 
-echo "\nDownloading Google Sheet tsv file"
-source Download_Google_Sheet.sh
-echo "\nMaking Plots"
+python Download_Google_Sheet.py
 
-#root -q makeAllPlots.C+
+echo "Making Plots"
 root -b -q makeAllPlots.C+
 
 sleep 1

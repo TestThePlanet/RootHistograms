@@ -5,7 +5,7 @@ import time
 
 Google_Sheet_URL_CSV = "https://docs.google.com/spreadsheets/d/1arv8PObW_O4HMpScei3KAlt0zj1C55v_/gviz/tq?tqx=out:csv&sheet=Main"
 temp_CSV_downloaded_file = "data.csv"
-output_TSV_file_name = "Main2.tsv"
+output_TSV_file_name = "Main.tsv"
 
 error_flag_file = "error.flag"
 

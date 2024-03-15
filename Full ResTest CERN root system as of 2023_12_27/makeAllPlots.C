@@ -36,6 +36,7 @@ enum FeatureState { enable = true, disable = false };
 enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
 enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1 };
 enum BkgColorScheme { White, OffWhite, Dark };
+enum sizeCode{Lg=0,Sm,NOSIZE,SIZEMAX};
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 //     _____      __  __  _                 
@@ -46,22 +47,25 @@ enum BkgColorScheme { White, OffWhite, Dark };
 //                            /____/        @settings
 static const std::string tsv_filename = "Main.tsv";
 static const std::string error_flag_file = "error.flag";
-static const long unsigned int maskname_tsv_column_index = 2;
-static const long unsigned int exer1_tsv_column_index = 3;
+static const unsigned int maskname_tsv_column_index = 2;
+static const unsigned int exer1_tsv_column_index = 3;
+static const unsigned int size_column_index = 25;
 static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
-static const int analysis_grade_tsv_column_index = 20;
+static const unsigned int analysis_grade_tsv_column_index = 20;
 static const bool use_only_analysis_grade = true;
+static const bool use_sizes = true;
 static const bool save_plots_enabled = enable;
 static const bool save_with_HMFF_prefix = enable;
 static const bool skip_first_line_of_tsv_file = true;
 
-static const int testerID_tsv_column_index = 16;
+static const unsigned int testerID_tsv_column_index = 16;
 
 static const bool single_plot_mode_enabled = disable; 
 //static const bool single_plot_mode_enabled = enable;// ilya undo
-static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
+//static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
+//static const string which_one = "Laianzhi black HYX1002 large 2023";
 //static const string which_one = "3M AFFM";  //missalighend left
-//static const string which_one = "3M Aura 9205+"; //mid
+static const string which_one = "3M Aura 9210+"; //mid
 //static const string which_one = "Easimask FSM18";  //misalighend right 
 
 //static const string which_one = "Vitacore CAN99 model 9500";
@@ -152,6 +156,9 @@ static const SigmoidOption value_func = S_tanh;
 ///////////////////////////////////////////////////////////////////
 ///////////////////////// End Settings /////////////////////////////
 ///////////////////////////////////////////////////////////////////
+//
+
+
 
 void readJsonFile(const std::string& filename, std::map<std::string, std::string>& jsonData) ;
 
@@ -161,13 +168,14 @@ struct Hist{
     float cdf[nbins+1];
     string title;
     TH1F* hist;
+    TH1F* histBySize[SIZEMAX];
     std::vector<float> all_vals;
     std::set<std::string> unique_testers;
 
     Hist(string title, float* linbinning);
     ~Hist(){ delete hist; }
-    void Fill(float val);
-    void FillLog10(float val);
+    void Fill(float val,sizeCode s);
+    void FillLog10(float val,sizeCode s);
     string GetTitle(){return title;}
     float Percentile2X(float percentile);
     float X2Percentile(float x);
@@ -178,6 +186,7 @@ std::vector<std::string> parseTSVLine(const std::string& tsv_line);
 float Str2float(std::string& token);
 int   Str2int(std::string& token);
 bool  Str2bool(std::string& token);
+sizeCode Str2size(std::string s);
 float* generateLinBinning();
 float* generateLogBinning();
 TF2* makeGrad(float ymax);
@@ -192,15 +201,27 @@ Hist::Hist(string title, float* linbinning): is_sorted(false), has_cdf(false), t
     hist = new TH1F(title.c_str(), 
             (title+";"+x_axis_title+";"+y_axis_title).c_str(), 
             nbins,linbinning);
+    
+    histBySize[Lg] = new TH1F((title+" Lg").c_str(), 
+            (title+" Lg;"+x_axis_title+";"+y_axis_title).c_str(), 
+            nbins,linbinning);
+    histBySize[Sm] = new TH1F((title+" Sm").c_str(), 
+            (title+" Sm;"+x_axis_title+";"+y_axis_title).c_str(), 
+            nbins,linbinning);
+    histBySize[NOSIZE] = new TH1F((title+" no size").c_str(), 
+            (title+" no size;"+x_axis_title+";"+y_axis_title).c_str(), 
+            nbins,linbinning);
 }
-void Hist::Fill(float val){
+void Hist::Fill(float val,sizeCode s){
     //Fill for linear axis
     hist->Fill(val);
+    histBySize[s]->Fill(val);
     all_vals.push_back(val);
 }
-void Hist::FillLog10(float val){
+void Hist::FillLog10(float val,sizeCode s){
     //Correctly handles fill for artificial log axis
     hist->Fill(TMath::Log10(val));
+    histBySize[s]->Fill(TMath::Log10(val));
     all_vals.push_back(val);
 }
 float Hist::X2Percentile(float x){
@@ -295,16 +316,22 @@ void makeAllPlots(){ //main
         // Parse the line into tokens
         std::vector<std::string> tokens = parseTSVLine(tsv_line);
 
-        if(tokens.size() < exer1_tsv_column_index)
-            std::cout<<"ERROR nogo line "<<jline<<std::endl;
-        else if(tokens.size() < exer1_tsv_column_index + number_of_exercises) //
-            std::cout<<"ERROR weird length line "<<jline<<std::endl;
-        else{ //line not obviously invalid
+        if(tokens.size() <= exer1_tsv_column_index){
+            std::cerr<<"ERROR nogo line "<<jline<<std::endl;
+        } else if(use_sizes and tokens.size() <= size_column_index ){
+            std::cerr<<"Warning Unable to access sizes due to line "<<jline<<std::endl;
+        } else if(tokens.size() < exer1_tsv_column_index + number_of_exercises) {
+            std::cerr<<"ERROR weird length line "<<jline<<std::endl;
+        } else{ //line not obviously invalid
             if(jline % 100 == 0) std::cout<<"readln "<<jline<<std::endl;
 
             if(use_only_analysis_grade and tokens.size() < analysis_grade_tsv_column_index){
-                std::cout<<"Warning line too short for analysis grade "<<jline<<std::endl;
+                std::cerr<<"Warning line too short for analysis grade "<<jline<<std::endl;
                 continue;
+            }
+            sizeCode s = NOSIZE;
+            if(use_sizes and tokens.size() > size_column_index ){
+                s = Str2size(tokens[size_column_index]);
             }
             bool is_analysis_grade = Str2bool(tokens[analysis_grade_tsv_column_index]);
             if(use_only_analysis_grade and not is_analysis_grade){
@@ -324,7 +351,7 @@ void makeAllPlots(){ //main
                 for (int i=0;i<number_of_exercises;i++){
                     float x = Str2float(tokens[exer1_tsv_column_index + i]);
                     if(x<0.f) break;
-                    else it->second->FillLog10(x);
+                    else it->second->FillLog10(x,s);
                 }
                 //std::cout<<jline<<" "<<maskname<<" old fill #="<<i<<std::endl;
             } else { //New mask, create a new histogram
@@ -335,7 +362,7 @@ void makeAllPlots(){ //main
                 for (int i=0;i<number_of_exercises;i++){
                     float x = Str2float(tokens[exer1_tsv_column_index + i]);
                     if(x<0.f) break;
-                    else newHistogram->FillLog10(x);
+                    else newHistogram->FillLog10(x,s);
                 }
                 //std::cout<<jline<<" "<<maskname<<" new fill #="<<i<<std::endl;
                 hMap[maskname] = newHistogram;
@@ -373,9 +400,6 @@ void makeAllPlots(){ //main
             if(single_plot_mode_enabled){
                 std::cout<<"Plot and save "<<mask<<" single_plot_mode_enabled = true so no other plot get generated."<<std::endl;
             } 
-            /*else {
-                std::cout<<"Plot and save "<<mask<<std::endl;
-            }*/
 
             PlotAndSave(histogram, grad, mask);
         }
@@ -667,13 +691,8 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     canv->cd();
 
     //Arrow
-                                                                             //
-	//TCanvas * C = newTCanvas(hist->GetTitle()+"thecanvas", "Random Mask-Like Data",1660,989);
-	////TLegend *leg = new TLegend(0.646985, 0.772727, 0.978643, 0.891608);
-    ////PrettyLegend(leg);
-	////leg->AddEntry(h,"Super nice histogram");
-	PrettyHist(hist->hist,BkgColor,0); //RETURN
-                                   //
+	PrettyHist(hist->hist,BkgColor,0);
+
     if(ymax_setting > auto_fit_each_histogram) 
         SetRange(hist->hist,0,histogram_ymax);
 	canv->cd();
@@ -681,6 +700,44 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 	hist->hist->Draw();
     for(int i=0;i<nbins;i++){
         histarr[i]->Draw("same");
+    }
+
+    if(use_sizes){
+        TLegend* leg;
+        if(hist->Get_HarmonicMean() < 5000. ){
+            leg =  new TLegend(0.672497, 0.6, 0.872738, 0.8);
+        } else {
+            leg =  new TLegend(0.132087, 0.6, 0.332328, 0.8);
+        }
+        PrettyLegend(leg);
+
+        //Format main histogram for legend
+        PrettyMarker(hist->hist,kBlue, 20,0);
+        leg->AddEntry(hist->hist,"All sizes");
+
+        //Large size histogram
+        //
+        PrettyHist(  hist->histBySize[Lg],kCyan, 3,0);
+        PrettyMarker(hist->histBySize[Lg],kCyan, 20,0);
+        /*TH1F* Aoutline    = hist->histBySize[Lg].Clone( (((string)hist->histBySize[Lg]) + "outline").c_str()  );
+        TH1F* Alegendfill = hist->histBySize[Lg].Clone( (((string)hist->histBySize[Lg]) + "legendfill").c_str()  );
+        PrettyHist(Aoutline, kBlack, 3,0);
+        PrettyHist(Alegendfill, kBlack, 3,0);*/
+        PrettyFillColor(hist->histBySize[Lg], kCyan);
+        //hist->histBySize[Lg]->SetFillStyle(4050);//translucent fill
+        
+        hist->histBySize[Lg]->Draw("samehist");
+
+        //Small size histogram
+        PrettyHist(  hist->histBySize[Sm],kMagenta, 3,0);
+        PrettyMarker(hist->histBySize[Sm],kMagenta, 20,0);
+        hist->histBySize[Sm]->Draw("samehist");
+
+        leg->AddEntry(hist->histBySize[Lg],"Known Lg Heads");
+        leg->AddEntry(hist->histBySize[Sm],"Known Sm Heads");
+
+        leg->Draw("same");
+        gPad->RedrawAxis();
     }
 
     //CODE TO SHOW THE ARROW and "HM"
@@ -742,24 +799,13 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     sc->AddText(std::to_string(hist->unique_testers.size() ).c_str());
     sc->Draw();
 
-
-
-
-
-TPaveText *lowCountWarning = new TPaveText( 0.700000, 0.800000, 0.95, 0.999,"NDC"); //( 0.300000, 0.100000, 0.800000, 0.997925,"NDC");
+    TPaveText *lowCountWarning = new TPaveText( 0.700000, 0.800000, 0.95, 0.999,"NDC"); //( 0.300000, 0.100000, 0.800000, 0.997925,"NDC");
     PrettyPaveText(lowCountWarning);
     lowCountWarning->SetTextAlign(12); 
     lowCountWarning->SetTextColor(kGray+1);
-if (hist->unique_testers.size() < 4)
-    lowCountWarning->AddText("Very Low Adversarial Contributor Count");
+    if (hist->unique_testers.size() < 4)
+        lowCountWarning->AddText("Very Low Adversarial Contributor Count");
     lowCountWarning->Draw();
-
-
-
-
-
-
-
 
     gPad->RedrawAxis();
 	//leg->Draw("same");
@@ -778,7 +824,8 @@ if (hist->unique_testers.size() < 4)
             delete histarr[i];
         }
     }
-}
+} //PlotAndSave
+
 
 double sigmoid(double x, SigmoidOption softness){
     //enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
@@ -858,3 +905,10 @@ std::string getCurrentDateTime() {
     // Return the formatted date-time string
     return ss.str();
 }
+
+sizeCode Str2size(std::string s){
+    if(s == "A") return sizeCode::Lg;
+    else if(s == "B") return sizeCode::Sm;
+    else return sizeCode::NOSIZE;
+}
+
