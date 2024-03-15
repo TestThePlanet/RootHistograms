@@ -112,7 +112,7 @@ static const float red_end = TMath::Log10(10.);
 static const float yellow_end = TMath::Log10(30.);
 
 //trafficLightFaded Color Scheme Constants 
-static const char* red_hex_TLF = "#C3C3C3";   // the one that's actually used - ilya 9E9E9E
+static const char* red_hex_TLF = "#C3C3C3";   
 static const char* yellow_hex_TLF = "#C3C3C3";
 static const char* green_hex_TLF = "#D1D1D1";
 static const float red_end_TLF = TMath::Log10(10.);
@@ -711,9 +711,8 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         }
         PrettyLegend(leg);
 
-        //Format main histogram for legend // ilya
-      //  legendCol = GetColorForced(242,242,242); // label legend color
-        PrettyMarker(hist->hist,GetColorForced(242,242,242), 20,0);
+        //Format main histogram for legend 
+        PrettyMarker(hist->hist,kGray, 20,0);    // ilya
         leg->AddEntry(hist->hist,"All sizes");
 
         //Large size histogram
