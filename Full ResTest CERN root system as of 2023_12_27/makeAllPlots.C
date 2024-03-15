@@ -712,7 +712,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         PrettyLegend(leg);
 
         //Format main histogram for legend 
-        PrettyMarker(hist->hist,kGray, 20,0);    // ilya
+        //PrettyMarker(hist->hist,kBlue, 20,0);    // ilya note: switching kBlue to kGray doesn't affect anything
         leg->AddEntry(hist->hist,"All sizes");
 
         //Large size histogram
