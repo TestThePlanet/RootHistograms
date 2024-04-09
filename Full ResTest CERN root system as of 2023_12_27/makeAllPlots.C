@@ -89,7 +89,7 @@ static const int ArrowColor = kBlack;
 static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
 //Histogram Gradient Color Selection Control
-static const ColorScheme colorScheme = LUT1;
+static const ColorScheme colorScheme = trafficLight; // toggle between LUT1 and trafficLight
 
 //LUT1 Color Scheme Controls
 //To set light green, set r[0],b[0], g[0] here:
