@@ -34,7 +34,7 @@
 
 enum FeatureState { enable = true, disable = false };
 enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
-enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1 };
+enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen, blackWhite };
 enum BkgColorScheme { White, OffWhite, Dark };
 enum sizeCode{Lg=0,Sm,NOSIZE,SIZEMAX};
 ///////////////////////////////////////////////////////////////////
@@ -89,39 +89,70 @@ static const int ArrowColor = kBlack;
 static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
 //Histogram Gradient Color Selection Control
-static const ColorScheme colorScheme = LUT1; // toggle between LUT1 and trafficLight
+static const ColorScheme colorScheme = trafficLightFaded; 
+//Valid Options: enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen, blackWhite };
 
 //LUT1 Color Scheme Controls
 //To set light green, set r[0],b[0], g[0] here:
-static const char* red_hex_LUT1 = "#F2F2F2";      /////// ACTIVE
-static const char* yellow_hex_LUT1 = "#F2F2F2";  //////// ACTIVE
+static const char* red_hex_LUT1 = "#FF3355";
+static const char* yellow_hex_LUT1 = "#FFAA00";
 static const float red_end_LUT1 = TMath::Log10(10.);
 static const float yellow_end_LUT1 = TMath::Log10(30.);
 static const int lut1_len = 8;
-static const int r[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
-static const int g[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
-static const int b[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
+static const int r[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
+static const int g[lut1_len] = { 230, 242, 242, 242, 242, 242, 242, 242}; //ilya
+static const int b[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; //ilya
 bool lut1_uses_harmean = true; //false = uses median.
 //also uses red_hex and yellow_hex
 
+//LUT2
+static const char* red_hex_LUT2 = "#F2F2F2";
+static const char* yellow_hex_LUT2 = "#F2F2F2";
+static const float red_end_LUT2 = TMath::Log10(10.);
+static const float yellow_end_LUT2 = TMath::Log10(30.);
+static const int lut2_len = 8;
+static const int r2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
+static const int g2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
+static const int b2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
+bool lut2_uses_harmean = true; //false = uses median.
+
 //trafficLight Color Scheme Constants
-static const char* red_hex = "#C3C3C3"; // formerly "#FF3355"; then, "#FF8A80" // ilya //#7F7F7F
-static const char* yellow_hex = "#C3C3C3";// formerly "#FFAA00"; then #FFCDAB // ilya 
-static const char* green_hex = "#AFFFAB";// formerly "#26E600"; // "##AFFFAB";
+static const char* red_hex = "#FF3355"; 
+//static const char* red_hex = "#FF8A80"; //ilya calls this "useless" 
+static const char* yellow_hex = "#FFAA00"; 
+//static const char* yellow_hex = "#FFCDAB";//ilya calls this "useless" 
+static const char* green_hex = "#26E600"; 
+//static const char* green_hex = "#AFFFAB";//ilya calls this "useless" 
 static const float red_end = TMath::Log10(10.);
 static const float yellow_end = TMath::Log10(30.);
 
+//grayGreen
+static const char* red_gg = "#C3C3C3"; // #7F7F7F
+static const char* yellow_gg = "#C3C3C3";
+static const char* green_gg = "#AFFFAB";
+static const float red_end_gg = TMath::Log10(10.);
+static const float yellow_end_gg = TMath::Log10(30.);
+
 //trafficLightFaded Color Scheme Constants 
-static const char* red_hex_TLF = "#C3C3C3";   
-static const char* yellow_hex_TLF = "#C3C3C3";
-static const char* green_hex_TLF = "#D1D1D1";
+static const char* red_hex_TLF = "#FF3355";
+static const char* yellow_hex_TLF = "#FFAA00";
 static const float red_end_TLF = TMath::Log10(10.);
 static const float yellow_end_TLF = TMath::Log10(30.);
-static const float hue_green = 120.f;//overrides green_hex
+static const float hue_green = 120.f;
 static const float value_green = 0.274;//0.682f;//overrides green_hex
 static const float percentile_hardness = 5.0;
 static const float percentile_corner = 0.5;
-static const SigmoidOption satur_func = S_tanh;
+//static const SigmoidOption satur_func = S_tanh;
+
+//blackWhite 
+static const char* red_hex_BW = "#C3C3C3";   
+static const char* yellow_hex_BW = "#C3C3C3";
+static const float value_green_BW = 0.82;//0.274; //#D1D1D1 //darkest gray in the "green" region
+static const float hue_green_BW = 120.f; //totally unimportant
+static const float percentile_hardness_BW = 5.0;
+static const float percentile_corner_BW = 0.5;
+static const float red_end_BW = TMath::Log10(10.);
+static const float yellow_end_BW = TMath::Log10(30.);
 
 //blueberry Color Scheme Constants 
 static const float blueness = 1.0;
@@ -620,6 +651,17 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
                 PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value) );
                 //PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value_green) );
             }
+        } else if( colorScheme == blackWhite){
+            if(bc < red_end_BW){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(red_hex_BW));
+            } else if(bc < yellow_end_BW){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex_BW));
+            }
+            else{ // >= TMath::Log10(30)
+                float xxx = percentile_hardness_BW*(hist->X2Percentile(bc) - percentile_corner_BW );
+                float value = graymax - (graymax - value_green_BW)/(1.0f + exp(2.0*xxx));
+                PrettyFillColor(histarr[i],GetColorHSV(hue_green_BW, 0, value) );
+            }
         } else if( colorScheme == trafficLight){
             if(bc < red_end){ 
                 PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
@@ -628,6 +670,15 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
             }
             else{ 
                 PrettyFillColor(histarr[i], TColor::GetColor(green_hex));
+            }
+        } else if( colorScheme == grayGreen){
+            if(bc < red_end_gg){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(red_gg));
+            } else if(bc < yellow_end_gg){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(yellow_gg));
+            }
+            else{ 
+                PrettyFillColor(histarr[i], TColor::GetColor(green_gg));
             }
         } else if( colorScheme == blueberry ){
                 float xxx = (bc - hist->Get_Median())/stddev;
@@ -653,6 +704,19 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
                 PrettyFillColor(histarr[i], TColor::GetColor(r[j],g[j],b[j]));
             } 
 
+        } else if(colorScheme == LUT2){
+            float bc_middle; 
+            if(lut2_uses_harmean) bc_middle = TMath::Log10(hist->Get_HarmonicMean());
+            else bc_middle = hist->Get_Median();
+            i_middle = hist->hist->FindBin(bc_middle);
+            if(bc < red_end_LUT2){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(red_hex_LUT2));
+            } else if(bc < yellow_end_LUT2){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex_LUT2));
+            } else { //Green lut
+                int j = std::max(0,std::min(lut2_len-1, i+1-i_middle));
+                PrettyFillColor(histarr[i], TColor::GetColor(r2[j],g2[j],b2[j]));
+            } 
         }
 
         //hue is on 0..360, mod 360
