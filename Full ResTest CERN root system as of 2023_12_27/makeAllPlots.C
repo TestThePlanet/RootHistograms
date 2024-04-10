@@ -30,6 +30,10 @@
 //#include "TRandom1.h"
 #include "CMSStyle.C"
 
+#define TOML_EXCEPTIONS 0
+#define TOML_IMPLEMENTATION
+#include "toml.hpp"
+
 #define nbins (60)
 
 enum FeatureState { enable = true, disable = false };
@@ -37,130 +41,363 @@ enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
 enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1 };
 enum BkgColorScheme { White, OffWhite, Dark };
 enum sizeCode{Lg=0,Sm,NOSIZE,SIZEMAX};
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-//     _____      __  __  _                 
-//    / ___/___  / /_/ /_(_)___  ____ ______
-//    \__ \/ _ \/ __/ __/ / __ \/ __ `/ ___/
-//   ___/ /  __/ /_/ /_/ / / / / /_/ (__  ) 
-//  /____/\___/\__/\__/_/_/ /_/\__, /____/  
-//                            /____/        @settings
-static const std::string tsv_filename = "Main.tsv";
-static const std::string error_flag_file = "error.flag";
-static const unsigned int maskname_tsv_column_index = 2;
-static const unsigned int exer1_tsv_column_index = 3;
-static const unsigned int size_column_index = 25;
-static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
-static const unsigned int analysis_grade_tsv_column_index = 20;
-static const bool use_only_analysis_grade = true;
-static const bool use_sizes = true;
-static const bool save_plots_enabled = enable;
-static const bool save_with_HMFF_prefix = enable;
-static const bool skip_first_line_of_tsv_file = true;
-
-static const unsigned int testerID_tsv_column_index = 16;
-
-static const bool single_plot_mode_enabled = disable; 
-//static const bool single_plot_mode_enabled = enable;// ilya undo
-//static const string which_one = "AOK Tooling Softseal cup PN 20180021-L";
-//static const string which_one = "Laianzhi black HYX1002 large 2023";
-//static const string which_one = "3M AFFM";  //missalighend left
-static const string which_one = "3M Aura 9210+"; //mid
-//static const string which_one = "Easimask FSM18";  //misalighend right 
-
-//static const string which_one = "Vitacore CAN99 model 9500";
-//static const string which_one = "3M 8862";
-//static const string which_one = "CanadaMasq Q100 Medium CA-N95F-100PA";
-//static const string which_one ="Drager1920ML_1950ML";
-static const bool X11_persistence  = true; 
-
-static const std::string x_axis_title = "Exposure Reduction Factor               ";
-static const std::string y_axis_title = "Event Count";
-
 enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
-static const Ymax_state ymax_setting = auto_fit_each_histogram;
-static float histogram_ymax = 80.f;
 
-//Arrow
-static const bool UseHarmMeanArrow = true;
-static const int ArrowColor = kBlack;
+struct Settings{
+    bool load(std::string tomlfile);
 
-//Background Color Scheme Selection Control
-static const BkgColorScheme bkgColorScheme = White;//OffWhite;
+    //[singlePlotMode]
+    bool single_plot_mode_enabled;
+    std::string which_one;
 
-//Histogram Gradient Color Selection Control
-static const ColorScheme colorScheme = LUT1;
+    //[output]
+    bool save_plots_enabled;
+    bool save_with_HMFF_prefix;
+    bool X11_persistence;
 
-//LUT1 Color Scheme Controls
-//To set light green, set r[0],b[0], g[0] here:
-static const char* red_hex_LUT1 = "#F2F2F2";      /////// ACTIVE
-static const char* yellow_hex_LUT1 = "#F2F2F2";  //////// ACTIVE
-static const float red_end_LUT1 = TMath::Log10(10.);
-static const float yellow_end_LUT1 = TMath::Log10(30.);
-static const int lut1_len = 8;
-static const int r[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
-static const int g[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
-static const int b[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
-bool lut1_uses_harmean = true; //false = uses median.
-//also uses red_hex and yellow_hex
+    //[Analysis]
+    bool use_only_analysis_grade;
+    bool use_sizes;
 
-//trafficLight Color Scheme Constants
-static const char* red_hex = "#C3C3C3"; // formerly "#FF3355"; then, "#FF8A80" // ilya //#7F7F7F
-static const char* yellow_hex = "#C3C3C3";// formerly "#FFAA00"; then #FFCDAB // ilya 
-static const char* green_hex = "#AFFFAB";// formerly "#26E600"; // "##AFFFAB";
-static const float red_end = TMath::Log10(10.);
-static const float yellow_end = TMath::Log10(30.);
+    //[TSV]
+    std::string tsv_filename;
+    std::string error_flag_file;
+    bool skip_first_line_of_tsv_file;
+    unsigned int maskname_tsv_column_index;
+    unsigned int exer1_tsv_column_index;
+    unsigned int size_column_index;
+    int number_of_exercises;
+    unsigned int analysis_grade_tsv_column_index;
+    unsigned int testerID_tsv_column_index;
 
-//trafficLightFaded Color Scheme Constants 
-static const char* red_hex_TLF = "#C3C3C3";   
-static const char* yellow_hex_TLF = "#C3C3C3";
-static const char* green_hex_TLF = "#D1D1D1";
-static const float red_end_TLF = TMath::Log10(10.);
-static const float yellow_end_TLF = TMath::Log10(30.);
-static const float hue_green = 120.f;//overrides green_hex
-static const float value_green = 0.274;//0.682f;//overrides green_hex
-static const float percentile_hardness = 5.0;
-static const float percentile_corner = 0.5;
-static const SigmoidOption satur_func = S_tanh;
+    //[Histogram_Graphics]
+    int sizePixelsX;
+    int sizePixelsY;
+    std::string x_axis_title;
+    std::string y_axis_title;
+    Ymax_state ymax_setting;
+    float histogram_ymax;
 
-//blueberry Color Scheme Constants 
-static const float blueness = 1.0;
-static const float graymax = 0.945;//0.961;//0.95f; 
+    //[HistTitle]
+    float HistTitle_X1;
+    float HistTitle_Y1;
+    float HistTitle_X2;
+    float HistTitle_Y2;
 
-//Dark Mode Colors
-static const char* red_hex_dark = "#FF3355";
-static const char* yellow_hex_dark = "#FFAA00";
-static const char* green_hex_dark = "#26E600";
-static const float value_green_dark = 0.682f;//overrides green_hex_dark
+    //[TimeStamp]
+    float Contributers_X1;
+    float Contributers_Y1;
+    float Contributers_X2;
+    float Contributers_Y2;
+    std::string Contributers_prefixText;
+    std::string Contributers_timeFormat;
+    std::string Contributers_suffixText;
+    int Contributers_textAlignment;
+
+    //[Legend]
+    float Legend_HMSideSwitchThresh;
+    float Legend_lowX1;
+    float Legend_lowY1;
+    float Legend_lowX2;
+    float Legend_lowY2;
+    float Legend_highX1;
+    float Legend_highY1;
+    float Legend_highX2;
+    float Legend_highY2;
+    int Legend_markerSize;
+    int Legend_histSize;
+    std::string Legend_entryTextAll;
+    std::string Legend_entryTextLg;
+    std::string Legend_entryTextSm;
+    int Legend_colorAll;
+    int Legend_colorLg;
+    int Legend_colorSm;
+    int Legend_fillStyleLg;
+    int Legend_fillStyleSm;
+    std::string Legend_sizeHistDrawOption;
+
+    //[Arrow]
+    bool Arrow_useHarmMean;
+    int Arrow_color;
+    float Arrow_size;
+    int Arrow_linewidth;	
+    float histmax_factor;
+    float Arrow_ymin;
+    float Arrow_length;
+    std::string Arrow_tipStyle;
+    std::string ArrowText_label;
+    float ArrowText_lowerNDC;
+    float ArrowText_upperNDC;
+    float ArrowText_leftOffset;
+    float ArrowText_rightOffset;
+    
+    //[ColorScheme]
+    BkgColorScheme bkgColorScheme;
+    ColorScheme colorScheme;
+
+    //[ColorScheme.LUT1]
+    std::string red_hex_LUT1;
+    std::string yellow_hex_LUT1;
+    float red_end_LUT1;
+    float yellow_end_LUT1;
+    static const int lut1_len = 8; 
+    int r[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; 
+    int g[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; 
+    int b[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; 
+    bool lut1_uses_harmean;
+    
+    //[ColorScheme.trafficLight]
+    std::string red_hex;
+    std::string yellow_hex;
+    std::string green_hex;
+    float red_end;
+    float yellow_end;
+    
+    //[ColorScheme.trafficLightFaded] 
+    std::string red_hex_TLF;
+    std::string yellow_hex_TLF;
+    std::string green_hex_TLF;
+    float red_end_TLF;
+    float yellow_end_TLF;
+    float hue_green;
+    float value_green;
+    float percentile_hardness;
+    float percentile_corner;
+    SigmoidOption satur_func;
+    
+    //[ColorScheme.blueberry] 
+    float blueness;
+    float graymax;
+    
+    //[ColorScheme.darkMode]
+    std::string red_hex_dark;
+    std::string yellow_hex_dark;
+    std::string green_hex_dark;
+    float value_green_dark;
+};
+
+bool Settings::load(std::string tomlfile){
+    bool ret = true;
+    toml::parse_result cfg = toml::parse_file( tomlfile );
+    if (!cfg) {
+        std::cerr << "Failed to parse TOML file " <<tomlfile << cfg.error() << std::endl;
+        ret = false;
+        return ret;
+    }
+
+    single_plot_mode_enabled=cfg.at_path("singlePlotMode.single_plot_mode_enabled").value_or( false );  
+    which_one 			    =cfg.at_path("singlePlotMode.which_one").value_or( "3M Aura 9210+"sv ); 
+
+    save_plots_enabled 		=cfg.at_path("output.save_plots_enabled").value_or( true ); 
+    save_with_HMFF_prefix 	=cfg.at_path("output.save_with_HMFF_prefix").value_or( true ); 
+    X11_persistence  		=cfg.at_path("output.X11_persistence").value_or( true );  
+
+    use_only_analysis_grade	=cfg.at_path("Analysis.use_only_analysis_grade").value_or( true ); 
+    use_sizes 			    =cfg.at_path("Analysis.use_sizes").value_or( true ); 
+
+    tsv_filename 			        =cfg.at_path("TSV.tsv_filename").value_or( "Main.tsv"sv ); 
+    skip_first_line_of_tsv_file 	=cfg.at_path("TSV.skip_first_line_of_tsv_file").value_or( true ); 
+    maskname_tsv_column_index 		=cfg.at_path("TSV.maskname_tsv_column_index").value_or( 2 ); 
+    exer1_tsv_column_index 			=cfg.at_path("TSV.exer1_tsv_column_index").value_or( 3 ); 
+    size_column_index 			    =cfg.at_path("TSV.size_column_index").value_or( 25 ); 
+    number_of_exercises 			=cfg.at_path("TSV.number_of_exercises").value_or( 12 ); 
+    analysis_grade_tsv_column_index	=cfg.at_path("TSV.analysis_grade_tsv_column_index").value_or( 20 ); 
+    testerID_tsv_column_index 		=cfg.at_path("TSV.testerID_tsv_column_index").value_or( 16 );  
+    error_flag_file 			    =cfg.at_path("TSV.error_flag_file").value_or( "error.flag"sv ); 
+
+    Legend_HMSideSwitchThresh  = cfg.at_path("legend.HMSideSwitchThresh").value_or(5000.0);
+    Legend_lowX1  = cfg.at_path("legend.lowX1").value_or(0.672497);
+    Legend_lowY1  = cfg.at_path("legend.lowY1").value_or(0.6);
+    Legend_lowX2  = cfg.at_path("legend.lowX2").value_or(0.872738);
+    Legend_lowY2  = cfg.at_path("legend.lowY2").value_or(0.8);
+    Legend_highX1  = cfg.at_path("legend.highX1").value_or(0.132087);
+    Legend_highY1  = cfg.at_path("legend.highY1").value_or(0.6);
+    Legend_highX2  = cfg.at_path("legend.highX2").value_or(0.332328);
+    Legend_highY2  = cfg.at_path("legend.highY2").value_or(0.8);
+    Legend_markerSize  = cfg.at_path("legend.markerSize").value_or(20);
+    Legend_histSize  = cfg.at_path("legend.histSize").value_or(3);
+    Legend_entryTextAll  = cfg.at_path("legend.entryTextAll").value_or("All sizes");
+    Legend_entryTextLg  = cfg.at_path("legend.entryTextLg").value_or("Known Lg Heads");
+    Legend_entryTextSm  = cfg.at_path("legend.entryTextSm").value_or("Known Sm Heads");
+    Legend_colorAll = cfg.at_path("legend.colorAll").value_or(600);//600=kBlue
+    Legend_colorLg = cfg.at_path("legend.colorLg").value_or(432);//432=kCyan
+    Legend_colorSm = cfg.at_path("legend.colorSm").value_or(616);//616=kMagenta
+    Legend_fillStyleLg = cfg.at_path("legend.fillStyleLg").value_or(1001); // #1001 = solid, #4050
+    Legend_fillStyleSm = cfg.at_path("legend.fillStyleSm").value_or(0); //0 = hollow
+    Legend_sizeHistDrawOption  = cfg.at_path("legend.sizeHistDrawOption").value_or("samehist");
+
+    Arrow_useHarmMean=cfg.at_path("Arrow.useHarmMean ").value_or( true);
+    Arrow_color 		=cfg.at_path("Arrow.color").value_or( 1 ); //1 = kBlack 
+    Arrow_size 		=cfg.at_path("Arrow.size").value_or( 0.015 ); 
+    Arrow_linewidth 	=cfg.at_path("Arrow.linewidth").value_or( 4 ); 
+    histmax_factor 	=cfg.at_path("Arrow.histmax_factor").value_or( 1.052631 ); 
+    Arrow_ymin 		=cfg.at_path("Arrow.ymin").value_or( 0.74 );  
+    Arrow_length 	=cfg.at_path("Arrow.length").value_or( 0.146 );  
+    Arrow_tipStyle 	=cfg.at_path("Arrow.tipStyle ").value_or( "|>"sv );
+
+    ArrowText_label 		=cfg.at_path("ArrowText.label ").value_or( "HMpop"sv );
+    ArrowText_lowerNDC 	=cfg.at_path("ArrowText.lowerNDC ").value_or( 0.865145);
+    ArrowText_upperNDC 	=cfg.at_path("ArrowText.upperNDC ").value_or( 0.910788);
+    ArrowText_leftOffset	=cfg.at_path("ArrowText.leftOffset ").value_or( -0.015);
+    ArrowText_rightOffset=cfg.at_path("ArrowText.rightOffset ").value_or( 0.15);
+
+    sizePixelsX =cfg.at_path("Histogram_Graphics.sizePixelsX").value_or( 1660); 
+    sizePixelsY =cfg.at_path("Histogram_Graphics.sizePixelsY").value_or( 989); 
+    x_axis_title 	=cfg.at_path("Histogram_Graphics.x_axis_title").value_or( "Exposure Reduction Factor               "sv ); 
+    y_axis_title 	=cfg.at_path("Histogram_Graphics.y_axis_title").value_or( "Event Count"sv ); 
+
+    std::string ymax_setting_str = cfg.at_path("Histogram_Graphics.ymax_setting").value_or( "auto_fit_each_histogram" ); 
+    //enum Ymax_state
+    if(ymax_setting_str == "manual")
+            ymax_setting=manual;
+    if(ymax_setting_str == "global_full_auto")
+            ymax_setting=global_full_auto;
+    if(ymax_setting_str == "global_auto_with_manual_min_ymax")
+            ymax_setting=global_auto_with_manual_min_ymax;
+    if(ymax_setting_str == "auto_fit_each_histogram")
+            ymax_setting=auto_fit_each_histogram;
+    else ymax_setting=auto_fit_each_histogram;
+
+    histogram_ymax 	=cfg.at_path("Histogram_Graphics.histogram_ymax").value_or( 80.0 );  
 
 
-//Sigmoid scheme constants
-/*static const float hue_red = -10.f;
-static const float hue_yellow = 40.f;
-static const float hue_green = 110.f;
-//static const float hue_transition_hardness = 0.36f; 
-//static const SigmoidOption hue_func = S_abs;
+    HistTitle_X1 =cfg.at_path("HistTitle.X1").value_or( 0.16 );  
+    HistTitle_Y1 =cfg.at_path("HistTitle.Y1").value_or( 0.94 );  
+    HistTitle_X2 =cfg.at_path("HistTitle.X2").value_or( 0.75 );  
+    HistTitle_Y2 =cfg.at_path("HistTitle.Y2").value_or( 0.995 );  
 
-static const float satur_green = 0.15f;
-static const float satur_at_center = 0.7f;
-static const float satur_center_percential = 0.5f;
-static const float satur_transition_hardness = 6.0f;
+    Contributers_X1 =cfg.at_path("Contributers.X1").value_or(0.00120627);
+    Contributers_Y1 =cfg.at_path("Contributers.Y1").value_or(0.965768);
+    Contributers_X2 =cfg.at_path("Contributers.X2").value_or(0.179131);
+    Contributers_Y2 =cfg.at_path("Contributers.Y2").value_or(0.997925);
+    Contributers_prefixText =cfg.at_path("Contributers.prefixText").value_or("TIL distribution as of "sv);
+    Contributers_timeFormat =cfg.at_path("Contributers.timeFormat").value_or("%Y-%m-%d %H:%M"sv );
+    Contributers_suffixText =cfg.at_path("Contributers.suffixText").value_or("");
+    Contributers_textAlignment =cfg.at_path("Contributers.textAlignment").value_or(12); //12 = Align to top left
+
+    std::string colorScheme_str 	=cfg.at_path("ColorScheme.colorScheme").value_or( "" ); 
+    //enum ColorScheme 
+    if(colorScheme_str == "trafficLight") colorScheme=trafficLight;
+    if(colorScheme_str == "trafficLightFaded") colorScheme=trafficLightFaded;
+    if(colorScheme_str == "blueberry") colorScheme=blueberry;
+    if(colorScheme_str == "LUT1") colorScheme=LUT1 ;
+    else colorScheme=LUT1 ;
+
+    std::string bkgColorScheme_str 	=cfg.at_path("ColorScheme.bkgColorScheme").value_or( "" ); 
+    
+    //enum BkgColorScheme 
+    if(bkgColorScheme_str == "White") bkgColorScheme = White; 
+    if(bkgColorScheme_str == "OffWhite") bkgColorScheme = OffWhite; 
+    if(bkgColorScheme_str == "Dark") bkgColorScheme = Dark; 
+    else bkgColorScheme = White; 
+
+    red_hex_LUT1 	=cfg.at_path("ColorScheme.LUT1.red_hex_LUT1").value_or( "#F2F2F2" ); 
+    yellow_hex_LUT1 =cfg.at_path("ColorScheme.LUT1.yellow_hex_LUT1").value_or( "#F2F2F2"  );
+    red_end_LUT1 	=cfg.at_path("ColorScheme.LUT1.red_end_LUT1").value_or( 1.0 );  
+    yellow_end_LUT1 =cfg.at_path("ColorScheme.LUT1.yellow_end_LUT1").value_or( 1.47712125472 );  
+    //lut1_len 		=cfg.at_path("ColorScheme.LUT1.lut1_len").value_or( 8 ); //TODO
 
 
-static const float value_red = 1.0f;
-static const float value_green = 0.9f;
-static const float value_transition_center = 1.17f;//1.17 = log10(25)
-static const float value_transition_hardness = 8.0f;
-static const SigmoidOption value_func = S_tanh;
-*/
+    toml::array* r_TArr = cfg["ColorScheme"]["LUT1"]["r"].as_array();
+    if(r_TArr and r_TArr->is_homogeneous(toml::node_type::integer) ){ 
+        size_t i = 0;
+        for (auto it = r_TArr->cbegin(); it != r_TArr->cend() and i<lut1_len; ++it) 
+            r[i++] = it->value_or(-1);
+        //if anything ends up -1, complain.
+        bool neg1 = false;
+        for(int j=0;j<lut1_len;j++) if( r[j] == -1 ) neg1 = true;
+
+        if(neg1){
+            std::cerr << "Warning: LUT1::r has invalid entries. Toml file: " <<tomlfile << std::endl;
+            ret &= !neg1;
+        }
+
+        if(i<lut1_len){
+            std::cerr << "Warning: LUT1::r is too short. Toml file: " <<tomlfile << std::endl;
+            ret = false;
+        }
+    }
+
+    toml::array* g_TArr = cfg["ColorScheme"]["LUT1"]["g"].as_array();
+    if(g_TArr and g_TArr->is_homogeneous(toml::node_type::integer) ){ 
+        size_t i = 0;
+        for (auto it = g_TArr->cbegin(); it != g_TArr->cend() and i<lut1_len; ++it) 
+            g[i++] = it->value_or(-1);
+        //if anything ends up -1, complain.
+        bool neg1 = false;
+        for(int j=0;j<lut1_len;j++) if( g[j] == -1 ) neg1 = true;
+
+        if(neg1){
+            std::cerr << "Warning: LUT1::g has invalid entries. Toml file: " <<tomlfile << std::endl;
+            ret &= !neg1;
+        }
+
+        if(i<lut1_len){
+            std::cerr << "Warning: LUT1::g is too short. Toml file: " <<tomlfile << std::endl;
+            ret = false;
+        }
+    }
+
+    toml::array* b_TArr = cfg["ColorScheme"]["LUT1"]["b"].as_array();
+    if(b_TArr and b_TArr->is_homogeneous(toml::node_type::integer) ){ 
+        size_t i = 0;
+        for (auto it = b_TArr->cbegin(); it != b_TArr->cend() and i<lut1_len; ++it) 
+            b[i++] = it->value_or(-1);
+        //if anything ends up -1, complain.
+        bool neg1 = false;
+        for(int j=0;j<lut1_len;j++) if( b[j] == -1 ) neg1 = true;
+
+        if(neg1){
+            std::cerr << "Warning: LUT1::b has invalid entries. Toml file: " <<tomlfile << std::endl;
+            ret &= !neg1;
+        }
+
+        if(i<lut1_len){
+            std::cerr << "Warning: LUT1::b is too short. Toml file: " <<tomlfile << std::endl;
+            ret = false;
+        }
+    }
+
+    lut1_uses_harmean =cfg.at_path("ColorScheme.LUT1.lut1_uses_harmean").value_or( true );
+
+    red_hex 		=cfg.at_path("ColorScheme.trafficLight.red_hex").value_or( "#C3C3C3" );
+    yellow_hex 		=cfg.at_path("ColorScheme.trafficLight.yellow_hex").value_or( "#C3C3C3" );
+    green_hex 		=cfg.at_path("ColorScheme.trafficLight.green_hex").value_or( "#AFFFAB" );
+    red_end 		=cfg.at_path("ColorScheme.trafficLight.red_end").value_or( 1.0 );  
+    yellow_end 		=cfg.at_path("ColorScheme.trafficLight.yellow_end").value_or( 1.47712125472 ); 
+
+    red_hex_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.red_hex_TLF").value_or( "#C3C3C3"   );
+    yellow_hex_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.yellow_hex_TLF").value_or( "#C3C3C3" );
+    green_hex_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.green_hex_TLF").value_or( "#D1D1D1");
+    red_end_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.red_end_TLF").value_or( 1.0 );  
+    yellow_end_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.yellow_end_TLF").value_or( 1.47712125472 );  
+    hue_green 		=cfg.at_path("ColorScheme.trafficLightFaded.hue_green").value_or( 120.0 );  
+    value_green 	=cfg.at_path("ColorScheme.trafficLightFaded.value_green").value_or( 0.274 );  
+    percentile_hardness =cfg.at_path("ColorScheme.trafficLightFaded.percentile_hardness").value_or( 5.0 );  
+    percentile_corner 	=cfg.at_path("ColorScheme.trafficLightFaded.percentile_corner").value_or( 0.5 ); 
+    std::string satur_func_str 	=cfg.at_path("ColorScheme.trafficLightFaded.satur_func").value_or( "" ); 
+    if(satur_func_str == "S_abs") satur_func = S_abs;
+    if(satur_func_str == "S_erf") satur_func = S_erf;
+    if(satur_func_str == "S_gd") satur_func = S_gd;
+    if(satur_func_str == "S_algeb") satur_func = S_algeb;
+    if(satur_func_str == "S_atan") satur_func = S_atan;
+    if(satur_func_str == "S_absalgeb") satur_func = S_absalgeb;
+    if(satur_func_str == "S_tanh") satur_func = S_tanh;
+    else satur_func = S_tanh;
+
+    blueness 		=cfg.at_path("ColorScheme.blueberry.blueness").value_or( 1.0 ); 
+    graymax 		=cfg.at_path("ColorScheme.blueberry.graymax").value_or( 0.945 );  
+
+    red_hex_dark 	=cfg.at_path("ColorScheme.darkMode.red_hex_dark").value_or( "#FF3355" ); 
+    yellow_hex_dark	=cfg.at_path("ColorScheme.darkMode.yellow_hex_dark").value_or( "#FFAA00" ); 
+    green_hex_dark 	=cfg.at_path("ColorScheme.darkMode.green_hex_dark").value_or( "#26E600" ); 
+    value_green_dark=cfg.at_path("ColorScheme.darkMode.value_green_dark").value_or( 0.682 );  
+
+    return ret;
+} //load toml
 ///////////////////////////////////////////////////////////////////
 ///////////////////////// End Settings /////////////////////////////
 ///////////////////////////////////////////////////////////////////
-//
-
-
-
-void readJsonFile(const std::string& filename, std::map<std::string, std::string>& jsonData) ;
 
 struct Hist{
     bool is_sorted;
@@ -172,7 +409,7 @@ struct Hist{
     std::vector<float> all_vals;
     std::set<std::string> unique_testers;
 
-    Hist(string title, float* linbinning);
+    Hist(string title, float* linbinning, const Settings& cfg);
     ~Hist(){ delete hist; }
     void Fill(float val,sizeCode s);
     void FillLog10(float val,sizeCode s);
@@ -191,25 +428,25 @@ float* generateLinBinning();
 float* generateLogBinning();
 TF2* makeGrad(float ymax);
 void SetBinLabels(Hist* hist);
-void PlotAndSave(Hist* hist, TF2* grad, string fname_noext);
+void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg);
 bool isALlWhiteSpace(const std::string& str);
-std::string getCurrentDateTime();
+std::string getCurrentDateTime(const Settings& cfg);
 
 double sigmoid(double x, SigmoidOption softness);
 
-Hist::Hist(string title, float* linbinning): is_sorted(false), has_cdf(false), title(title){
+Hist::Hist(string title, float* linbinning, const Settings& cfg): is_sorted(false), has_cdf(false), title(title){
     hist = new TH1F(title.c_str(), 
-            (title+";"+x_axis_title+";"+y_axis_title).c_str(), 
+            (title+";"+cfg.x_axis_title+";"+cfg.y_axis_title).c_str(), 
             nbins,linbinning);
     
     histBySize[Lg] = new TH1F((title+" Lg").c_str(), 
-            (title+" Lg;"+x_axis_title+";"+y_axis_title).c_str(), 
+            (title+" Lg;"+cfg.x_axis_title+";"+cfg.y_axis_title).c_str(), 
             nbins,linbinning);
     histBySize[Sm] = new TH1F((title+" Sm").c_str(), 
-            (title+" Sm;"+x_axis_title+";"+y_axis_title).c_str(), 
+            (title+" Sm;"+cfg.x_axis_title+";"+cfg.y_axis_title).c_str(), 
             nbins,linbinning);
     histBySize[NOSIZE] = new TH1F((title+" no size").c_str(), 
-            (title+" no size;"+x_axis_title+";"+y_axis_title).c_str(), 
+            (title+" no size;"+cfg.x_axis_title+";"+cfg.y_axis_title).c_str(), 
             nbins,linbinning);
 }
 void Hist::Fill(float val,sizeCode s){
@@ -265,40 +502,52 @@ float Hist::Get_HarmonicMean(){
     return ((float)all_vals.size()) / harmonicSum;
 }
 
-void makeAllPlots(){ //main
+void makeAllPlots(std::string tomlfile = "config.toml"){ //main
+
+    Settings cfg;
+    if(not cfg.load(tomlfile)){
+        std::cerr<<" Errors encountered in TOML config file "<<tomlfile<<std::endl;
+        return;
+    }
 
     { //Check if there's an error flag, and if so, don't run.
-        std::ifstream flag_file(error_flag_file);
+        std::ifstream flag_file(cfg.error_flag_file);
         if (flag_file.good()){
             std::cout << "Error flag was raised, so the TSV file must be no good. Root exits without generating plots." << std::endl;
             return;
         }
     }
 
-    if(bkgColorScheme  == White){
-        BkgColor = kWhite; //255, 255, 255
-        FontColor = kBlack;
-    } else if(bkgColorScheme  == OffWhite){ 
-        //BkgColor = 10; // 254, 254, 254
-        //BkgColor = 19; // very light gray
-        BkgColor = GetColorForced(248,248,248);
-        std::cout<<"Bkg color "<<BkgColor <<std::endl;//DEBUG
-        FontColor = kBlack;
-    } else if(bkgColorScheme  == Dark ){
-        BkgColor = TColor::GetColor(0.188f, 0.22f, 0.255f);//dark gray #303841
-        FontColor = TColor::GetColor(0.847f, 0.871f, 0.914f);//#D8DEE9
+
+    switch(cfg.bkgColorScheme){
+        case OffWhite:
+            //BkgColor = 10; // 254, 254, 254
+            //BkgColor = 19; // very light gray
+            BkgColor = GetColorForced(248,248,248);//CFGTODO
+            std::cout<<"Bkg color "<<BkgColor <<std::endl;//DEBUG
+            FontColor = kBlack;
+            break;
+        case Dark:
+            BkgColor = TColor::GetColor(0.188f, 0.22f, 0.255f);//dark gray #303841//CFGTODO
+            FontColor = TColor::GetColor(0.847f, 0.871f, 0.914f);//#D8DEE9//CFGTODO
+            break;
+        default:
+        case White:
+            BkgColor = kWhite; //255, 255, 255
+            FontColor = kBlack;
+            break;
     }
                      
-    if( single_plot_mode_enabled) std::cout<<"Single Plot Mode ENABLED, see single_plot_mode_enabled"<<std::endl;
+    if( cfg.single_plot_mode_enabled) std::cout<<"Single Plot Mode ENABLED, see single_plot_mode_enabled"<<std::endl;
     std::unordered_map<std::string, Hist*> hMap;
 	CMSStyle(); 
 	float* linbinning = generateLinBinning();
-    static const float grad_height = max(75.f,histogram_ymax+1.f);//the float argument (75) is the height that the gradient will go up to. anything pretty big is ok
+    static const float grad_height = max(75.f,cfg.histogram_ymax+1.f);//the float argument (75) is the height that the gradient will go up to. anything pretty big is ok
     TF2* grad = makeGrad(grad_height); 
 
-    std::ifstream inputFile(tsv_filename);
+    std::ifstream inputFile(cfg.tsv_filename);
     if (!inputFile.is_open()) {
-        std::cerr << "Error unable to opening file" << tsv_filename << std::endl;
+        std::cerr << "Error unable to opening file" << cfg.tsv_filename << std::endl;
         return;
     }
 
@@ -312,58 +561,58 @@ void makeAllPlots(){ //main
     int jline=0; //tsv line number counter.
     while (std::getline(inputFile, tsv_line)) { //for every line
         jline++; 
-        if(skip_first_line_of_tsv_file and jline == 1) continue;
+        if(cfg.skip_first_line_of_tsv_file and jline == 1) continue;
         // Parse the line into tokens
         //std::replace(tsv_line.begin(), tsv_line.end(),',',''); //Guard names against ,
         tsv_line.erase(std::remove(tsv_line.begin(), tsv_line.end(), ','), tsv_line.end());
 
         std::vector<std::string> tokens = parseTSVLine(tsv_line);
 
-        if(tokens.size() <= exer1_tsv_column_index){
+        if(tokens.size() <= cfg.exer1_tsv_column_index){
             std::cerr<<"ERROR nogo line "<<jline<<std::endl;
-        } else if(use_sizes and tokens.size() <= size_column_index ){
+        } else if(cfg.use_sizes and tokens.size() <= cfg.size_column_index ){
             std::cerr<<"Warning Unable to access sizes due to line "<<jline<<std::endl;
-        } else if(tokens.size() < exer1_tsv_column_index + number_of_exercises) {
+        } else if(tokens.size() < cfg.exer1_tsv_column_index + cfg.number_of_exercises) {
             std::cerr<<"ERROR weird length line "<<jline<<std::endl;
         } else{ //line not obviously invalid
             if(jline % 100 == 0) std::cout<<"readln "<<jline<<std::endl;
 
-            if(use_only_analysis_grade and tokens.size() < analysis_grade_tsv_column_index){
+            if(cfg.use_only_analysis_grade and tokens.size() < cfg.analysis_grade_tsv_column_index){
                 std::cerr<<"Warning line too short for analysis grade "<<jline<<std::endl;
                 continue;
             }
             sizeCode s = NOSIZE;
-            if(use_sizes and tokens.size() > size_column_index ){
-                s = Str2size(tokens[size_column_index]);
+            if(cfg.use_sizes and tokens.size() > cfg.size_column_index ){
+                s = Str2size(tokens[cfg.size_column_index]);
             }
-            bool is_analysis_grade = Str2bool(tokens[analysis_grade_tsv_column_index]);
-            if(use_only_analysis_grade and not is_analysis_grade){
+            bool is_analysis_grade = Str2bool(tokens[cfg.analysis_grade_tsv_column_index]);
+            if(cfg.use_only_analysis_grade and not is_analysis_grade){
                 //std::cout<<"line rejected for non-analysis grade tag "<<jline<<std::endl;
                 continue;
             }
 
             //if the mask on this line has been seen before, find its entry in map. 
-            string maskname = tokens[maskname_tsv_column_index];
+            string maskname = tokens[cfg.maskname_tsv_column_index];
             std::replace(maskname.begin(), maskname.end(),'/','_'); //Guard names against /
             std::replace(maskname.begin(), maskname.end(),'\'','_'); //Guard names against '
             std::unordered_map<std::string, Hist*>::iterator it = hMap.find(maskname);
 
             if (it != hMap.end()) { //This mask has been seen already. Fill the existing histogram
                 //int i=0;
-                //for (;i<number_of_exercises;i++){
-                for (int i=0;i<number_of_exercises;i++){
-                    float x = Str2float(tokens[exer1_tsv_column_index + i]);
+                //for (;i<cfg.number_of_exercises;i++){
+                for (int i=0;i<cfg.number_of_exercises;i++){
+                    float x = Str2float(tokens[cfg.exer1_tsv_column_index + i]);
                     if(x<0.f) break;
                     else it->second->FillLog10(x,s);
                 }
                 //std::cout<<jline<<" "<<maskname<<" old fill #="<<i<<std::endl;
             } else { //New mask, create a new histogram
-                Hist* newHistogram = new Hist(maskname,linbinning);
+                Hist* newHistogram = new Hist(maskname,linbinning,cfg);
 
                 //int i=0;
-                //for (;i<number_of_exercises;i++){
-                for (int i=0;i<number_of_exercises;i++){
-                    float x = Str2float(tokens[exer1_tsv_column_index + i]);
+                //for (;i<cfg.number_of_exercises;i++){
+                for (int i=0;i<cfg.number_of_exercises;i++){
+                    float x = Str2float(tokens[cfg.exer1_tsv_column_index + i]);
                     if(x<0.f) break;
                     else newHistogram->FillLog10(x,s);
                 }
@@ -371,7 +620,7 @@ void makeAllPlots(){ //main
                 hMap[maskname] = newHistogram;
             } //end else 
 
-            string testerID = tokens[testerID_tsv_column_index];
+            string testerID = tokens[cfg.testerID_tsv_column_index];
             if(not isALlWhiteSpace(testerID))
                 hMap[maskname]->unique_testers.insert(testerID);
 
@@ -379,16 +628,16 @@ void makeAllPlots(){ //main
     } //end while every tsv line
     inputFile.close();
 
-    if(ymax_setting >= global_full_auto){
-        static const float ymax_margin = 1.10f;
+    if(cfg.ymax_setting >= global_full_auto){
+        static const float ymax_margin = 1.10f;//CFGTODO
         //calculate the largest bin content of all histograms
         float global_max_bin = 0.f;
         for (const std::pair<const std::string, Hist*>& pair : hMap) {
             global_max_bin = max(global_max_bin, (float)((Hist*) pair.second)->hist->GetMaximum());
         }
-        if(ymax_setting == global_full_auto or 
-                (ymax_setting == global_auto_with_manual_min_ymax and global_max_bin > histogram_ymax*ymax_margin))
-            histogram_ymax = global_max_bin*ymax_margin;
+        if(cfg.ymax_setting == global_full_auto or 
+                (cfg.ymax_setting == global_auto_with_manual_min_ymax and global_max_bin > cfg.histogram_ymax*ymax_margin))
+            cfg.histogram_ymax = global_max_bin*ymax_margin;
     }
 
     //Now make all plots and save them to file.
@@ -396,22 +645,22 @@ void makeAllPlots(){ //main
     for (const std::pair<const std::string, Hist*>& pair : hMap) {
         const std::string& mask = pair.first;
         Hist* histogram = pair.second;
-        if( single_plot_mode_enabled and mask != which_one ) continue;
+        if( cfg.single_plot_mode_enabled and mask != cfg.which_one ) continue;
         something_was_found = true;
 
-        if(save_plots_enabled){
-            if(single_plot_mode_enabled){
+        if(cfg.save_plots_enabled){
+            if(cfg.single_plot_mode_enabled){
                 std::cout<<"Plot and save "<<mask<<" single_plot_mode_enabled = true so no other plot get generated."<<std::endl;
             } 
 
-            PlotAndSave(histogram, grad, mask);
+            PlotAndSave(histogram, grad, mask, cfg);
         }
     }
-    if( single_plot_mode_enabled and not something_was_found ){
-        std::cout<<"Warning! No plot found that matched name which_one = "<<which_one<<std::endl;
+    if( cfg.single_plot_mode_enabled and not something_was_found ){
+        std::cout<<"Warning! No plot found that matched name which_one = "<<cfg.which_one<<std::endl;
     }
     
-    if(not (single_plot_mode_enabled and X11_persistence)){
+    if(not (cfg.single_plot_mode_enabled and cfg.X11_persistence)){
         for (auto& pair : hMap) {
             delete pair.second;
         }
@@ -508,8 +757,8 @@ TF2* makeGrad(float ymax){
     //alternative functions: https://upload.wikimedia.org/wikipedia/commons/6/6f/Gjl-t%28x%29.svg
 
     //define the color gradient
-    const UInt_t Ncolors = 3;
-    Double_t Red[Ncolors]   = {0.957,0.999,0.999};
+    const UInt_t Ncolors = 3;//CFGTODO
+    Double_t Red[Ncolors]   = {0.957,0.999,0.999};//CFGTODO
     Double_t Green[Ncolors] = {0.435,0.999,0.999};
     Double_t Blue[Ncolors]  = {0.039,0.999,0.999};
     Double_t Stops[Ncolors] = {0.000,0.500,1.000};
@@ -539,9 +788,9 @@ void SetBinLabels(Hist* hist){
 }
 
 
-void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
+void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg){
     //plot it and make it pretty
-	PrettyFillColor(hist->hist, TColor::GetColor(242, 242, 242));  // ilya - formerly kAzure + 5
+	PrettyFillColor(hist->hist, TColor::GetColor(242, 242, 242));  // ilya - formerly kAzure + 5//CFGTODO
     SetBinLabels(hist);
     float* linbinning = generateLinBinning();
 
@@ -549,7 +798,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     for(int i=0;i<nbins;i++){
         histarr[i] = new TH1F( 
                 (hist->GetTitle()+std::to_string(i)).c_str(),
-                (";"+x_axis_title+","+y_axis_title).c_str(),
+                (";"+cfg.x_axis_title+","+cfg.y_axis_title).c_str(),
                 nbins,linbinning);
     }
 
@@ -603,76 +852,76 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
 
            rgb(149,255,128) unused     TColor::GetColor(0.5843137f,1.0f,0.5019608f)   light green "#95FF80"
            */
-        if(colorScheme == trafficLightFaded){
-            if(bc < red_end_TLF){ 
-                PrettyFillColor(histarr[i],TColor::GetColor(red_hex_TLF));
-            } else if(bc < yellow_end_TLF){ 
-                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex_TLF));
+        if(cfg.colorScheme == trafficLightFaded){
+            if(bc < cfg.red_end_TLF){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(cfg.red_hex_TLF.c_str()));
+            } else if(bc < cfg.yellow_end_TLF){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.yellow_hex_TLF.c_str()));
             }
             else{ // >= TMath::Log10(30)
                 //float xxx = (bc - mean)/stddev;
                 //float xxx = (bc - hist->Get_Median())/stddev;
                 //float xxx = (bc - TMath::Log10(hist->Get_HarmonicMean()))/stddev;
-                float xxx = percentile_hardness*(hist->X2Percentile(bc) - percentile_corner );
-                //float saturation = 1.0 - std::max(0, sigmoid(xxx, satur_func ));
-                float saturation = 1.0f/(1.0f + exp(2.0*xxx));
-                float value = graymax - (graymax - value_green)*saturation;
-                PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value) );
-                //PrettyFillColor(histarr[i],GetColorHSV(hue_green, saturation, value_green) );
+                float xxx = cfg.percentile_hardness*(hist->X2Percentile(bc) - cfg.percentile_corner );
+                //float saturation = 1.0 - std::max(0, sigmoid(xxx, cfg.satur_func ));
+                float saturation = 1.0f/(1.0f + exp(2.0*xxx));//CFGTODO
+                float value = cfg.graymax - (cfg.graymax - cfg.value_green)*saturation;
+                PrettyFillColor(histarr[i],GetColorHSV(cfg.hue_green, saturation, value) );
+                //PrettyFillColor(histarr[i],GetColorHSV(cfg.hue_green, saturation, cfg.value_green) );
             }
-        } else if( colorScheme == trafficLight){
-            if(bc < red_end){ 
-                PrettyFillColor(histarr[i],TColor::GetColor(red_hex));
-            } else if(bc < yellow_end){ 
-                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex));
+        } else if( cfg.colorScheme == trafficLight){
+            if(bc < cfg.red_end){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(cfg.red_hex.c_str()));
+            } else if(bc < cfg.yellow_end){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.yellow_hex.c_str()));
             }
             else{ 
-                PrettyFillColor(histarr[i], TColor::GetColor(green_hex));
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.green_hex.c_str()));
             }
-        } else if( colorScheme == blueberry ){
+        } else if( cfg.colorScheme == blueberry ){
                 float xxx = (bc - hist->Get_Median())/stddev;
-                float gray = 1.0f/(1.0f + exp(-2.0*xxx));
-                if(gray > graymax) gray = graymax;
-                PrettyFillColor(histarr[i],TColor::GetColor( gray, gray, blueness) );
-        } else if(colorScheme == LUT1){
+                float gray = 1.0f/(1.0f + exp(-2.0*xxx));//CFGTODO
+                if(gray > cfg.graymax) gray = cfg.graymax;
+                PrettyFillColor(histarr[i],TColor::GetColor( gray, gray, cfg.blueness) );
+        } else if(cfg.colorScheme == LUT1){
             //float bc_middle = hist->Get_Median();
             float bc_middle; 
-            if(lut1_uses_harmean) bc_middle = TMath::Log10(hist->Get_HarmonicMean());
+            if(cfg.lut1_uses_harmean) bc_middle = TMath::Log10(hist->Get_HarmonicMean());
             else bc_middle = hist->Get_Median();
             i_middle = hist->hist->FindBin(bc_middle);
             //std::cout<<"bini="<<i+1<<" ["<<hist->hist->GetXaxis()->GetBinLowEdge(i+1)<<"-"<<
             //    hist->hist->GetXaxis()->GetBinUpEdge(i+1)<<
-            //    "] LUT1: use harmean = "<<lut1_uses_harmean<<" harmean/bc_middle: "<<bc_middle <<" i_middle "<<i_middle<<std::endl;//DEBUG
-            if(bc < red_end_LUT1){ 
-                PrettyFillColor(histarr[i],TColor::GetColor(red_hex_LUT1));
-            } else if(bc < yellow_end_LUT1){ 
-                PrettyFillColor(histarr[i], TColor::GetColor(yellow_hex_LUT1));
+            //    "] LUT1: use harmean = "<<cfg.lut1_uses_harmean<<" harmean/bc_middle: "<<bc_middle <<" i_middle "<<i_middle<<std::endl;//DEBUG
+            if(bc < cfg.red_end_LUT1){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(cfg.red_hex_LUT1.c_str()));
+            } else if(bc < cfg.yellow_end_LUT1){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.yellow_hex_LUT1.c_str()));
             } else { //Green lut
-                int j = std::max(0,std::min(lut1_len-1, i+1-i_middle));
-            //    std::cout<<"green j="<<j<<" di="<<i+1-i_middle<<" r "<<r[j]<<" b "<<b[j]<<std::endl;//DEBUG
-                PrettyFillColor(histarr[i], TColor::GetColor(r[j],g[j],b[j]));
+                int j = std::max(0,std::min(cfg.lut1_len-1, i+1-i_middle));
+            //    std::cout<<"green j="<<j<<" di="<<i+1-i_middle<<" r "<<cfg.r[j]<<" b "<<cfg.b[j]<<std::endl;//DEBUG
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.r[j],cfg.g[j],cfg.b[j]));
             } 
 
         }
 
         //hue is on 0..360, mod 360
-        /*hue = hue_red + (hue_green - hue_red)*sigmoid(hue_transition_hardness*bc,hue_func);//sigmoid(0.36*bc,S_tanh)
-        if(bc < red_end){
+        /*hue = hue_red + (cfg.hue_green - hue_red)*sigmoid(hue_transition_hardness*bc,hue_func);//sigmoid(0.36*bc,S_tanh)
+        if(bc < cfg.red_end){
             hue = hue_red;
-        } else if(bc <  yellow_end ){
+        } else if(bc <  cfg.yellow_end ){
             hue = hue_yellow;
         }
         else{ 
-            hue = hue_green;
+            hue = cfg.hue_green;
         }
 
         saturation = std::min(1.0,
                 satur_at_center + (satur_green - satur_at_center )*sigmoid(
-                    satur_transition_hardness*(hist->X2Percentile(bc) - satur_center_percential),satur_func )
+                    satur_transition_hardness*(hist->X2Percentile(bc) - satur_center_percential),cfg.satur_func )
                     
                 );
 
-        float value_delta = 0.5*(value_red - value_green ); 
+        float value_delta = 0.5*(value_red - cfg.value_green ); 
         value = (1.0 - value_delta ) - value_delta*sigmoid(value_transition_hardness*(bc - value_transition_center),value_func); //darkens green
 
         PrettyFillColor(histarr[i],GetColorHSV(hue, saturation, value) );
@@ -689,15 +938,15 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     string newcanvname = hist->GetTitle()+"thecanvas";
     string superfluousTitle = "asdf";
 	//TCanvas * C = newTCanvas(newcanvname.c_str(), superfluousTitle.c_str(),1660,989); //This line blows up.
-    TCanvas * canv =new TCanvas( newcanvname.c_str(), superfluousTitle.c_str(),1660,989);
+    TCanvas * canv =new TCanvas( newcanvname.c_str(), superfluousTitle.c_str(), cfg.sizePixelsX, cfg.sizePixelsY);
     PrettyCanvas(canv);
     canv->cd();
 
     //Arrow
 	PrettyHist(hist->hist,BkgColor,0);
 
-    if(ymax_setting > auto_fit_each_histogram) 
-        SetRange(hist->hist,0,histogram_ymax);
+    if(cfg.ymax_setting > auto_fit_each_histogram) 
+        SetRange(hist->hist,0,cfg.histogram_ymax);
 	canv->cd();
 	gStyle->SetOptStat(0);
 	hist->hist->Draw();
@@ -705,130 +954,148 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
         histarr[i]->Draw("same");
     }
 
-    if(use_sizes){
+    if(cfg.use_sizes){
+
         TLegend* leg;
-        if(hist->Get_HarmonicMean() < 5000. ){
-            leg =  new TLegend(0.672497, 0.6, 0.872738, 0.8);
+        if(hist->Get_HarmonicMean() < cfg.Legend_HMSideSwitchThresh){ 
+            leg =  new TLegend(
+                    cfg.Legend_lowX1,
+                    cfg.Legend_lowY1,
+                    cfg.Legend_lowX2,
+                    cfg.Legend_lowY2);
         } else {
-            leg =  new TLegend(0.132087, 0.6, 0.332328, 0.8);
+            leg =  new TLegend(
+                    cfg.Legend_highX1,
+                    cfg.Legend_highY1,
+                    cfg.Legend_highX2,
+                    cfg.Legend_highY2);
         }
         PrettyLegend(leg);
 
         //Format main histogram for legend 
-        PrettyMarker(hist->hist,kBlue, 20,0);    
-        leg->AddEntry(hist->hist,"All sizes");
+        PrettyMarker(hist->hist,cfg.Legend_colorAll, cfg.Legend_markerSize,0);    
+        leg->AddEntry(hist->hist,cfg.Legend_entryTextAll.c_str());
 
         //Large size histogram
-        //
-        PrettyHist(  hist->histBySize[Lg],kCyan, 3,0);
-        PrettyMarker(hist->histBySize[Lg],kCyan, 20,0);
+        PrettyHist(  hist->histBySize[Lg],cfg.Legend_histSize, cfg.Legend_histSize,0);
+        PrettyMarker(hist->histBySize[Lg],cfg.Legend_histSize, cfg.Legend_markerSize,0);
         /*TH1F* Aoutline    = hist->histBySize[Lg].Clone( (((string)hist->histBySize[Lg]) + "outline").c_str()  );
         TH1F* Alegendfill = hist->histBySize[Lg].Clone( (((string)hist->histBySize[Lg]) + "legendfill").c_str()  );
-        PrettyHist(Aoutline, kBlack, 3,0);
-        PrettyHist(Alegendfill, kBlack, 3,0);*/
-        PrettyFillColor(hist->histBySize[Lg], kCyan);
-        //hist->histBySize[Lg]->SetFillStyle(4050);//translucent fill
+        PrettyHist(Aoutline, kBlack, cfg.Legend_histSize,0);
+        PrettyHist(Alegendfill, kBlack, cfg.Legend_histSize,0);*/
+        PrettyFillColor(hist->histBySize[Lg], cfg.Legend_colorLg);
+
+        hist->histBySize[Lg]->SetFillStyle(cfg.Legend_fillStyleLg);//Experimental
+
+
         
-        hist->histBySize[Lg]->Draw("samehist");
+        hist->histBySize[Lg]->Draw(cfg.Legend_sizeHistDrawOption.c_str());
 
         //Small size histogram
-        PrettyHist(  hist->histBySize[Sm],kMagenta, 3,0);
-        PrettyMarker(hist->histBySize[Sm],kMagenta, 20,0);
-        hist->histBySize[Sm]->Draw("samehist");
+        PrettyHist(  hist->histBySize[Sm],cfg.Legend_colorSm, cfg.Legend_histSize,0);
+        PrettyMarker(hist->histBySize[Sm],cfg.Legend_colorSm, cfg.Legend_markerSize,0);
 
-        leg->AddEntry(hist->histBySize[Lg],"Known Lg Heads");
-        leg->AddEntry(hist->histBySize[Sm],"Known Sm Heads");
+        //PrettyFillColor(hist->histBySize[Sm], cfg.Legend_colorSm);//Experimental
 
+        //hist->histBySize[Lg]->SetFillStyle(cfg.Legend_fillStyleSm);//Experimental
+        hist->histBySize[Sm]->Draw(cfg.Legend_sizeHistDrawOption.c_str());
+
+        leg->AddEntry(hist->histBySize[Lg],cfg.Legend_entryTextLg.c_str() );
+        leg->AddEntry(hist->histBySize[Sm],cfg.Legend_entryTextSm.c_str() );
         leg->Draw("same");
         gPad->RedrawAxis();
     }
 
     //CODE TO SHOW THE ARROW and "HM"
     Double_t arrowX = TMath::Log10(hist->Get_HarmonicMean());
-    Double_t ytop = hist->hist->GetMaximum()/0.95; //Top of the y-axis. TH1->GetYaxis()->GetXmax() incorrectly returns 1
-    Double_t ymin = ytop*0.06;
-    //Double_t ymin = ytop*0.74;
+    Double_t ytop = hist->hist->GetMaximum()/0.95; //Top of the y-axis. TH1->GetYaxis()->GetXmax() incorrectly returns 1 //CFGTODO
+    Double_t ymin = ytop*cfg.Arrow_ymin;
     //std::cout<<"ymax_init "<< ymax<<std::endl; //comes out 1 every time F*CK
     //Double_t ymax *= ytop*0.886;
-    Double_t arrow_length = ytop*0.146;
-    TArrow* arrow = new TArrow(arrowX, ymin + arrow_length, arrowX, ymin, 0.015, "|>");//x1,y1 and x2,y2 the arrowsize in regular coordinates
+    Double_t arrow_length = ytop*cfg.Arrow_length;
+    TArrow* arrow = new TArrow(arrowX, ymin + arrow_length, arrowX, ymin, cfg.Arrow_size, cfg.Arrow_tipStyle.c_str());//x1,y1 and x2,y2 the Arrow_size in regular coordinates
 
     //HM
-    Double_t textX = -0.0644+((arrowX+0.7435)/6.9749); //Should work when hist->hist->GetXaxis()->GetXmax() = 6
-    Double_t text_ymin_ndc = 0.383817;// 0.865145;
-    Double_t text_dy_NDC = 0.910788-0.865145;
-    TPaveText *arrpt = new TPaveText(textX-0.015,text_ymin_ndc,textX+0.15,text_ymin_ndc + text_dy_NDC,"NDC");
-    //std::cout<<"Tarrow x: "<<arrowX<<" ymin "<<ymin<<" ymax "<<ymax<<" histogram_ymax "<<histogram_ymax<< " textX "<<textX<<std::endl<<std::endl;
-    if(UseHarmMeanArrow){
-        arrow->SetLineWidth(4);
-        arrow->SetFillColor(ArrowColor);
-        arrow->SetLineColor(ArrowColor);
+    Double_t textX = -0.0644+((arrowX+0.7435)/6.9749); //Should work when hist->hist->GetXaxis()->GetXmax() = 6 //CFGTODO
+    Double_t text_ymin_ndc = 0.383817;// 0.865145; //CFGTODO
+
+    Double_t text_dy_NDC = cfg.ArrowText_upperNDC-cfg.ArrowText_lowerNDC;		
+    //TODO: chamge this to a simple setting, and make text_ymin_ndc to a param.
+    TPaveText *arrpt = new TPaveText(textX + cfg.ArrowText_leftOffset 		,text_ymin_ndc,textX+cfg.ArrowText_rightOffset,text_ymin_ndc + text_dy_NDC,"NDC");
+    if(cfg.Arrow_useHarmMean){
+        arrow->SetLineWidth(cfg.Arrow_linewidth);
+        arrow->SetFillColor(cfg.Arrow_color);
+        arrow->SetLineColor(cfg.Arrow_color);
         arrow->Draw();
 
         PrettyPaveText(arrpt);
-        TText *apt_LaTex = arrpt->AddText("HMpop");
+        TText *apt_LaTex = arrpt->AddText(cfg.ArrowText_label.c_str());
         arrpt->Draw();
     } 
 
-    TPaveText *pt = new TPaveText(0.16,0.94,0.75,0.995,"NDC");
-    //TPaveText *pt = new TPaveText(0.16,0.94,0.84,0.995,"NDC");
-    //TPaveText *pt = new TPaveText(0.05,0.94,0.95,0.995,"blNDC");
+    TPaveText *pt = new TPaveText(cfg.HistTitle_X1, cfg.HistTitle_Y1, cfg.HistTitle_X2, cfg.HistTitle_Y2,"NDC");
+
     PrettyPaveText(pt);
     TText *pt_LaTex = pt->AddText(hist->GetTitle().c_str());
     pt->Draw();
 
     //Display timestamp
     TPaveText *timestamp1= new TPaveText( 
-            0.00120627, 0.965768, 0.179131, 0.997925,
+            cfg.Contributers_X1,
+            cfg.Contributers_Y1,
+            cfg.Contributers_X2,
+            cfg.Contributers_Y2,
             "NDC");
    // timestamp1->AddText("TIL score distribution as of ");
-    timestamp1->AddText(("TIL distribution as of " + getCurrentDateTime()).c_str());
+    timestamp1->AddText((cfg.Contributers_prefixText + getCurrentDateTime(cfg) + cfg.Contributers_suffixText).c_str());
     PrettyPaveText(timestamp1);
-    timestamp1->SetTextAlign(12); //Align to top left
+    timestamp1->SetTextAlign(cfg.Contributers_textAlignment);
     timestamp1->Draw();
     canv->Update();
 
     //Display #Contributers and Samples
-    TPaveText *nc = new TPaveText( 0.750000, 0.936722, 0.994572, 0.997925,"NDC");//0.857057
+    TPaveText *nc = new TPaveText( 0.750000, 0.936722, 0.994572, 0.997925,"NDC");//0.857057//CFGTODO
     PrettyPaveText(nc);
-    nc->SetTextAlign(12); 
-    nc->AddText("M41 Mode Exercise Samples:");
-    nc->AddText("Adversarial Contributor Count:");
+    nc->SetTextAlign(12); //CFGTODO
+    nc->AddText("M41 Mode Exercise Samples:");//CFGTODO
+    nc->AddText("Adversarial Contributor Count:");//CFGTODO
     nc->Draw();
-    TPaveText *sc = new TPaveText( 0.936068, 0.936722, 0.974668, 0.997925,"NDC"); 
+    TPaveText *sc = new TPaveText( 0.936068, 0.936722, 0.974668, 0.997925,"NDC"); //CFGTODO
     PrettyPaveText(sc);
-    sc->SetTextAlign(32); 
+    sc->SetTextAlign(32); //CFGTODO
     sc->AddText(std::to_string( static_cast<int>(hist->hist->Integral())).c_str());
     sc->AddText(std::to_string(hist->unique_testers.size() ).c_str());
     sc->Draw();
 
     TPaveText *lowCountWarning = new TPaveText( 0.700000, 0.800000, 0.95, 0.999,"NDC"); //( 0.300000, 0.100000, 0.800000, 0.997925,"NDC");
+                                                                                        //CFGTODO
     PrettyPaveText(lowCountWarning);
-    lowCountWarning->SetTextAlign(12); 
-    lowCountWarning->SetTextColor(kGray+1);
-    if (hist->unique_testers.size() < 4)
-        lowCountWarning->AddText("Very Low Adversarial Contributor Count");
+    lowCountWarning->SetTextAlign(12); //CFGTODO
+    lowCountWarning->SetTextColor(kGray+1);//CFGTODO
+    if (hist->unique_testers.size() < 4)//CFGTODO
+        lowCountWarning->AddText("Very Low Adversarial Contributor Count");//CFGTODO
     lowCountWarning->Draw();
 
     gPad->RedrawAxis();
 	//leg->Draw("same");
     string fname;
-    if(save_with_HMFF_prefix){
+    if(cfg.save_with_HMFF_prefix){
         std::ostringstream prefix;
         prefix << std::fixed << std::setw(7) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean()*10);
-        fname = "plots/"+prefix.str()+"_"+fname_noext + ".png";
+        fname = "plots/"+prefix.str()+"_"+fname_noext + ".png";//CFGTODO
     } else{
         fname = "plots/"+fname_noext + ".png";
     }
 	canv->SaveAs(fname.c_str());
 
-    if(not (single_plot_mode_enabled and X11_persistence)){ //This memory leaks, but who cares.
+    if(not (cfg.single_plot_mode_enabled and cfg.X11_persistence)){ //This memory leaks, but who cares.
         for(int i=0;i<nbins;i++){
             delete histarr[i];
         }
     }
 } //PlotAndSave
 
+/*********************************************************************************************************************/
 
 double sigmoid(double x, SigmoidOption softness){
     //enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
@@ -853,32 +1120,6 @@ double sigmoid(double x, SigmoidOption softness){
     }
 }
 
-void readJsonFile(const std::string& filename, std::map<std::string, std::string>& jsonData) {
-    std::ifstream file(filename);
-
-    if (!file.is_open()) {
-        std::cerr << "Error opening file: " << filename << std::endl;
-        return;
-    }
-
-    std::string line;
-    while (std::getline(file, line)) {
-        // Process each line as needed, for simplicity, we assume key-value pairs separated by colon
-        std::istringstream iss(line);
-        std::string key, value;
-        if (std::getline(iss, key, ':') && std::getline(iss, value)) {
-            // Trim leading and trailing whitespaces
-            key.erase(0, key.find_first_not_of(" \t\n\r\f\v"));
-            key.erase(key.find_last_not_of(" \t\n\r\f\v") + 1);
-            value.erase(0, value.find_first_not_of(" \t\n\r\f\v"));
-            value.erase(value.find_last_not_of(" \t\n\r\f\v") + 1);
-
-            // Add to the map
-            jsonData[key] = value;
-        }
-    }
-}
-
 bool isALlWhiteSpace(const std::string& str) {
     for (char c : str) {
         if (!std::isspace(static_cast<unsigned char>(c))) {
@@ -888,7 +1129,7 @@ bool isALlWhiteSpace(const std::string& str) {
     return true;
 }
 
-std::string getCurrentDateTime() {
+std::string getCurrentDateTime(const Settings& cfg) {
     // Get the current time point
     auto now = std::chrono::system_clock::now();
 
@@ -902,7 +1143,9 @@ std::string getCurrentDateTime() {
     std::stringstream ss;
 
     // Set the format flags for the month to display 3-letter month name
-    ss << std::put_time(tm_now, "%Y-%m-%d %H:%M");
+    ss << std::put_time(tm_now, cfg.Contributers_timeFormat.c_str() );
+    //ss << std::put_time(tm_now, "%Y-%m-%d %H:%M");//CFGTODO
+
     //ss << std::put_time(tm_now, "%Y-%b-%d %H:%M");
 
     // Return the formatted date-time string
@@ -910,8 +1153,8 @@ std::string getCurrentDateTime() {
 }
 
 sizeCode Str2size(std::string s){
-    if(s == "A") return sizeCode::Lg;
-    else if(s == "B") return sizeCode::Sm;
+    if(s == "A") return sizeCode::Lg;//CFGTODO
+    else if(s == "B") return sizeCode::Sm;//CFGTODO
     else return sizeCode::NOSIZE;
 }
 
