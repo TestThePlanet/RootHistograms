@@ -96,14 +96,13 @@ struct Settings{
 
     //[Legend]
     float Legend_HMSideSwitchThresh;
+    float Legend_fontSize;
     float Legend_lowX1;
-    float Legend_lowY1;
+    float Legend_Y1;
     float Legend_lowX2;
-    float Legend_lowY2;
+    float Legend_Y2;
     float Legend_highX1;
-    float Legend_highY1;
     float Legend_highX2;
-    float Legend_highY2;
     int Legend_markerSize;
     int Legend_histSize;
     std::string Legend_entryTextAll;
@@ -205,26 +204,27 @@ bool Settings::load(std::string tomlfile){
     testerID_tsv_column_index 		=cfg.at_path("TSV.testerID_tsv_column_index").value_or( 16 );  
     error_flag_file 			    =cfg.at_path("TSV.error_flag_file").value_or( "error.flag"sv ); 
 
-    Legend_HMSideSwitchThresh  = cfg.at_path("legend.HMSideSwitchThresh").value_or(5000.0);
-    Legend_lowX1  = cfg.at_path("legend.lowX1").value_or(0.672497);
-    Legend_lowY1  = cfg.at_path("legend.lowY1").value_or(0.6);
-    Legend_lowX2  = cfg.at_path("legend.lowX2").value_or(0.872738);
-    Legend_lowY2  = cfg.at_path("legend.lowY2").value_or(0.8);
-    Legend_highX1  = cfg.at_path("legend.highX1").value_or(0.132087);
-    Legend_highY1  = cfg.at_path("legend.highY1").value_or(0.6);
-    Legend_highX2  = cfg.at_path("legend.highX2").value_or(0.332328);
-    Legend_highY2  = cfg.at_path("legend.highY2").value_or(0.8);
-    Legend_markerSize  = cfg.at_path("legend.markerSize").value_or(20);
-    Legend_histSize  = cfg.at_path("legend.histSize").value_or(3);
-    Legend_entryTextAll  = cfg.at_path("legend.entryTextAll").value_or("All sizes");
-    Legend_entryTextLg  = cfg.at_path("legend.entryTextLg").value_or("Known Lg Heads");
-    Legend_entryTextSm  = cfg.at_path("legend.entryTextSm").value_or("Known Sm Heads");
-    Legend_colorAll = cfg.at_path("legend.colorAll").value_or(600);//600=kBlue
-    Legend_colorLg = cfg.at_path("legend.colorLg").value_or(432);//432=kCyan
-    Legend_colorSm = cfg.at_path("legend.colorSm").value_or(616);//616=kMagenta
-    Legend_fillStyleLg = cfg.at_path("legend.fillStyleLg").value_or(1001); // #1001 = solid, #4050
-    Legend_fillStyleSm = cfg.at_path("legend.fillStyleSm").value_or(0); //0 = hollow
-    Legend_sizeHistDrawOption  = cfg.at_path("legend.sizeHistDrawOption").value_or("samehist");
+    Legend_HMSideSwitchThresh  = cfg.at_path("Legend.HMSideSwitchThresh").value_or(5000.0);
+    Legend_fontSize = cfg.at_path("Legend.fontSize").value_or(0.05);
+    Legend_lowX1  = cfg.at_path("Legend.lowX1").value_or(0.672497);
+    Legend_Y1  = cfg.at_path("Legend.Y1").value_or(0.6);
+    Legend_lowX2  = cfg.at_path("Legend.lowX2").value_or(0.872738);
+    Legend_Y2  = cfg.at_path("Legend.Y2").value_or(0.8);
+    Legend_highX1  = cfg.at_path("Legend.highX1").value_or(0.132087);
+    
+    Legend_highX2  = cfg.at_path("Legend.highX2").value_or(0.332328);
+   
+    Legend_markerSize  = cfg.at_path("Legend.markerSize").value_or(20);
+    Legend_histSize  = cfg.at_path("Legend.histSize").value_or(3);
+    Legend_entryTextAll  = cfg.at_path("Legend.entryTextAll").value_or("All sizes");
+    Legend_entryTextLg  = cfg.at_path("Legend.entryTextLg").value_or("Known Lg Heads");
+    Legend_entryTextSm  = cfg.at_path("Legend.entryTextSm").value_or("Known Sm Heads");
+    Legend_colorAll = cfg.at_path("Legend.colorAll").value_or(600);//600=kBlue
+    Legend_colorLg = cfg.at_path("Legend.colorLg").value_or(432);//432=kCyan
+    Legend_colorSm = cfg.at_path("Legend.colorSm").value_or(616);//616=kMagenta
+    Legend_fillStyleLg = cfg.at_path("Legend.fillStyleLg").value_or(1001); // #1001 = solid, #4050
+    Legend_fillStyleSm = cfg.at_path("Legend.fillStyleSm").value_or(0); //0 = hollow
+    Legend_sizeHistDrawOption  = cfg.at_path("Legend.sizeHistDrawOption").value_or("samehist");
 
     Arrow_useHarmMean=cfg.at_path("Arrow.useHarmMean ").value_or( true);
     Arrow_color 		=cfg.at_path("Arrow.color").value_or( 1 ); //1 = kBlack 
@@ -960,17 +960,17 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
         if(hist->Get_HarmonicMean() < cfg.Legend_HMSideSwitchThresh){ 
             leg =  new TLegend(
                     cfg.Legend_lowX1,
-                    cfg.Legend_lowY1,
+                    cfg.Legend_Y1,
                     cfg.Legend_lowX2,
-                    cfg.Legend_lowY2);
+                    cfg.Legend_Y2);
         } else {
             leg =  new TLegend(
                     cfg.Legend_highX1,
-                    cfg.Legend_highY1,
+                    cfg.Legend_Y1,
                     cfg.Legend_highX2,
-                    cfg.Legend_highY2);
+                    cfg.Legend_Y2);
         }
-        PrettyLegend(leg);
+        PrettyLegend(leg,cfg.Legend_fontSize);
 
         //Format main histogram for legend 
         PrettyMarker(hist->hist,cfg.Legend_colorAll, cfg.Legend_markerSize,0);    

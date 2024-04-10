@@ -48,15 +48,14 @@ suffixText = ""
 textAlignment = 12
 
 [Legend] #see line 887
-HMSideSwitchThresh = 5000.0
-lowX1 = 0.672497
-lowY1 = 0.6 
-lowX2 = 0.872738
-lowY2 = 0.8
-highX1 = 0.132087
-highY1 = 0.6
-highX2 = 0.332328
-highY2 = 0.8
+HMSideSwitchThresh = 100.0
+fontSize = 0.03 
+lowX1 = 0.493969
+Y1 = 0.794606
+lowX2 = 0.595296
+Y2 = 0.891079 
+highX1 = 0.136912
+highX2 = 0.238239
 markerSize = 20
 histSize = 3
 entryTextAll = "All sizes"
