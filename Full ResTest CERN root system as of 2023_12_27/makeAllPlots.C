@@ -89,7 +89,7 @@ static const int ArrowColor = kBlack;
 static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
 //Histogram Gradient Color Selection Control
-static const ColorScheme colorScheme = blackWhite; //
+static const ColorScheme colorScheme = trafficLightFaded; 
 //Valid Options: enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen, blackWhite };
 
 //LUT1 Color Scheme Controls
@@ -138,8 +138,8 @@ static const char* red_hex_TLF = "#FF3355";
 static const char* yellow_hex_TLF = "#FFAA00";
 static const float red_end_TLF = TMath::Log10(10.);
 static const float yellow_end_TLF = TMath::Log10(30.);
-static const float hue_green = 120.f;
-static const float value_green = 0.274;//0.682f;//overrides green_hex
+static const float hue_green = 110.f; //#26E600 = huse 110, value 0.902 //120.
+static const float value_green = 0.682f;//overrides green_hex //rejected 0.274
 static const float percentile_hardness = 5.0;
 static const float percentile_corner = 0.5;
 //static const SigmoidOption satur_func = S_tanh;
