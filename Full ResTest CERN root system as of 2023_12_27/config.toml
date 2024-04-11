@@ -99,35 +99,63 @@ colorScheme = "LUT1" #ColorScheme
 bkgColorScheme = "White" #BkgColorScheme OffWhite; 
 
 [ColorScheme.LUT1]
-red_hex_LUT1 = "#F2F2F2" #string
-yellow_hex_LUT1 = "#F2F2F2"  #string
-red_end_LUT1 = 1.0 #float TMath::Log10(10.)
-yellow_end_LUT1 = 1.47712125472 #float TMath::Log10(30.)
-#Length is determined by lut1_len, required to be 8
-r = [ 242, 242, 242, 242, 242, 242, 242, 242] #int #ilya
-g = [ 242, 242, 242, 242, 242, 242, 242, 242] #int #ilya
-b = [ 242, 242, 242, 242, 242, 242, 242, 242] #int #ilya
-lut1_uses_harmean = true #false = uses median.
+red_hex = "#FF3355" #string
+yellow_hex = "#FFAA00"  #string
+red_end = 1.0 #float TMath::Log10(10.)
+yellow_end = 1.47712125472 #float TMath::Log10(30.)
+#Array length is determined by lut1_len = 8
+r = [ 110, 180, 220, 230, 235, 240, 242, 242] #int #ilya
+g = [ 230, 242, 242, 242, 242, 242, 242, 242] #int #ilya
+b = [ 110, 180, 220, 230, 235, 240, 242, 242] #int #ilya
+uses_harmean = true #false = uses median.
 ##also uses red_hex and yellow_hex
 
+[ColorScheme.LUT2]
+red_hex = "#F2F2F2" #string
+yellow_hex = "#F2F2F2" #string
+red_end = 1.0 #float TMath::Log10(10.)
+yellow_end = 1.47712125472 #float TMath::Log10(30.)
+#Array length is determined by lut2_len = 8
+r = [ 242, 242, 242, 242, 242, 242, 242, 242] #int
+g = [ 242, 242, 242, 242, 242, 242, 242, 242]
+b = [ 242, 242, 242, 242, 242, 242, 242, 242] 
+uses_harmean = true #false = uses median.
+
 [ColorScheme.trafficLight]
-red_hex = "#C3C3C3" #string  # formerly "#FF3355"; then, "#FF8A80" // ilya //#7F7F7F
-yellow_hex = "#C3C3C3" #string # formerly "#FFAA00"; then #FFCDAB // ilya 
-green_hex = "#AFFFAB" #string # formerly "#26E600"; // "##AFFFAB";
+red_hex = "#FF3355"
+yellow_hex = "#FFAA00"
+green_hex = "#26E600"
+red_end = 1.0 #float TMath::Log10(10.)
+yellow_end = 1.47712125472 #float TMath::Log10(30.)
+
+[ColorScheme.grayGreen]
+red_hex = "#C3C3C3" #string #7F7F7F
+yellow_hex = "#C3C3C3"#string
+green_hex = "#AFFFAB" #string
 red_end = 1.0 #float TMath::Log10(10.)
 yellow_end = 1.47712125472 #float TMath::Log10(30.)
 
 [ColorScheme.trafficLightFaded]
-red_hex_TLF = "#C3C3C3"   #string
-yellow_hex_TLF = "#C3C3C3" #string
-green_hex_TLF = "#D1D1D1" #string
-red_end_TLF = 1.0 #float TMath::Log10(10.)
-yellow_end_TLF = 1.47712125472 #float TMath::Log10(30.)
+red_hex = "#FF3355"   #string
+yellow_hex = "#FFAA00" #string
+red_end = 1.0 #float TMath::Log10(10.)
+yellow_end = 1.47712125472 #float TMath::Log10(30.)
 hue_green = 120.0 #float #overrides green_hex
 value_green = 0.274 #float #0.682f;//overrides green_hex
 percentile_hardness = 5.0 #float 
 percentile_corner = 0.5 #float
-satur_func = "S_tanh"
+graymax = 0.945 
+
+[blackWhite]
+red_hex = "#C3C3C3"   
+yellow_hex = "#C3C3C3"
+value_green = 0.82 #//0.274; //#D1D1D1 //darkest gray in the "green" region
+hue_green = 120.0 #totally unimportant
+percentile_hardness = 5.0
+percentile_corner = 0.5
+red_end = 1.0 #float TMath::Log10(10.)
+yellow_end = 1.47712125472 #float TMath::Log10(30.)
+graymax = 0.945 
 
 [ColorScheme.blueberry]
 blueness = 1.0 #float

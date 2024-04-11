@@ -38,7 +38,7 @@
 
 enum FeatureState { enable = true, disable = false };
 enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
-enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1 };
+enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen, blackWhite};
 enum BkgColorScheme { White, OffWhite, Dark };
 enum sizeCode{Lg=0,Sm,NOSIZE,SIZEMAX};
 enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
@@ -135,15 +135,26 @@ struct Settings{
     ColorScheme colorScheme;
 
     //[ColorScheme.LUT1]
-    std::string red_hex_LUT1;
-    std::string yellow_hex_LUT1;
-    float red_end_LUT1;
-    float yellow_end_LUT1;
+    std::string LUT1_red_hex;
+    std::string LUT1_yellow_hex;
+    float LUT1_red_end;
+    float LUT1_yellow_end;
     static const int lut1_len = 8; 
-    int r[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; 
-    int g[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; 
-    int b[lut1_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; 
-    bool lut1_uses_harmean;
+    int r[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; 
+    int g[lut1_len] = { 230, 242, 242, 242, 242, 242, 242, 242}; 
+    int b[lut1_len] = { 110, 180, 220, 230, 235, 240, 242, 242}; 
+    bool LUT1_uses_harmean;
+
+    //[ColorScheme.LUT2]
+    std::string LUT2_red_hex;
+    std::string LUT2_yellow_hex;
+    float LUT2_red_end;
+    float LUT2_yellow_end;
+    static const int lut2_len = 8; 
+    int LUT2_r[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242};
+    int LUT2_g[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242};
+    int LUT2_b[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242};
+    bool LUT2_uses_harmean;
     
     //[ColorScheme.trafficLight]
     std::string red_hex;
@@ -151,18 +162,36 @@ struct Settings{
     std::string green_hex;
     float red_end;
     float yellow_end;
+
+    //[ColorScheme.grayGreen]
+    std::string GG_red_hex;
+    std::string GG_yellow_hex;
+    std::string GG_green_hex;
+    float GG_red_end;
+    float GG_yellow_end;
     
+    //[ColorScheme.blackWhite] 
+    std::string BW_red_hex;
+    std::string BW_yellow_hex;
+    float BW_red_end;
+    float BW_yellow_end;
+    float BW_hue_green;
+    float BW_value_green;
+    float BW_percentile_hardness;
+    float BW_percentile_corner;
+    float BW_graymax;
+
     //[ColorScheme.trafficLightFaded] 
-    std::string red_hex_TLF;
-    std::string yellow_hex_TLF;
-    std::string green_hex_TLF;
-    float red_end_TLF;
-    float yellow_end_TLF;
-    float hue_green;
-    float value_green;
-    float percentile_hardness;
-    float percentile_corner;
-    SigmoidOption satur_func;
+    std::string TLF_red_hex;
+    std::string TLF_yellow_hex;
+    float TLF_red_end;
+    float TLF_yellow_end;
+    float TLF_hue_green;
+    float TLF_value_green;
+    float TLF_percentile_hardness;
+    float TLF_percentile_corner;
+    float TLF_graymax;
+    //SigmoidOption satur_func;
     
     //[ColorScheme.blueberry] 
     float blueness;
@@ -280,8 +309,11 @@ bool Settings::load(std::string tomlfile){
     if(colorScheme_str == "trafficLight") colorScheme=trafficLight;
     if(colorScheme_str == "trafficLightFaded") colorScheme=trafficLightFaded;
     if(colorScheme_str == "blueberry") colorScheme=blueberry;
-    if(colorScheme_str == "LUT1") colorScheme=LUT1 ;
-    else colorScheme=LUT1 ;
+    if(colorScheme_str == "LUT1") colorScheme=LUT1;
+    if(colorScheme_str == "LUT2") colorScheme=LUT2;
+    if(colorScheme_str == "blackWhite") colorScheme=blackWhite;
+    if(colorScheme_str == "grayGreen") colorScheme=grayGreen;
+    else colorScheme=LUT1;
 
     std::string bkgColorScheme_str 	=cfg.at_path("ColorScheme.bkgColorScheme").value_or( "" ); 
     
@@ -291,11 +323,11 @@ bool Settings::load(std::string tomlfile){
     if(bkgColorScheme_str == "Dark") bkgColorScheme = Dark; 
     else bkgColorScheme = White; 
 
-    red_hex_LUT1 	=cfg.at_path("ColorScheme.LUT1.red_hex_LUT1").value_or( "#F2F2F2" ); 
-    yellow_hex_LUT1 =cfg.at_path("ColorScheme.LUT1.yellow_hex_LUT1").value_or( "#F2F2F2"  );
-    red_end_LUT1 	=cfg.at_path("ColorScheme.LUT1.red_end_LUT1").value_or( 1.0 );  
-    yellow_end_LUT1 =cfg.at_path("ColorScheme.LUT1.yellow_end_LUT1").value_or( 1.47712125472 );  
-    //lut1_len 		=cfg.at_path("ColorScheme.LUT1.lut1_len").value_or( 8 ); //TODO
+    LUT1_red_hex 	=cfg.at_path("ColorScheme.LUT1.red_hex").value_or( "#FF3355" ); 
+    LUT1_yellow_hex =cfg.at_path("ColorScheme.LUT1.yellow_hex").value_or( "#FFAA00"  );
+    LUT1_red_end 	=cfg.at_path("ColorScheme.LUT1.red_end").value_or( 1.0 );  
+    LUT1_yellow_end =cfg.at_path("ColorScheme.LUT1.yellow_end").value_or( 1.47712125472 );  
+    //lut1_len 		=cfg.at_path("ColorScheme.LUT1.lut1_len").value_or( 8 ); 
 
 
     toml::array* r_TArr = cfg["ColorScheme"]["LUT1"]["r"].as_array();
@@ -358,24 +390,114 @@ bool Settings::load(std::string tomlfile){
         }
     }
 
-    lut1_uses_harmean =cfg.at_path("ColorScheme.LUT1.lut1_uses_harmean").value_or( true );
+    LUT2_uses_harmean =cfg.at_path("ColorScheme.LUT2.uses_harmean").value_or( true );
+    //LUT2
 
-    red_hex 		=cfg.at_path("ColorScheme.trafficLight.red_hex").value_or( "#C3C3C3" );
-    yellow_hex 		=cfg.at_path("ColorScheme.trafficLight.yellow_hex").value_or( "#C3C3C3" );
-    green_hex 		=cfg.at_path("ColorScheme.trafficLight.green_hex").value_or( "#AFFFAB" );
+    LUT2_red_hex 	=cfg.at_path("ColorScheme.LUT2.red_hex").value_or( "#FF3355" ); 
+    LUT2_yellow_hex =cfg.at_path("ColorScheme.LUT2.yellow_hex").value_or( "#FFAA00"  );
+    LUT2_red_end 	=cfg.at_path("ColorScheme.LUT2.red_end").value_or( 1.0 );  
+    LUT2_yellow_end =cfg.at_path("ColorScheme.LUT2.yellow_end").value_or( 1.47712125472 );  
+    //lut2_len 		=cfg.at_path("ColorScheme.LUT2.lut2_len").value_or( 8 ); 
+
+
+    toml::array* r_TArr2 = cfg["ColorScheme"]["LUT2"]["r"].as_array();
+    if(r_TArr2 and r_TArr2->is_homogeneous(toml::node_type::integer) ){ 
+        size_t i = 0;
+        for (auto it = r_TArr2->cbegin(); it != r_TArr2->cend() and i<lut2_len; ++it) 
+            LUT2_r[i++] = it->value_or(-1);
+        //if anything ends up -1, complain.
+        bool neg1 = false;
+        for(int j=0;j<lut2_len;j++) if( LUT2_r[j] == -1 ) neg1 = true;
+
+        if(neg1){
+            std::cerr << "Warning: LUT2::r has invalid entries. Toml file: " <<tomlfile << std::endl;
+            ret &= !neg1;
+        }
+
+        if(i<lut2_len){
+            std::cerr << "Warning: LUT2::r is too short. Toml file: " <<tomlfile << std::endl;
+            ret = false;
+        }
+    }
+
+    toml::array* g_TArr2 = cfg["ColorScheme"]["LUT2"]["g"].as_array();
+    if(g_TArr2 and g_TArr2->is_homogeneous(toml::node_type::integer) ){ 
+        size_t i = 0;
+        for (auto it = g_TArr2->cbegin(); it != g_TArr2->cend() and i<lut2_len; ++it) 
+            LUT2_g[i++] = it->value_or(-1);
+        //if anything ends up -1, complain.
+        bool neg1 = false;
+        for(int j=0;j<lut2_len;j++) if( LUT2_g[j] == -1 ) neg1 = true;
+
+        if(neg1){
+            std::cerr << "Warning: LUT2::g has invalid entries. Toml file: " <<tomlfile << std::endl;
+            ret &= !neg1;
+        }
+
+        if(i<lut2_len){
+            std::cerr << "Warning: LUT2::g is too short. Toml file: " <<tomlfile << std::endl;
+            ret = false;
+        }
+    }
+
+    toml::array* b_TArr2 = cfg["ColorScheme"]["LUT2"]["b"].as_array();
+    if(b_TArr2 and b_TArr2->is_homogeneous(toml::node_type::integer) ){ 
+        size_t i = 0;
+        for (auto it = b_TArr2->cbegin(); it != b_TArr2->cend() and i<lut2_len; ++it) 
+            LUT2_b[i++] = it->value_or(-1);
+        //if anything ends up -1, complain.
+        bool neg1 = false;
+        for(int j=0;j<lut2_len;j++) if( LUT2_b[j] == -1 ) neg1 = true;
+
+        if(neg1){
+            std::cerr << "Warning: LUT2::b has invalid entries. Toml file: " <<tomlfile << std::endl;
+            ret &= !neg1;
+        }
+
+        if(i<lut2_len){
+            std::cerr << "Warning: LUT2::b is too short. Toml file: " <<tomlfile << std::endl;
+            ret = false;
+        }
+    }
+
+    LUT2_uses_harmean =cfg.at_path("ColorScheme.LUT2.uses_harmean").value_or( true );
+
+    //trafficLight
+    red_hex 		=cfg.at_path("ColorScheme.trafficLight.red_hex").value_or( "#FF3355" );
+    yellow_hex 		=cfg.at_path("ColorScheme.trafficLight.yellow_hex").value_or( "#FFAA00" );
+    green_hex 		=cfg.at_path("ColorScheme.trafficLight.green_hex").value_or( "#26E600" );
     red_end 		=cfg.at_path("ColorScheme.trafficLight.red_end").value_or( 1.0 );  
     yellow_end 		=cfg.at_path("ColorScheme.trafficLight.yellow_end").value_or( 1.47712125472 ); 
 
-    red_hex_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.red_hex_TLF").value_or( "#C3C3C3"   );
-    yellow_hex_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.yellow_hex_TLF").value_or( "#C3C3C3" );
-    green_hex_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.green_hex_TLF").value_or( "#D1D1D1");
-    red_end_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.red_end_TLF").value_or( 1.0 );  
-    yellow_end_TLF 	=cfg.at_path("ColorScheme.trafficLightFaded.yellow_end_TLF").value_or( 1.47712125472 );  
-    hue_green 		=cfg.at_path("ColorScheme.trafficLightFaded.hue_green").value_or( 120.0 );  
-    value_green 	=cfg.at_path("ColorScheme.trafficLightFaded.value_green").value_or( 0.274 );  
-    percentile_hardness =cfg.at_path("ColorScheme.trafficLightFaded.percentile_hardness").value_or( 5.0 );  
-    percentile_corner 	=cfg.at_path("ColorScheme.trafficLightFaded.percentile_corner").value_or( 0.5 ); 
-    std::string satur_func_str 	=cfg.at_path("ColorScheme.trafficLightFaded.satur_func").value_or( "" ); 
+    GG_red_hex =cfg.at_path("ColorScheme.grayGreen.red_hex").value_or( "#FF3355" );
+    GG_yellow_hex =cfg.at_path("ColorScheme.grayGreen.yellow_hex").value_or( "#FFAA00" );
+    GG_green_hex =cfg.at_path("ColorScheme.grayGreen.green_hex").value_or( "#26E600" );
+    GG_red_end =cfg.at_path("ColorScheme.grayGreen.red_end").value_or( 1.0 );  
+    GG_yellow_end =cfg.at_path("ColorScheme.grayGreen.yellow_end").value_or( 1.47712125472 ); 
+
+    TLF_red_hex 	=cfg.at_path("ColorScheme.trafficLightFaded.red_hex").value_or("#FF3355");
+    TLF_yellow_hex 	=cfg.at_path("ColorScheme.trafficLightFaded.yellow_hex").value_or( "#FFAA00" );
+    TLF_red_end 	=cfg.at_path("ColorScheme.trafficLightFaded.red_end").value_or( 1.0 );  
+    TLF_yellow_end 	=cfg.at_path("ColorScheme.trafficLightFaded.yellow_end").value_or( 1.47712125472 );  
+    TLF_hue_green 		=cfg.at_path("ColorScheme.trafficLightFaded.hue_green").value_or( 120.0 );  
+    TLF_value_green 	=cfg.at_path("ColorScheme.trafficLightFaded.value_green").value_or( 0.274 );  
+    TLF_percentile_hardness =cfg.at_path("ColorScheme.trafficLightFaded.percentile_hardness").value_or( 5.0 );  
+    TLF_percentile_corner 	=cfg.at_path("ColorScheme.trafficLightFaded.percentile_corner").value_or( 0.5 ); 
+    TLF_graymax 	=cfg.at_path("ColorScheme.trafficLightFaded.graymax").value_or( 0.945 ); 
+
+    BW_red_hex 	=cfg.at_path("ColorScheme.trafficLightFaded.red_hex").value_or("#C3C3C3");
+    BW_yellow_hex 	=cfg.at_path("ColorScheme.trafficLightFaded.yellow_hex").value_or( "#C3C3C3" );
+    BW_red_end 	=cfg.at_path("ColorScheme.trafficLightFaded.red_end").value_or( 1.0 );  
+    BW_yellow_end 	=cfg.at_path("ColorScheme.trafficLightFaded.yellow_end").value_or( 1.47712125472 );  
+
+    BW_hue_green 		=cfg.at_path("ColorScheme.trafficLightFaded.hue_green").value_or( 120.0 );  
+    BW_value_green 	=cfg.at_path("ColorScheme.trafficLightFaded.value_green").value_or( 0.82 );  
+    BW_percentile_hardness =cfg.at_path("ColorScheme.trafficLightFaded.percentile_hardness").value_or( 5.0 );  
+    BW_percentile_corner 	=cfg.at_path("ColorScheme.trafficLightFaded.percentile_corner").value_or( 0.5 ); 
+    BW_graymax 	=cfg.at_path("ColorScheme.trafficLightFaded.graymax").value_or( 0.945 ); 
+
+
+    /*std::string satur_func_str 	=cfg.at_path("ColorScheme.trafficLightFaded.satur_func").value_or( "" ); 
     if(satur_func_str == "S_abs") satur_func = S_abs;
     if(satur_func_str == "S_erf") satur_func = S_erf;
     if(satur_func_str == "S_gd") satur_func = S_gd;
@@ -383,7 +505,7 @@ bool Settings::load(std::string tomlfile){
     if(satur_func_str == "S_atan") satur_func = S_atan;
     if(satur_func_str == "S_absalgeb") satur_func = S_absalgeb;
     if(satur_func_str == "S_tanh") satur_func = S_tanh;
-    else satur_func = S_tanh;
+    else satur_func = S_tanh;*/
 
     blueness 		=cfg.at_path("ColorScheme.blueberry.blueness").value_or( 1.0 ); 
     graymax 		=cfg.at_path("ColorScheme.blueberry.graymax").value_or( 0.945 );  
@@ -853,21 +975,32 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
            rgb(149,255,128) unused     TColor::GetColor(0.5843137f,1.0f,0.5019608f)   light green "#95FF80"
            */
         if(cfg.colorScheme == trafficLightFaded){
-            if(bc < cfg.red_end_TLF){ 
-                PrettyFillColor(histarr[i],TColor::GetColor(cfg.red_hex_TLF.c_str()));
-            } else if(bc < cfg.yellow_end_TLF){ 
-                PrettyFillColor(histarr[i], TColor::GetColor(cfg.yellow_hex_TLF.c_str()));
+            if(bc < cfg.TLF_red_end){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(cfg.TLF_red_hex.c_str()));
+            } else if(bc < cfg.TLF_yellow_end){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.TLF_yellow_hex.c_str()));
             }
             else{ // >= TMath::Log10(30)
                 //float xxx = (bc - mean)/stddev;
                 //float xxx = (bc - hist->Get_Median())/stddev;
                 //float xxx = (bc - TMath::Log10(hist->Get_HarmonicMean()))/stddev;
-                float xxx = cfg.percentile_hardness*(hist->X2Percentile(bc) - cfg.percentile_corner );
+                float xxx = cfg.TLF_percentile_hardness*(hist->X2Percentile(bc) - cfg.TLF_percentile_corner );
                 //float saturation = 1.0 - std::max(0, sigmoid(xxx, cfg.satur_func ));
                 float saturation = 1.0f/(1.0f + exp(2.0*xxx));//CFGTODO
-                float value = cfg.graymax - (cfg.graymax - cfg.value_green)*saturation;
-                PrettyFillColor(histarr[i],GetColorHSV(cfg.hue_green, saturation, value) );
-                //PrettyFillColor(histarr[i],GetColorHSV(cfg.hue_green, saturation, cfg.value_green) );
+                float value = cfg.TLF_graymax - (cfg.TLF_graymax - cfg.TLF_value_green)*saturation; //CFGTODO graymax is in blueberry
+                PrettyFillColor(histarr[i],GetColorHSV(cfg.TLF_hue_green, saturation, value) );
+                //PrettyFillColor(histarr[i],GetColorHSV(cfg.TLF_hue_green, saturation, cfg.TLF_value_green) );
+            }
+        } else if( cfg.colorScheme == blackWhite){ 
+            if(bc < cfg.BW_red_end){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(cfg.BW_red_hex.c_str()));
+            } else if(bc < cfg.BW_yellow_end){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.BW_yellow_hex.c_str()));
+            }
+            else{ // >= TMath::Log10(30)
+                float xxx = cfg.BW_percentile_hardness*(hist->X2Percentile(bc) - cfg.BW_percentile_corner);
+                float value = cfg.BW_graymax - (cfg.BW_graymax - cfg.BW_value_green)/(1.0f + exp(2.0*xxx)); 
+                PrettyFillColor(histarr[i],GetColorHSV(cfg.BW_hue_green, 0, value) );
             }
         } else if( cfg.colorScheme == trafficLight){
             if(bc < cfg.red_end){ 
@@ -878,6 +1011,15 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
             else{ 
                 PrettyFillColor(histarr[i], TColor::GetColor(cfg.green_hex.c_str()));
             }
+        } else if( cfg.colorScheme == grayGreen){
+            if(bc < cfg.GG_red_end){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(cfg.GG_red_hex.c_str()));
+            } else if(bc < cfg.GG_yellow_end){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.GG_yellow_hex.c_str()));
+            }
+            else{ 
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.GG_green_hex.c_str()));
+            }
         } else if( cfg.colorScheme == blueberry ){
                 float xxx = (bc - hist->Get_Median())/stddev;
                 float gray = 1.0f/(1.0f + exp(-2.0*xxx));//CFGTODO
@@ -886,33 +1028,46 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
         } else if(cfg.colorScheme == LUT1){
             //float bc_middle = hist->Get_Median();
             float bc_middle; 
-            if(cfg.lut1_uses_harmean) bc_middle = TMath::Log10(hist->Get_HarmonicMean());
+            if(cfg.LUT1_uses_harmean) bc_middle = TMath::Log10(hist->Get_HarmonicMean());
             else bc_middle = hist->Get_Median();
             i_middle = hist->hist->FindBin(bc_middle);
             //std::cout<<"bini="<<i+1<<" ["<<hist->hist->GetXaxis()->GetBinLowEdge(i+1)<<"-"<<
             //    hist->hist->GetXaxis()->GetBinUpEdge(i+1)<<
-            //    "] LUT1: use harmean = "<<cfg.lut1_uses_harmean<<" harmean/bc_middle: "<<bc_middle <<" i_middle "<<i_middle<<std::endl;//DEBUG
-            if(bc < cfg.red_end_LUT1){ 
-                PrettyFillColor(histarr[i],TColor::GetColor(cfg.red_hex_LUT1.c_str()));
-            } else if(bc < cfg.yellow_end_LUT1){ 
-                PrettyFillColor(histarr[i], TColor::GetColor(cfg.yellow_hex_LUT1.c_str()));
+            //    "] LUT1: use harmean = "<<cfg.LUT1_uses_harmean<<" harmean/bc_middle: "<<bc_middle <<" i_middle "<<i_middle<<std::endl;//DEBUG
+            if(bc < cfg.LUT1_red_end){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(cfg.LUT1_red_hex.c_str()));
+            } else if(bc < cfg.LUT1_yellow_end){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.LUT1_yellow_hex.c_str()));
             } else { //Green lut
                 int j = std::max(0,std::min(cfg.lut1_len-1, i+1-i_middle));
             //    std::cout<<"green j="<<j<<" di="<<i+1-i_middle<<" r "<<cfg.r[j]<<" b "<<cfg.b[j]<<std::endl;//DEBUG
                 PrettyFillColor(histarr[i], TColor::GetColor(cfg.r[j],cfg.g[j],cfg.b[j]));
             } 
 
+        } else if(cfg.colorScheme == LUT2){ 
+            float bc_middle; 
+            if(cfg.LUT2_uses_harmean) bc_middle = TMath::Log10(hist->Get_HarmonicMean());
+            else bc_middle = hist->Get_Median();
+            i_middle = hist->hist->FindBin(bc_middle);
+            if(bc < cfg.LUT2_red_end){ 
+                PrettyFillColor(histarr[i],TColor::GetColor(cfg.LUT2_red_hex.c_str()));
+            } else if(bc < cfg.LUT2_yellow_end){ 
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.LUT2_yellow_hex.c_str()));
+            } else { //Green lut
+                int j = std::max(0,std::min(cfg.lut2_len-1, i+1-i_middle));
+                PrettyFillColor(histarr[i], TColor::GetColor(cfg.LUT2_r[j],cfg.LUT2_g[j],cfg.LUT2_b[j]));
+            } 
         }
 
         //hue is on 0..360, mod 360
-        /*hue = hue_red + (cfg.hue_green - hue_red)*sigmoid(hue_transition_hardness*bc,hue_func);//sigmoid(0.36*bc,S_tanh)
+        /*hue = hue_red + (cfg.TLF_hue_green - hue_red)*sigmoid(hue_transition_hardness*bc,hue_func);//sigmoid(0.36*bc,S_tanh)
         if(bc < cfg.red_end){
             hue = hue_red;
         } else if(bc <  cfg.yellow_end ){
             hue = hue_yellow;
         }
         else{ 
-            hue = cfg.hue_green;
+            hue = cfg.TLF_hue_green;
         }
 
         saturation = std::min(1.0,
@@ -921,7 +1076,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
                     
                 );
 
-        float value_delta = 0.5*(value_red - cfg.value_green ); 
+        float value_delta = 0.5*(value_red - cfg.TLF_value_green ); 
         value = (1.0 - value_delta ) - value_delta*sigmoid(value_transition_hardness*(bc - value_transition_center),value_func); //darkens green
 
         PrettyFillColor(histarr[i],GetColorHSV(hue, saturation, value) );
