@@ -30,15 +30,17 @@ def tomlGetSeq(tomlLoadData, key_list, default_val = -1):
             return default_val, False
 
 """
+This version relies more hevily on the toml config file. 
+
 To execute
 
-./make2Overlays.py [output_dir] [transparent_photos] [transparent_photos2] [plots_dir]
+./make2Overlays.py [config_file.toml]
 
-All directory inputs are optional. You can just put makeOverlays.py in the directory above plots/ and run it with no inputs.
-If command line arguments are not supplied, values are drawn from the TOML config file. 
-If that's not there, hard coded defaults are used. 
+The config file input are optional. You can just put makeOverlays.py in the directory above plots/ and run it with no inputs
 
 ./make2Overlays.py 
+
+In that case, config.toml is assumed. 
 
 See default directories below. 
 If plots and transphotos directories must exist, terminate early. 
@@ -46,18 +48,8 @@ If the output directory doesn't exist, it is created.
 """
 
 ####################################################
-
-#overlayDir = "_final" #output_dir = "./_final"                                                                                                        transphotos_dir = "./transparent_photos_front"                                                                                                        transphotos_dir2 = "./transparent_photos_inside"                                                                                                      image_size = "400x300" #overlay_size = "400x300" #                                                                                                    top_overlay_location = "+1100+80" # 1000+50                                                                                                           bottom_overlay_location = "+1100+350"
-
-try:
-    data = toml.load("config.toml") #TODO  This should be a commandline argument if ever there was one. 
-except TypeError:
-    print("Type Error, non-string passed")
-except TomlDecodeError:
-    print("Error decoding the toml file")
-
-
 #Hard coded backup default values:
+toml_config_file = "config.toml"
 plots_dir = "plots"
 transphotos_dir = "transparent_photos_front"
 transphotos_dir2 = "transparent_photos_inside"
@@ -65,10 +57,24 @@ output_dir = "_final"
 overlay_size = "400x300" 
 top_overlay_location = "+1100+80" # 1000+50
 bottom_overlay_location = "+1100+350" 
-
 ####################################################
+inlen = len(sys.argv)
+#set ouput_dir
+if inlen > 1:
+    toml_config_file = sys.argv[1]
 
+#too many inputs
+if inlen > 2:
+    print(f"Warning! This takes at most 1 input. {inlen-1} inputs were specified")
+####################################################
 #Load params from TOML
+try:
+    data = toml.load("config.toml") 
+except TypeError:
+    print("Type Error, non-string passed")
+except TomlDecodeError:
+    print("Error decoding the toml file")
+
 all_ok = True
 overlay_size, ok = tomlGetSeq(data, ["Overlay","overlayDir"], overlay_size)
 all_ok &= not ok
@@ -77,42 +83,25 @@ all_ok &= not ok
 bottom_overlay_location , ok = tomlGetSeq(data, ["Overlay","overlayDir"], bottom_overlay_location)
 all_ok &= not ok
 
-inlen = len(sys.argv)
-#set ouput_dir
-if inlen > 1:
-    output_dir = sys.argv[1]
-else:
-    output_dir, ok = tomlGetSeq(data, ["Overlay","overlayDir"], output_dir)
-    all_ok &= not ok
+#set output/overlays dir
+output_dir, ok = tomlGetSeq(data, ["Overlay","overlayDir"], output_dir)
+all_ok &= not ok
 output_dir = "./" + output_dir 
 
 #set transphotos_dir
-if inlen > 2:
-    transphotos_dir = sys.argv[2]
-else:
-    transphotos_dir, ok = tomlGetSeq(data, ["Overlay","transphotos_dir_fronts"], transphotos_dir)
-    all_ok &= not ok
+transphotos_dir, ok = tomlGetSeq(data, ["Overlay","transphotos_dir_fronts"], transphotos_dir)
+all_ok &= not ok
 transphotos_dir = "./" + transphotos_dir
 
 #set transphotos_dir2
-if inlen > 3:
-    transphotos_dir2 = sys.argv[3]
-else:
-    transphotos_dir2, ok = tomlGetSeq(data, ["Overlay","transphotos_dir_insides"], transphotos_dir2)
-    all_ok &= not ok
+transphotos_dir2, ok = tomlGetSeq(data, ["Overlay","transphotos_dir_insides"], transphotos_dir2)
+all_ok &= not ok
 transphotos_dir2 = "./" + transphotos_dir2 
 
 #set plots dir
-if inlen > 4: 
-    plots_dir = sys.argv[4]
-else:
-    plots_dir, ok = tomlGetSeq(data, ["Output","plotDir"], plots_dir)
-    all_ok &= not ok
+plots_dir, ok = tomlGetSeq(data, ["Output","plotDir"], plots_dir)
+all_ok &= not ok
 plots_dir = "./"+plots_dir
-
-#too many inputs
-if inlen > 5:
-    print(f"Warning! This takes at most 5 inputs. {inlen-1} inputs were specified")
 
 if not os.path.exists(plots_dir):
     print(f"Error! The plots directory does not exist {plots_dir}")
@@ -157,28 +146,48 @@ for plot in plots:
     plotmorph2 = transphotos_dir2+'/'+plot_stem 
     plotmorphout = output_dir + '/' + plot[len(plots_dir)+1:]
     #plotmorphout = output_dir + '/' + plot_stem 
+    make_cmd_list = ["convert",#0
+            plot, 
+            "\(",#2
+            plotmorph, 
+            "-resize",#4
+            overlay_size, 
+            "\)",#6 #TODO need backslashes??
+            "-geometry", 
+            top_overlay_location,#8
+            "-compose", 
+            "over",#10
+            "-composite", 
+            "\(",#12
+            plotmorph2, 
+            "-resize",#14
+            overlay_size, 
+            "\)",#16
+            "-geometry", 
+            bottom_overlay_location,#18
+            "-compose", 
+            "over",#20
+            "-composite", 
+            plotmorphout]
     if plotmorph in transphotos and plotmorph2 in transphotos2:
-        make_command = f"convert {plot} \( {plotmorph} -resize {overlay_size} \) -geometry {top_overlay_location} -compose over -composite \( {plotmorph2} -resize {overlay_size} \) -geometry {bottom_overlay_location} -compose over -composite {plotmorphout}"
-        #TODO convert to subprocess
-        #print(make_command)
         print("Making overlay",plotmorphout)
-        os.system(make_command)
+        subprocess.run( make_cmd_list )
         cnt_both += 1
     elif plotmorph in transphotos:
-        make_command = f"convert {plot} \( {plotmorph} -resize {overlay_size} \) -geometry {top_overlay_location} -compose over -composite {plotmorphout}" 
+        make_cmd_list = make_cmd_list[:12] + make_cmd_list[-1:]
+        #make_command = f"convert {plot} \( {plotmorph} -resize {overlay_size} \) -geometry {top_overlay_location} -compose over -composite {plotmorphout}" 
         print(f"No plot for {plot_stem} found in {transphotos_dir2}")
-        #TODO convert to subprocess
         print("Making overlay",plotmorphout)
-        #print(make_command)
-        os.system(make_command)
+        subprocess.run( make_cmd_list )
+        #os.system(make_command)
         cnt_1st  += 1
     elif plotmorph2 in transphotos2:
-        make_command = f"convert {plot} \( {plotmorph2} -resize {overlay_size} \) -geometry {bottom_overlay_location} -compose over -composite {plotmorphout}" 
+        make_cmd_list = make_cmd_list[:2] + make_cmd_list[12:]
+        #make_command = f"convert {plot} \( {plotmorph2} -resize {overlay_size} \) -geometry {bottom_overlay_location} -compose over -composite {plotmorphout}" 
         print(f"No plot for {plot_stem} found in {transphotos_dir}")
-        #TODO convert to subprocess
         print("Making overlay",plotmorphout)
-        #print(make_command)
-        os.system(make_command)
+        subprocess.run( make_cmd_list )
+        #os.system(make_command)
         cnt_2nd += 1
     i += 1
 

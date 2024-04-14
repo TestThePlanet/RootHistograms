@@ -1,12 +1,20 @@
-[singlePlotMode]
+[SinglePlotMode]
 single_plot_mode_enabled = true #bool 
 which_one = "3M Aura 9210+" #string 
 
-[output]
+[Output]
 save_plots_enabled = true
 save_with_HMFF_prefix = true
 X11_persistence  = true #bool 
-#plotDir = "plots"
+plotDir = "plots" #NEW #plots_dir = "./plots"
+
+[Overlay]
+overlayDir = "_final" #output_dir = "./_final"
+transphotos_dir_fronts = "./transparent_photos_front"
+transphotos_dir_insides = "./transparent_photos_inside"
+image_size = "400x300" #overlay_size = "400x300" #
+top_overlay_location = "+1100+80" # 1000+50
+bottom_overlay_location = "+1100+350"
 
 [Analysis]
 use_only_analysis_grade = true #bool

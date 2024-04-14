@@ -46,11 +46,11 @@ enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_
 struct Settings{
     bool load(std::string tomlfile);
 
-    //[singlePlotMode]
+    //[SinglePlotMode]
     bool single_plot_mode_enabled;
     std::string which_one;
 
-    //[output]
+    //[Output]
     bool save_plots_enabled;
     bool save_with_HMFF_prefix;
     bool X11_persistence;
@@ -213,12 +213,12 @@ bool Settings::load(std::string tomlfile){
         return ret;
     }
 
-    single_plot_mode_enabled=cfg.at_path("singlePlotMode.single_plot_mode_enabled").value_or( false );  
-    which_one 			    =cfg.at_path("singlePlotMode.which_one").value_or( "3M Aura 9210+"sv ); 
+    single_plot_mode_enabled=cfg.at_path("SinglePlotMode.single_plot_mode_enabled").value_or( false );  
+    which_one 			    =cfg.at_path("SinglePlotMode.which_one").value_or( "3M Aura 9210+"sv ); 
 
-    save_plots_enabled 		=cfg.at_path("output.save_plots_enabled").value_or( true ); 
-    save_with_HMFF_prefix 	=cfg.at_path("output.save_with_HMFF_prefix").value_or( true ); 
-    X11_persistence  		=cfg.at_path("output.X11_persistence").value_or( true );  
+    save_plots_enabled 		=cfg.at_path("Output.save_plots_enabled").value_or( true ); 
+    save_with_HMFF_prefix 	=cfg.at_path("Output.save_with_HMFF_prefix").value_or( true ); 
+    X11_persistence  		=cfg.at_path("Output.X11_persistence").value_or( true );  
 
     use_only_analysis_grade	=cfg.at_path("Analysis.use_only_analysis_grade").value_or( true ); 
     use_sizes 			    =cfg.at_path("Analysis.use_sizes").value_or( true ); 
