@@ -53,7 +53,7 @@ static const unsigned int size_column_index = 25;
 static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
 static const unsigned int analysis_grade_tsv_column_index = 20;
 static const bool use_only_analysis_grade = true;
-static const bool use_sizes = false;
+static const bool use_sizes = false;  
 static const bool save_plots_enabled = enable;
 static const bool save_with_HMFF_prefix = enable;
 static const bool skip_first_line_of_tsv_file = true;
@@ -89,7 +89,7 @@ static const int ArrowColor = kBlack;
 static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
 //Histogram Gradient Color Selection Control
-static const ColorScheme colorScheme = blueberry; 
+static const ColorScheme colorScheme = grayGreen; 
 //Valid Options: enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen, blackWhite };
 
 //LUT1 Color Scheme Controls
