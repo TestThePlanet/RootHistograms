@@ -53,7 +53,7 @@ static const unsigned int size_column_index = 25;
 static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
 static const unsigned int analysis_grade_tsv_column_index = 20;
 static const bool use_only_analysis_grade = true;
-static const bool use_sizes = false;  
+static const bool use_sizes = true;  
 static const bool save_plots_enabled = enable;
 static const bool save_with_HMFF_prefix = enable;
 static const bool skip_first_line_of_tsv_file = true;
@@ -89,8 +89,14 @@ static const int ArrowColor = kBlack;
 static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
 //Histogram Gradient Color Selection Control
-static const ColorScheme colorScheme = blueberry; 
-//Valid Options: enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen(kinda works), blackWhite(blocky right now)};
+static const ColorScheme colorScheme = LUT2; 
+// Valid Options: enum ColorScheme { trafficLight (original),
+// trafficLightFaded - not sure but seems like a dead end
+// blueberry - single color mode
+// LUT1 (the actual final trafficLightFaded) 
+// LUT2 (USE FOR BACKGROUND OF use_sizes mode) 
+// grayGreen(kinda works but draws to much attention to an arbitrary cutoff
+// blackWhite(good idea but blocky right now)};
 
 //LUT1 Color Scheme Controls
 //To set light green, set r[0],b[0], g[0] here:
@@ -772,9 +778,9 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext){
     if(use_sizes){
         TLegend* leg;
         if(hist->Get_HarmonicMean() < 5000. ){
-            leg =  new TLegend(0.672497, 0.6, 0.872738, 0.8);
+            leg =  new TLegend(0.672497, 0.6, 0.872738, 0.8); // old setting (0.672497, 0.6, 0.872738, 0.8)
         } else {
-            leg =  new TLegend(0.132087, 0.6, 0.332328, 0.8);
+            leg =  new TLegend(0.132087, 0.6, 0.332328, 0.8); // old setting (0.132087, 0.6, 0.332328, 0.8)
         }
         PrettyLegend(leg);
 
