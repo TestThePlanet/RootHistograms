@@ -112,6 +112,7 @@ bool lut1_uses_harmean = true; //false = uses median.
 //also uses red_hex and yellow_hex
 
 //LUT2
+/*
 static const char* red_hex_LUT2 = "#F2F2F2";
 static const char* yellow_hex_LUT2 = "#F2F2F2";
 static const float red_end_LUT2 = TMath::Log10(10.);
@@ -121,6 +122,21 @@ static const int r2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ily
 static const int g2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
 static const int b2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
 bool lut2_uses_harmean = true; //false = uses median.
+*/
+
+// LUT2 alternative
+
+static const char* red_hex_LUT2 = "#C3C3C3";
+static const char* yellow_hex_LUT2 = "#C3C3C3";
+static const float red_end_LUT2 = TMath::Log10(10.);
+static const float yellow_end_LUT2 = TMath::Log10(30.);
+static const int lut2_len = 8;
+static const int r2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195}; //ilya
+static const int g2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195}; //ilya
+static const int b2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195}; //ilya
+bool lut2_uses_harmean = true; //false = uses median.
+
+
 
 //trafficLight Color Scheme Constants
 static const char* red_hex = "#FF3355"; 
