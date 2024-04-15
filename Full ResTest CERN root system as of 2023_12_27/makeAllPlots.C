@@ -89,7 +89,7 @@ static const int ArrowColor = kBlack;
 static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
 //Histogram Gradient Color Selection Control
-static const ColorScheme colorScheme = grayGreen; 
+static const ColorScheme colorScheme = LUT1; 
 //Valid Options: enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen(kinda works), blackWhite};
 
 //LUT1 Color Scheme Controls
