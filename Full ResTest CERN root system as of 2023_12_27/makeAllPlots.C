@@ -74,7 +74,7 @@ static const string which_one = "3M Aura 9210+"; //mid
 //static const string which_one ="Drager1920ML_1950ML";
 static const bool X11_persistence  = true; 
 
-static const std::string x_axis_title = "Exposure Reduction Factor               ";
+static const std::string x_axis_title = "M41 PATS Score               ";
 static const std::string y_axis_title = "Event Count";
 
 enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
@@ -90,7 +90,7 @@ static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
 //Histogram Gradient Color Selection Control
 static const ColorScheme colorScheme = grayGreen; 
-//Valid Options: enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen, blackWhite };
+//Valid Options: enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen(kinda works), blackWhite};
 
 //LUT1 Color Scheme Controls
 //To set light green, set r[0],b[0], g[0] here:
