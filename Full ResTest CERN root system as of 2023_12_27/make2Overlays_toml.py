@@ -45,26 +45,26 @@ if inlen > 2:
 data,ok = ut.tomlLoad(toml_config_file) 
 
 all_ok = True
-Overlay_image_size, _, all_ok = tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=Overlay_image_size)
-Overlay_top_location, _, all_ok = tomlGetSeq(data, ["Overlay","Overlay_top_location"], all_ok, default_val=Overlay_top_location)
-Overlay_bottom_location, _, all_ok = tomlGetSeq(data, ["Overlay","Overlay_bottom_location"], all_ok, default_val=Overlay_bottom_location)
+Overlay_image_size, _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=Overlay_image_size)
+Overlay_top_location, _, all_ok = ut.tomlGetSeq(data, ["Overlay","top_location"], all_ok, default_val=Overlay_top_location)
+Overlay_bottom_location, _, all_ok = ut.tomlGetSeq(data, ["Overlay","bottom_location"], all_ok, default_val=Overlay_bottom_location)
 
-output_dir, ok, all_ok = tomlGetSeq(data, ["Overlay","overlayDir"], all_ok, default_val=output_dir)
+output_dir, ok, all_ok = ut.tomlGetSeq(data, ["Overlay","overlayDir"], all_ok, default_val=output_dir)
 output_dir = os.path.join('.', output_dir)
 
-transphotos_dir, ok, all_ok = tomlGetSeq(data, ["Overlay","transphotos_dir_fronts"], all_ok, default_val=transphotos_dir)
+transphotos_dir, ok, all_ok = ut.tomlGetSeq(data, ["Overlay","transphotos_dir_fronts"], all_ok, default_val=transphotos_dir)
 transphotos_dir = os.path.join('.', transphotos_dir)
 
-transphotos_dir2, ok, all_ok = tomlGetSeq(data, ["Overlay","transphotos_dir_insides"], all_ok, default_val=transphotos_dir2)
+transphotos_dir2, ok, all_ok = ut.tomlGetSeq(data, ["Overlay","transphotos_dir_insides"], all_ok, default_val=transphotos_dir2)
 transphotos_dir2 = os.path.join('.',transphotos_dir2)
 
-plots_dir, ok, all_ok = tomlGetSeq(data, ["Output","plotDir"], all_ok, default_val=plots_dir)
+plots_dir, ok, all_ok = ut.tomlGetSeq(data, ["Output","plotDir"], all_ok, default_val=plots_dir)
 plots_dir = os.path.join('.',plots_dir)
 ######################################################################################
 #Check that the directories exist.
 ut.assert_failExits(os.path.exists(plots_dir), f"Error! The plots directory does not exist {plots_dir}")
 ut.assert_failExits(os.path.exists(transphotos_dir), f"Error! The first transparent plots directory does not exist {transphotos_dir}")
-ut.assert_failExits(os.path.exists(transphotos_dir2,f"Error! The second transparent plots directory does not exist {transphotos_dir2}")
+ut.assert_failExits(os.path.exists(transphotos_dir2),f"Error! The second transparent plots directory does not exist {transphotos_dir2}")
 ut.assert_failExits(os.path.exists(output_dir),f"Output directory {output_dir} not found, creating it.")
 
 ut.assert_failPrints(all_ok, f"Warning! Unable to read some paramters from the TOML file. Resorting to hard-coded backups")
@@ -118,7 +118,8 @@ for plot in plots:
             "-compose", 
             "over",#20
             "-composite", 
-            plotmorphout]
+            plotmorphout,
+            "-quiet"]
     if plotmorph in transphotos and plotmorph2 in transphotos2:
         print("Making overlay",plotmorphout)
         subprocess.run( make_cmd_list )

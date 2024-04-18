@@ -6,11 +6,11 @@ import urllib.request
 import time
 import utils as ut
 
-def check_config_file_version(config_file_version:int):
+def check_config_file_version(toml_config_file, config_file_version:int):
     #Check that the supplied config file has a version that is compatibe with this codebase 
     required_min_config_file_version = 1
     ut.assert_failExits( config_file_version >= required_min_config_file_version,\
-            f"Error! Config file {toml_config_file} is version {config_file_version } which is requires at least version {expected_config_file_version }")
+            f"Error! Config file {toml_config_file} is version {config_file_version } which is requires at least version {required_min_config_file_version}")
 
 #######################################################################################################################
 
@@ -70,8 +70,10 @@ def display_latest_eog(plots_dir:str):
 def process_config(toml_data):
     #Takes the parsed nested dictionary from the toml config file
         
+    this_config_file_name = toml_data["tomlConfigFileName"]
+    all_ok = True
     config_file_version, _, all_ok = ut.tomlGetSeq(data, ["ProcessCtrl","config_file_version"], all_ok, default_val=-1)
-    check_config_file_version(config_file_version)
+    check_config_file_version(this_config_file_name, config_file_version)
 
     delete_preexisting_plots, _, all_ok = ut.tomlGetSeq(data, ["Output","delete_preexisting_plots"], all_ok, default_val=False)
     plots_dir, _, all_ok = ut.tomlGetSeq(data, ["Output","plotDir"], all_ok, default_val="plots")
@@ -98,9 +100,9 @@ def process_config(toml_data):
 
         print( "Making Plots" )
         if single_plot_mode_enabled:
-            subprocess.run( ["root", "-q", f'makeAllPlots.C+(\"{toml_config_file}\")'] )
+            subprocess.run( ["root", "-l", f'makeAllPlots.C+(\"{this_config_file_name}\")'] )
         else: 
-            subprocess.run( ["root", "-b", "-q", f'makeAllPlots.C+(\"{toml_config_file}\")'] )
+            subprocess.run( ["root", "-l", "-b", "-q", f'makeAllPlots.C+(\"{toml_config_file}\")'] )
     
         time.sleep(1)
         print("Plots made")
@@ -116,7 +118,7 @@ def process_config(toml_data):
                     os.remove(os.path.join(plots_dir, file_name) )
 
         print( "Making Overlays" )
-        subprocess.run( [sys.executable, "make2Overlays_toml.py", toml_config_file] ) #TODO this is stupid, make it a funciton
+        subprocess.run( [sys.executable, "make2Overlays_toml.py", this_config_file_name] ) #TODO this is stupid, make it a funciton
         if open_overlay_eog:
             display_latest_eog(overlayDir)
 
@@ -135,7 +137,7 @@ data, all_ok = ut.tomlLoad(toml_config_files[0], exit_on_fail = True)
 all_load_ok = all_ok
 
 config_file_version, _, all_ok = ut.tomlGetSeq(data, ["ProcessCtrl","config_file_version"], all_ok, default_val=-1)
-check_config_file_version(config_file_version)
+check_config_file_version(toml_config_files, config_file_version)
 
 do_git_pull, _, all_ok = ut.tomlGetSeq(data, ["ProcessCtrl","do_git_pull"], all_ok, default_val=True)
 
@@ -150,14 +152,17 @@ if do_git_pull:
     print( "Doing git pull" )
     subprocess.run(["git", "stash"])
     subprocess.check_call(["git", "pull"])
+else:
+    print("Skipping git pull")
 ##########makeAllPlots.sh#############################################
 if GoogleSheet_redownload:
     ut.Download_Google_Sheet(data)
-    #subprocess.run( [sys.executable, "Download_Google_Sheet.py"] )
+else:
+    print("Skipping redownload of the google sheet")
 
 #### Run config file inputs
 config_data_list = [data,]
-remaining_config_data,ok = ut.tomlLoadAll(toml_config_file[1:])
+remaining_config_data,ok = ut.tomlLoadAll(toml_config_files[1:])
 all_load_ok &= ok
 config_data_list = config_data_list + remaining_config_data 
 
@@ -167,7 +172,7 @@ same_dir_conflict, deletion_conflict = check_config_files(config_data_list)
 if deletion_conflict:
     print("Exiting!")
     sys.exit()
-elif same_dir_conflict
+elif same_dir_conflict:
     while(True):
         user_responce = input("Do you want to continue Y/N?").lower()
         if user_responce[0] == 'y':

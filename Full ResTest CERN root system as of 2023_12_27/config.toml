@@ -11,7 +11,7 @@ output_TSV_file_name = "Main.tsv"
 download_timeout_sec = 120
 
 [SinglePlotMode]
-single_plot_mode_enabled = true #bool #Turns on root editor
+single_plot_mode_enabled = true #bool #Turns on root editor TODO apply to make2overlays
 which_one = "3M Aura 9210+" #string 
 
 [Output]
@@ -29,8 +29,8 @@ overlayDir = "_final" #output_dir = "./_final"
 transphotos_dir_fronts = "./transparent_photos_front"
 transphotos_dir_insides = "./transparent_photos_inside"
 image_size = "400x300" #overlay_size = "400x300" #
-top_overlay_location = "+1100+80" # 1000+50
-bottom_overlay_location = "+1100+350"
+top_location = "+1100+80" # 1000+50
+bottom_location = "+1100+350"
 
 [Analysis]
 use_only_analysis_grade = true #bool
