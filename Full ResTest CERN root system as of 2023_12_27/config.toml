@@ -1,14 +1,31 @@
+[ProcessCtrl]
+do_git_pull = true
+#use_root_editor = false
+run_make2Overlays_toml_py = true
+run_makeAllPlots_C = true
+open_main_eog = true
+open_overlay_eog = true
+config_file_version = 1 #TODO
+
+[GoogleSheet]
+redownload = true 
+CSV_URL = "https://docs.google.com/spreadsheets/d/1arv8PObW_O4HMpScei3KAlt0zj1C55v_/gviz/tq?tqx=out:csv&sheet=Main"
+output_TSV_file_name = "Main.tsv"
+download_timeout_sec = 120
+
 [SinglePlotMode]
-single_plot_mode_enabled = true #bool 
+single_plot_mode_enabled = true #bool #Turns on root editor
 which_one = "3M Aura 9210+" #string 
 
 [Output]
+delete_preexisting_plots = false
 save_plots_enabled = true
 save_with_HMFF_prefix = true
 X11_persistence  = true #bool 
 plotDir = "plots" #NEW #plots_dir = "./plots"
 
 [Overlay]
+delete_preexisting_overlays = false
 overlayDir = "_final" #output_dir = "./_final"
 transphotos_dir_fronts = "./transparent_photos_front"
 transphotos_dir_insides = "./transparent_photos_inside"
