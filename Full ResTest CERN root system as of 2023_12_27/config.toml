@@ -1,11 +1,8 @@
 [ProcessCtrl]
-do_git_pull = true
-#use_root_editor = false
-run_make2Overlays_toml_py = true
-run_makeAllPlots_C = true
+config_file_version = 1 
+do_git_pull = false
 open_main_eog = true
 open_overlay_eog = true
-config_file_version = 1 #TODO
 
 [GoogleSheet]
 redownload = true 
@@ -18,14 +15,16 @@ single_plot_mode_enabled = true #bool #Turns on root editor
 which_one = "3M Aura 9210+" #string 
 
 [Output]
-delete_preexisting_plots = false
+run_makeAllPlots_C = true
+delete_preexisting_plots = false #only runs if run_makeAllPlots_C 
 save_plots_enabled = true
 save_with_HMFF_prefix = true
 X11_persistence  = true #bool 
 plotDir = "plots" #NEW #plots_dir = "./plots"
 
 [Overlay]
-delete_preexisting_overlays = false
+run_make2Overlays_toml_py = true
+delete_preexisting_overlays = false #only runs if run_make2Overlays_toml_py 
 overlayDir = "_final" #output_dir = "./_final"
 transphotos_dir_fronts = "./transparent_photos_front"
 transphotos_dir_insides = "./transparent_photos_inside"

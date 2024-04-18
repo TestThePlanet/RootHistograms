@@ -1,4 +1,4 @@
-import os,sys,
+import os,sys
 import subprocess
 import urllib.request
 import time
@@ -9,7 +9,9 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "toml"])
     import toml
 
-def tomlGet(tomlLoadData, key:string, default_val = -1, all_ok = None):
+#######################################################################################################################
+
+def tomlGet(tomlLoadData, key:str, all_ok = None, default_val = -1):
     #single key
     #tomlLoadData is a nested dictionary, default_val doesn't have to be a int and should match the expected value type.
     #If the key is valid, returns the toml data at that key and true. else return default value and false.
@@ -28,26 +30,31 @@ def tomlGet(tomlLoadData, key:string, default_val = -1, all_ok = None):
         else:
             return default_val, False, False
 
-def tomlGetSeq(tomlLoadData, key_list, default_val = -1, all_ok = None):
+#######################################################################################################################
+
+def tomlGetSeq(tomlLoadData, key_list, all_ok = None, default_val = -1):
     #list of keys, otherwise just like tomlGet
     if len(key_list) <= 0:
         print("Error Unable to tomlGet an empty key list")
         return default_val, False
     elif len(key_list) == 1:
-        return tomlGet(tomlLoadData, key_list[0], default_val, all_ok)
+        return tomlGet(tomlLoadData, key_list[0], all_ok, default_val)
     else: # len > 1
         if key_list[0] in tomlLoadData:
-            return tomlGetSeq(tomlLoadData[key_list[0]], key_list[1:], default_val, all_ok)
+            return tomlGetSeq(tomlLoadData[key_list[0]], key_list[1:], all_ok, default_val)
         else: #key not found
             if all_ok == None:
                 return default_val, False
             else:
                 return default_val, False, False
 
-def tomlLoad(toml_config_file:string, exit_on_fail:bool = True):
+#######################################################################################################################
+
+def tomlLoad(toml_config_file:str, exit_on_fail:bool = True):
     #Loads the toml config file
     #Takes in the config file path, and a bool exit_on_failure telling whether to crash if there's a problem loading
     #Returns the toml config as a nested dictionary, and a bool = True if it's ok.
+    #The name of the toml config file is appended to the top-level dictionary under the tag "tomlConfigFileName"
 
     if not os.path.exists(toml_config_file):
         if exit_on_fail:
@@ -59,6 +66,7 @@ def tomlLoad(toml_config_file:string, exit_on_fail:bool = True):
 
     try:
         data = toml.load(toml_config_file)
+        data["tomlConfigFileName"] = toml_config_file 
         return data, True
     except TypeError:
         if exit_on_fail:
@@ -74,7 +82,22 @@ def tomlLoad(toml_config_file:string, exit_on_fail:bool = True):
             print("Warning! Unable to decode the TOML config file {toml_config_file}.")
     return {},False
 
-######################################################################
+#######################################################################################################################
+
+def tomlLoadAll(list_of_config_file_names):
+    #takes a list of config file names
+    #returns a list of dictionaries corresponding to those toml 
+    data_list = []
+    all_ok = True
+    for toml_config_file in list_of_config_file_names:
+        data, ok = tomlLoad(toml_config_file, exit_on_fail=False):
+        all_ok &= ok
+        if ok:
+            data_list.append(data)
+    return data_list, all_ok
+
+#######################################################################################################################
+#######################################################################################################################
 
 def assert_failPrints(ok, message):
     if not ok:
@@ -85,7 +108,9 @@ def assert_failExits(ok, message):
         print(message)
         sys.exit()
 
-######################################################################
+#######################################################################################################################
+#######################################################################################################################
+
 def Download_Google_Sheet(toml_data):
     #Takes a nested dictionary that originates from a toml config file. 
     #returns true iff download went ok
@@ -97,9 +122,9 @@ def Download_Google_Sheet(toml_data):
     #TOML imputs
     all_ok = True
     GoogleSheet_CSV_URL = "https://docs.google.com/spreadsheets/d/1arv8PObW_O4HMpScei3KAlt0zj1C55v_/gviz/tq?tqx=out:csv&sheet=Main"
-    GoogleSheet_CSV_URL, _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","CSV_URL"], default_val=GoogleSheet_CSV_URL, all_ok)
-    output_TSV_file_name, _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","output_TSV_file_name"], default_val="Main.tsv", all_ok)
-    download_timeout_sec, _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","download_timeout_sec"], default_val=120, all_ok)
+    GoogleSheet_CSV_URL, _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","CSV_URL"], all_ok, default_val=GoogleSheet_CSV_URL)
+    output_TSV_file_name, _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","output_TSV_file_name"], all_ok, default_val="Main.tsv")
+    download_timeout_sec, _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","download_timeout_sec"], all_ok, default_val=120)
     
     #Clear any existing error flags
     if os.path.exists(error_flag_file):
@@ -132,7 +157,7 @@ def Download_Google_Sheet(toml_data):
         return all_ok
     else:
         #Set error flag to inhibit root from running
-        #os.system(f"echo '1' > {error_flag_file}") #TODO: this is stupid, improve it.
+        #os.system(f"echo '1' > {error_flag_file}")
         with open(error_flag_file, 'w') as file:
             file.write('1')
         return False

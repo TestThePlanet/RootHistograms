@@ -45,20 +45,20 @@ if inlen > 2:
 data,ok = ut.tomlLoad(toml_config_file) 
 
 all_ok = True
-Overlay_image_size, _, all_ok = tomlGetSeq(data, ["Overlay","image_size"], default_val=Overlay_image_size, all_ok)
-Overlay_top_location, _, all_ok = tomlGetSeq(data, ["Overlay","Overlay_top_location"], default_val=Overlay_top_location, all_ok)
-Overlay_bottom_location, _, all_ok = tomlGetSeq(data, ["Overlay","Overlay_bottom_location"], default_val=Overlay_bottom_location, all_ok)
+Overlay_image_size, _, all_ok = tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=Overlay_image_size)
+Overlay_top_location, _, all_ok = tomlGetSeq(data, ["Overlay","Overlay_top_location"], all_ok, default_val=Overlay_top_location)
+Overlay_bottom_location, _, all_ok = tomlGetSeq(data, ["Overlay","Overlay_bottom_location"], all_ok, default_val=Overlay_bottom_location)
 
-output_dir, ok, all_ok = tomlGetSeq(data, ["Overlay","overlayDir"], default_val=output_dir, all_ok)
+output_dir, ok, all_ok = tomlGetSeq(data, ["Overlay","overlayDir"], all_ok, default_val=output_dir)
 output_dir = os.path.join('.', output_dir)
 
-transphotos_dir, ok, all_ok = tomlGetSeq(data, ["Overlay","transphotos_dir_fronts"], default_val=transphotos_dir, all_ok)
+transphotos_dir, ok, all_ok = tomlGetSeq(data, ["Overlay","transphotos_dir_fronts"], all_ok, default_val=transphotos_dir)
 transphotos_dir = os.path.join('.', transphotos_dir)
 
-transphotos_dir2, ok, all_ok = tomlGetSeq(data, ["Overlay","transphotos_dir_insides"], default_val=transphotos_dir2, all_ok)
+transphotos_dir2, ok, all_ok = tomlGetSeq(data, ["Overlay","transphotos_dir_insides"], all_ok, default_val=transphotos_dir2)
 transphotos_dir2 = os.path.join('.',transphotos_dir2)
 
-plots_dir, ok, all_ok = tomlGetSeq(data, ["Output","plotDir"], default_val=plots_dir, all_ok)
+plots_dir, ok, all_ok = tomlGetSeq(data, ["Output","plotDir"], all_ok, default_val=plots_dir)
 plots_dir = os.path.join('.',plots_dir)
 ######################################################################################
 #Check that the directories exist.
