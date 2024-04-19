@@ -53,7 +53,7 @@ static const unsigned int size_column_index = 25;
 static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
 static const unsigned int analysis_grade_tsv_column_index = 20;
 static const bool use_only_analysis_grade = true;
-static const bool use_sizes = false;   // toggle
+static const bool use_sizes = true;   // toggle
 static const bool save_plots_enabled = enable;
 static const bool save_with_HMFF_prefix = enable;
 static const bool skip_first_line_of_tsv_file = true;
@@ -114,7 +114,7 @@ bool lut1_uses_harmean = true; //false = uses median.
 
 
 //LUT2
-/*
+
 static const char* red_hex_LUT2 = "#F2F2F2";
 static const char* yellow_hex_LUT2 = "#F2F2F2";
 static const float red_end_LUT2 = TMath::Log10(10.);
@@ -124,10 +124,10 @@ static const int r2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ily
 static const int g2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
 static const int b2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
 bool lut2_uses_harmean = true; //false = uses median.
-*/
+
 
 // LUT2 alternative
-
+/*
 static const char* red_hex_LUT2 = "#C3C3C3";
 static const char* yellow_hex_LUT2 = "#C3C3C3";
 static const float red_end_LUT2 = TMath::Log10(10.);
@@ -137,7 +137,7 @@ static const int r2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195}; //ily
 static const int g2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195}; //ilya
 static const int b2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195}; //ilya
 bool lut2_uses_harmean = true; //false = uses median.
-
+*/
 
 
 //trafficLight Color Scheme Constants
