@@ -96,56 +96,50 @@ for plot in plots:
     plotmorph2 = os.path.join(transphotos_dir2, plot_stem) 
     plotmorphout = os.path.join(output_dir, plot[len(plots_dir)+1:] )
     #plotmorphout = output_dir + '/' + plot_stem 
-    make_cmd_list = ["convert",#0
-            plot, 
-            "\(",#2
-            plotmorph, 
-            "-resize",#4
-            Overlay_image_size, 
-            "\)",#6 #TODO need backslashes??
-            "-geometry", 
-            Overlay_top_location,#8
-            "-compose", 
-            "over",#10
-            "-composite", 
-            "\(",#12
-            plotmorph2, 
-            "-resize",#14
-            Overlay_image_size, 
-            "\)",#16
-            "-geometry", 
-            Overlay_bottom_location,#18
-            "-compose", 
-            "over",#20
-            "-composite", 
-            plotmorphout,
-            "-quiet"]
+    make_command_part1 = f"convert -quiet {plot} " #TODO add silencing, -quiet might not be right.
+    make_command_part2 = f"\( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite "
+    make_command_part3 = f"\( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite "
+    make_command_part4 = f"{plotmorphout}" 
+    #make_command = f"convert -quiet {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}"
+
+    make_command = make_command_part1 + make_command_part2 + make_command_part4 
+    #make_command = f"convert -quiet {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite {plotmorphout}" 
+    #make_command = f"convert {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite {plotmorphout}" 
+
+    make_command = make_command_part1 + make_command_part3 + make_command_part4 
+    #make_command = f"convert {plot} \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}" 
     if plotmorph in transphotos and plotmorph2 in transphotos2:
+        make_command = make_command_part1 + make_command_part2 + make_command_part3 + make_command_part4 
+        #make_command = f"convert -quiet {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}"
         print("Making overlay",plotmorphout)
-        subprocess.run( make_cmd_list )
+        #print(make_command)
+        subprocess.run(make_command, shell=True) #os.system(make_command)
         cnt_both += 1
     elif plotmorph in transphotos:
-        make_cmd_list = make_cmd_list[:12] + make_cmd_list[-1:]
+        #make_command = f"convert -quiet {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite {plotmorphout}" 
         #make_command = f"convert {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite {plotmorphout}" 
-        print(f"No plot for {plot_stem} found in {transphotos_dir2}")
+        make_command = make_command_part1 + make_command_part2 + make_command_part4 
         print("Making overlay",plotmorphout)
-        subprocess.run( make_cmd_list )
-        #os.system(make_command)
+        print(f"    no interior image for {plot_stem} found in {transphotos_dir2}")
+        #print(make_command)
+        subprocess.run(make_command, shell=True) #os.system(make_command)
         cnt_1st  += 1
     elif plotmorph2 in transphotos2:
-        make_cmd_list = make_cmd_list[:2] + make_cmd_list[12:]
+        #make_command = f"convert -quiet {plot} \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}" 
+        make_command = make_command_part1 + make_command_part3 + make_command_part4 
         #make_command = f"convert {plot} \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}" 
-        print(f"No plot for {plot_stem} found in {transphotos_dir}")
         print("Making overlay",plotmorphout)
-        subprocess.run( make_cmd_list )
-        #os.system(make_command)
+        print(f"    no front image for {plot_stem} found in {transphotos_dir}")
+        #print(make_command)
+        subprocess.run(make_command, shell=True) #os.system(make_command)
         cnt_2nd += 1
     i += 1
 
-print(f"\nOut of {len(plots)} histograms in {plots_dir}")
-print(f"{cnt_both} had matches for both overlays")
-print(f"{cnt_1st} only had a match in {transphotos_dir}")
-print(f"{cnt_2nd} only had a match in {transphotos_dir2}")
-print(f"{len(plots) - cnt_both - cnt_1st - cnt_2nd} had no matches anywhere.")
-print(f"{len(transphotos) - cnt_both - cnt_1st} unused files in {transphotos_dir}")
+print(f"\nOverlay Process Report")
+print(f"    Out of {len(plots)} histograms in {plots_dir}")
+print(f"    {cnt_both} had matches for both overlays")
+print(f"    {cnt_1st} only had a match in {transphotos_dir}")
+print(f"    {cnt_2nd} only had a match in {transphotos_dir2}")
+print(f"    {len(plots) - cnt_both - cnt_1st - cnt_2nd} had no matches anywhere.")
+print(f"    {len(transphotos) - cnt_both - cnt_1st} unused files in {transphotos_dir}")
 print(f"{len(transphotos2) -cnt_both - cnt_2nd} unused files in {transphotos_dir2}")
