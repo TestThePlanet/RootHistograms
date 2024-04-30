@@ -132,14 +132,37 @@ toml_config_files = ["config.toml"]
 if len(sys.argv) > 1:
     toml_config_files = sys.argv[1:]
 
+############ COPY arg files ######################
+toml_config_files_active = ['.'+fn for fn in toml_config_files]
+
+all_exist = True
+for orig in toml_config_files:
+    is_here = os.path.exists(orig)
+    if not is_here:
+        print("The config file ",orig," doesn't exist. Exiting")
+    all_exist &= is_here
+
+if all_exist:
+    for orig, active in zip(toml_config_files, toml_config_files_active):
+        try:
+            subprocess.run(["cp", orig, active], check=True)
+        except subprocess.CalledProcessError:
+            print(f"Warning, unable to copying '{orig}' to '{active}'")
+            all_exist = False
+
+if not all_exist:
+    sys.exit()
+
 #########Load params from TOML[0]#################
-data, all_ok = ut.tomlLoad(toml_config_files[0], exit_on_fail = True) 
+data, all_ok = ut.tomlLoad(toml_config_files_active[0], exit_on_fail = True) 
 all_load_ok = all_ok
 
 config_file_version, _, all_ok = ut.tomlGetSeq(data, ["ProcessCtrl","config_file_version"], all_ok, default_val=-1)
-check_config_file_version(toml_config_files, config_file_version)
+check_config_file_version(toml_config_files_active[0], config_file_version)
 
 do_git_pull, _, all_ok = ut.tomlGetSeq(data, ["ProcessCtrl","do_git_pull"], all_ok, default_val=True)
+ask_on_git_diff, _, all_ok = ut.tomlGetSeq(data, ["ProcessCtrl","ask_on_git_diff"], all_ok, default_val=True)
+git_diff_verbosity, _, all_ok = ut.tomlGetSeq(data, ["ProcessCtrl","ask_on_git_diff"], all_ok, default_val="info")
 
 GoogleSheet_redownload, _, all_ok = ut.tomlGetSeq(data, ["GoogleSheet","redownload"], all_ok, default_val=True)
 
@@ -148,12 +171,59 @@ ut.assert_failPrints(all_ok, "Warning! Unable to read some paramters from the TO
 
 ######## Manage Git Pull ##########################
 if do_git_pull:
-    #TODO Here's a dangerous contradiciton. Git pull may overwrite the config file and change behavior mid execution. 
     print( "Doing git pull" )
-    subprocess.run(["git", "stash"])
-    subprocess.check_call(["git", "pull"])
+    subprocess.run(["git", "stash","-q"])
+    subprocess.check_call(["git", "pull", "-q"])
 else:
     print("Skipping git pull")
+
+########## Note what the git pull changed, #############################################
+for i, (orig, active) in enumerate(zip(toml_config_files, toml_config_files_active)):
+    diff_arg_list = ["diff","--color", "--text", "--ignore-space-change", "--ignore-blank-lines", "--ignore-trailing-space", "--ignore-tab-expansion", "--ignore-blank-lines", active, orig]
+    if subprocess.run(diff_arg_list , stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
+        #the files differ
+        if ask_on_git_diff:
+            subprocess.run(diff_arg_list , stdout = subprocess.PIPE, stderr=subprocess.PIPE)
+            print(f"USER INPUT REQUIRED: the git pull updated the toml config file {orig}. Options:")
+            print("C: Continue with the pre-git-pull config file")
+            print("R: Replace the config file as run with the newly pulled file")
+            print("Q: Quit and restore local area from git stash")
+            while(True):
+                user_responce = input("Selection: ").lower()
+                if user_responce[0] == 'c':
+                    break
+                elif user_responce[0] == 'r':
+                    if i == 0:
+                        toml_config_files_active[i] = orig
+
+                        #Reload the current file as the git-pulled file
+                        data, all_ok2 = ut.tomlLoad(toml_config_files_active[0], exit_on_fail = True) 
+                        config_file_version, _, all_ok2 = ut.tomlGetSeq(data, ["ProcessCtrl","config_file_version"], all_ok2, default_val=-1)
+                        check_config_file_version(toml_config_files_active[0], config_file_version)
+                        GoogleSheet_redownload, _, _ = ut.tomlGetSeq(data, ["GoogleSheet","redownload"], all_ok2, default_val=True)
+                        if not all_ok2:
+                            print("Warning! Unable to read some paramters from the pulled file. Reverting to as-run config file.")
+                            toml_config_files_active[i] = active
+
+                            #Reload the current file as actively used file
+                            data, all_ok3 = ut.tomlLoad(toml_config_files_active[0], exit_on_fail = True) 
+                            config_file_version, _, _ = ut.tomlGetSeq(data, ["ProcessCtrl","config_file_version"], all_ok3, default_val=-1)
+                            check_config_file_version(toml_config_files_active[0], config_file_version)
+                            GoogleSheet_redownload, _, _ = ut.tomlGetSeq(data, ["GoogleSheet","redownload"], all_ok3, default_val=True)
+                            if not all_ok3:
+                                print(f"Ok, I quit, the as-run file {active} is now not readable. Exiting")
+                                sys.exit()
+                    else:
+                        toml_config_files_active[i] = toml_config_files[i]
+                    break
+                elif user_responce[0] == 'q':
+                    subprocess.run(["git", "stash","apply"])
+                    sys.exit()
+        elif git_diff_verbosity != "silent" or ask_on_git_diff:
+            if git_diff_verbosity == "verbose":
+                print(f"Diff between pre- and post- git pull for {orig}")
+                subprocess.run(diff_arg_list , stdout = subprocess.PIPE, stderr=subprocess.PIPE)
+            print(f"INFO: the git pull updated the toml config file {orig}")
 ##########makeAllPlots.sh#############################################
 if GoogleSheet_redownload:
     ut.Download_Google_Sheet(data)
@@ -162,7 +232,7 @@ else:
 
 #### Run config file inputs
 config_data_list = [data,]
-remaining_config_data,ok = ut.tomlLoadAll(toml_config_files[1:])
+remaining_config_data,ok = ut.tomlLoadAll(toml_config_files_active[1:])
 all_load_ok &= ok
 config_data_list = config_data_list + remaining_config_data 
 

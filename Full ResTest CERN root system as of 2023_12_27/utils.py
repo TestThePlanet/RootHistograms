@@ -90,7 +90,7 @@ def tomlLoadAll(list_of_config_file_names):
     data_list = []
     all_ok = True
     for toml_config_file in list_of_config_file_names:
-        data, ok = tomlLoad(toml_config_file, exit_on_fail=False):
+        data, ok = tomlLoad(toml_config_file, exit_on_fail=False)
         all_ok &= ok
         if ok:
             data_list.append(data)
@@ -142,7 +142,7 @@ def Download_Google_Sheet(toml_data):
         current_time = time.time() # Get the current time
         if current_time - file_time <= download_timeout_sec: # Check if the file's timestamp is within the last 3 minutes 
             download_went_ok = True
-            print("Download completed")
+            print("    download completed")
         else:
             print(f'Error! The Google Sheet was not downloaded. Curernt {temp_CSV_downloaded_file} file is out of date.')
     else:

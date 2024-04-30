@@ -1,6 +1,8 @@
 [ProcessCtrl]
-config_file_version = 1 
+config_file_version = 1  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
 do_git_pull = false
+ask_on_git_diff = true #when true, uses git_diff_verbose
+git_diff_verbosity = "info" #options: "verbose", "info" (default), "silent", tells how verbose to be when ask_on_git_diff = false 
 open_main_eog = true
 open_overlay_eog = true
 
