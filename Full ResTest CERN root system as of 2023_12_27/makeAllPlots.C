@@ -50,7 +50,7 @@ static const std::string error_flag_file = "error.flag";
 static const unsigned int maskname_tsv_column_index = 2;
 static const unsigned int exer1_tsv_column_index = 3;
 static const unsigned int size_column_index = 25;
-static const int number_of_exercises = 12; //says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
+static const int number_of_exercises = 12; //writes that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
 static const unsigned int analysis_grade_tsv_column_index = 20;
 static const bool use_only_analysis_grade = true;
 static const bool use_sizes = false;   // toggle
@@ -89,7 +89,10 @@ static const int ArrowColor = kBlack;
 static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 
 //Histogram Gradient Color Selection Control
-static const ColorScheme colorScheme = LUT2; 
+//
+//
+//
+static const ColorScheme colorScheme = LUT1; 
 // Valid Options: enum ColorScheme { trafficLight (original),
 // trafficLightFaded - not sure but seems like a dead end
 // blueberry - single color mode
@@ -113,7 +116,7 @@ bool lut1_uses_harmean = true; //false = uses median.
 //also uses red_hex and yellow_hex
 
 
-//LUT2
+//LUT2 OPTION 1 ULTRA-FADED for Size Overlay. "use_sizes" has to be set to true)
 /*
 static const char* red_hex_LUT2 = "#F2F2F2";
 static const char* yellow_hex_LUT2 = "#F2F2F2";
@@ -126,27 +129,25 @@ static const int b2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ily
 bool lut2_uses_harmean = true; //false = uses median.
 */
 
-// LUT2 alternative
+// LUT2 alternative - darker - for showing just the grey bar. Assumes a professional 
+// audience that doesn't stare at the right side of the histogram.
 
 static const char* red_hex_LUT2 = "#C3C3C3";
 static const char* yellow_hex_LUT2 = "#C3C3C3";
 static const float red_end_LUT2 = TMath::Log10(10.);
 static const float yellow_end_LUT2 = TMath::Log10(30.);
 static const int lut2_len = 8;
-static const int r2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195}; //ilya
-static const int g2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195}; //ilya
-static const int b2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195}; //ilya
+static const int r2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195};
+static const int g2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195};
+static const int b2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195};
 bool lut2_uses_harmean = true; //false = uses median.
+ 
 
 
-
-//trafficLight Color Scheme Constants
+//ABANDONED PATH - trafficLight Color Scheme Constants
 static const char* red_hex = "#FF3355"; 
-//static const char* red_hex = "#FF8A80"; //ilya calls this "useless" 
 static const char* yellow_hex = "#FFAA00"; 
-//static const char* yellow_hex = "#FFCDAB";//ilya calls this "useless" 
 static const char* green_hex = "#26E600"; 
-//static const char* green_hex = "#AFFFAB";//ilya calls this "useless" 
 static const float red_end = TMath::Log10(10.);
 static const float yellow_end = TMath::Log10(30.);
 
