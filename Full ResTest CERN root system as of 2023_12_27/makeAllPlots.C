@@ -92,7 +92,7 @@ static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 //
 //
 //
-static const ColorScheme colorScheme = LUT1; 
+static const ColorScheme colorScheme = LUT2; 
 // Valid Options: enum ColorScheme { trafficLight (original),
 // trafficLightFaded - not sure but seems like a dead end
 // blueberry - single color mode
