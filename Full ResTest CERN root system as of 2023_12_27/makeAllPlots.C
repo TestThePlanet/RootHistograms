@@ -53,7 +53,7 @@ static const unsigned int size_column_index = 25;
 static const int number_of_exercises = 12; //writes that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
 static const unsigned int analysis_grade_tsv_column_index = 20;
 static const bool use_only_analysis_grade = true;
-static const bool use_sizes = false;   // toggle
+static const bool use_sizes = true;   // toggle
 static const bool save_plots_enabled = enable;
 static const bool save_with_HMFF_prefix = enable;
 static const bool skip_first_line_of_tsv_file = true;
@@ -117,7 +117,7 @@ bool lut1_uses_harmean = true; //false = uses median.
 
 
 //LUT2 OPTION 1 ULTRA-FADED for Size Overlay. "use_sizes" has to be set to true)
-/*
+
 static const char* red_hex_LUT2 = "#F2F2F2";
 static const char* yellow_hex_LUT2 = "#F2F2F2";
 static const float red_end_LUT2 = TMath::Log10(10.);
@@ -127,11 +127,11 @@ static const int r2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ily
 static const int g2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
 static const int b2[lut2_len] = { 242, 242, 242, 242, 242, 242, 242, 242}; //ilya
 bool lut2_uses_harmean = true; //false = uses median.
-*/
+
 
 // LUT2 alternative - darker - for showing just the grey bar. Assumes a professional 
 // audience that doesn't stare at the right side of the histogram.
-
+/*
 static const char* red_hex_LUT2 = "#C3C3C3";
 static const char* yellow_hex_LUT2 = "#C3C3C3";
 static const float red_end_LUT2 = TMath::Log10(10.);
@@ -142,7 +142,7 @@ static const int g2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195};
 static const int b2[lut2_len] = { 195, 195, 195, 195, 195, 195, 195, 195};
 bool lut2_uses_harmean = true; //false = uses median.
  
-
+*/
 
 //ABANDONED PATH - trafficLight Color Scheme Constants
 static const char* red_hex = "#FF3355"; 
