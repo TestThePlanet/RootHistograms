@@ -10,14 +10,14 @@ else
 fi
 
 git add go.sh
+git add config.toml
 git add send.sh
 git add Download_Google_Sheet.sh
 git add CMSStyle.C
 git add makeAllPlots.C
-git add makeAllPlots.sh
-git add makeAllPlots_nocrop.sh
 git add makeOverlays.py
 git add make2Overlays.py
+git add make2Overlays_toml.py
 git add ../README.md
 git commit -m "$commitMessage"
 git push

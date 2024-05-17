@@ -1,0 +1,12 @@
+ - [x] Append unique contributers text
+ - [x] Append integral text
+ - [x] Put a time stamp in the upper left corner.
+ - [x] Make a setup script to get Ilya back into git with aliases.
+ - [ ] Test setup script. 
+ - [x] Make Ilya a script to do everything in one step. 
+ - [x] Modify makeOverlays to add a second plot
+ - [x] Automatic downloader
+ - [x] Fix known bugs
+ - [ ] Move HM to bottom of the screen
+ - [ ] Contributers off by 1?
+ - [ ] need to implement single plot mode in the overlays.

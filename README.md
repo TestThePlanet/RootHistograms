@@ -6,7 +6,7 @@ TODO:
 - [x] Use Gradients
     See any that you like? https://root.cern/doc/master/classTColor.html#C06
 - [x] Tune Gradients
-- [ ] Refrase color bars for low N unique testers, using testerID.
+- [x] Refrase color bars for low N unique testers, using testerID.
 - [x] Display N unique testers
 - [x] Display sample N
 - [x] Make white not actually be white. See newTCanvas in CMSStyle.C
@@ -20,4 +20,9 @@ TODO:
 - [x] Add datetime stamp
 - [ ] history sequences for animation
 - [x] making the option for the output files have a zero padded six digit prefix of the hmff of the whole dataset.
-
+- [ ] Add on the scoring system
+- [ ] Improve setup:
+    * Install pip 
+    * sudo apt-get -y install eog, or other imviewer..
+    * install tkinter
+    * image magick

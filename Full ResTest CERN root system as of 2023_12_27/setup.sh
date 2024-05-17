@@ -14,3 +14,5 @@
     if [ $(grep -c "^[^#]alias send=[^#]send.sh" ~/.bashrc) -eq 0 ]; then
         echo "alias send='source \"$(pwd)\"/send.sh'" >> ~/.bashrc
     fi
+    #TODO: need pip
+    #TODO need pip TOML

@@ -111,20 +111,20 @@ for plot in plots:
     plotmorphout = os.path.join(output_dir, plot[len(plots_dir)+1:] )
     #plotmorphout = output_dir + '/' + plot_stem 
     if plotmorph in transphotos and plotmorph2 in transphotos2:
-        make_command = f"convert {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}"
+        make_command = f"convert -quiet {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}"
         print("Making overlay",plotmorphout)
         print(make_command)
         os.system(make_command)
         cnt_both += 1
     elif plotmorph in transphotos:
-        make_command = f"convert {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite {plotmorphout}" 
+        make_command = f"convert -quiet {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite {plotmorphout}" 
         print(f"No plot for {plot_stem} found in {transphotos_dir2}")
         print("Making overlay",plotmorphout)
         print(make_command)
         os.system(make_command)
         cnt_1st  += 1
     elif plotmorph2 in transphotos2:
-        make_command = f"convert {plot} \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}" 
+        make_command = f"convert -quiet {plot} \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}" 
         print(f"No plot for {plot_stem} found in {transphotos_dir}")
         print("Making overlay",plotmorphout)
         print(make_command)
