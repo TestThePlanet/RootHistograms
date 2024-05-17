@@ -53,7 +53,7 @@ static const unsigned int size_column_index = 25;
 static const int number_of_exercises = 12; //writes that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
 static const unsigned int analysis_grade_tsv_column_index = 20;
 static const bool use_only_analysis_grade = true;
-static const bool use_sizes = false;   // toggle
+static const bool use_sizes = true;   // toggle
 static const bool save_plots_enabled = enable;
 static const bool save_with_HMFF_prefix = enable;
 static const bool skip_first_line_of_tsv_file = true;
@@ -92,7 +92,7 @@ static const BkgColorScheme bkgColorScheme = White;//OffWhite;
 //
 //
 //
-static const ColorScheme colorScheme = LUT1; 
+static const ColorScheme colorScheme = LUT2; 
 // Valid Options: enum ColorScheme { trafficLight (original),
 // trafficLightFaded - not sure but seems like a dead end
 // blueberry - single color mode
