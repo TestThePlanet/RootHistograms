@@ -15,7 +15,7 @@ TODO:
     text color: TColor::GetColor(0.847f, 0.871f, 0.914f)
 - [ ] Make a strip mode for webpage integration
 - [x] Guard against '/' in histogram names.
-- [ ] Turn settings into a json or TOML config file to avoid compilation time.
+- [x] Turn settings into a json or TOML config file to avoid compilation time.
 - [x] Add TArrow to harmonic mean
 - [x] Add datetime stamp
 - [ ] history sequences for animation
