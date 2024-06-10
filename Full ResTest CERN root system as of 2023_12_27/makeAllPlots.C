@@ -36,6 +36,19 @@
 
 #define nbins (60)
 
+/*
+Getting to ilya's stupid fucking points system
+
+* Column settings are under [TSV]
+* TesterID is column Q (16)
+	testerID_tsv_column_index
+* Protocol is column T (Acode -1) (19)
+* Frankly we should just import every column
+* Test Date is column R (17)
+
+*/
+
+
 enum FeatureState { enable = true, disable = false };
 enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
 enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen, blackWhite};
@@ -231,6 +244,7 @@ bool Settings::load(std::string tomlfile){
     number_of_exercises 			=cfg.at_path("TSV.number_of_exercises").value_or( 12 ); 
     analysis_grade_tsv_column_index	=cfg.at_path("TSV.analysis_grade_tsv_column_index").value_or( 20 ); 
     testerID_tsv_column_index 		=cfg.at_path("TSV.testerID_tsv_column_index").value_or( 16 );  
+    protocol_tsv_column_index		=cfg.at_path("TSV.protocol_tsv_column_index").value_or( 19 );  
     error_flag_file 			    =cfg.at_path("TSV.error_flag_file").value_or( "error.flag"sv ); 
 
     Legend_HMSideSwitchThresh  = cfg.at_path("Legend.HMSideSwitchThresh").value_or(5000.0);
@@ -685,11 +699,11 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
         jline++; 
         if(cfg.skip_first_line_of_tsv_file and jline == 1) continue;
         // Parse the line into tokens
-        //std::replace(tsv_line.begin(), tsv_line.end(),',',''); //Guard names against ,
         tsv_line.erase(std::remove(tsv_line.begin(), tsv_line.end(), ','), tsv_line.end());
 
         std::vector<std::string> tokens = parseTSVLine(tsv_line);
 
+	//Guard against invalid lines
         if(tokens.size() <= cfg.exer1_tsv_column_index){
             std::cerr<<"ERROR nogo line "<<jline<<std::endl;
         } else if(cfg.use_sizes and tokens.size() <= cfg.size_column_index ){
@@ -745,6 +759,7 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
             string testerID = tokens[cfg.testerID_tsv_column_index];
             if(not isALlWhiteSpace(testerID))
                 hMap[maskname]->unique_testers.insert(testerID);
+	    string protocol = tokens[cfg.protocol_tsv_column_index];
 
         } //end else ok line
     } //end while every tsv line
@@ -1162,7 +1177,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
     }
 
     //CODE TO SHOW THE ARROW and "HM"
-    Double_t arrowX = TMath::Log10(hist->Get_HarmonicMean());
+    Double_t arrowX = std::max(0,TMath::Log10(hist->Get_HarmonicMean()));
     Double_t ytop = hist->hist->GetMaximum()/0.95; //Top of the y-axis. TH1->GetYaxis()->GetXmax() incorrectly returns 1 //CFGTODO
     Double_t ymin = ytop*cfg.Arrow_ymin;
     //std::cout<<"ymax_init "<< ymax<<std::endl; //comes out 1 every time F*CK
