@@ -1,5 +1,5 @@
 [ProcessCtrl]
-config_file_version = 1  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
+config_file_version = 2  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
 do_git_pull = false
 ask_on_git_diff = true #when true, uses git_diff_verbose
 git_diff_verbosity = "info" #options: "verbose", "info" (default), "silent", tells how verbose to be when ask_on_git_diff = false 
@@ -17,22 +17,45 @@ single_plot_mode_enabled = true #bool #Turns on root editor TODO apply to make2o
 which_one = "3M Aura 9210+" #string 
 
 [Output]
+print_level = 5
 run_makeAllPlots_C = true
 delete_preexisting_plots = false #only runs if run_makeAllPlots_C 
 save_plots_enabled = true
 save_with_HMFF_prefix = true
+low_contrib_count_prefix = "L_"
 X11_persistence  = true #bool 
+#plotDir = "/mnt/g/My Drive/RootPlotOutput/histogram_by_sample/histogram_by_sample" #NEW #plots_dir = "./plots" #TODO
 plotDir = "plots" #NEW #plots_dir = "./plots"
+#plotDirUserHMean = "/mnt/g/My Drive/RootPlotOutput/histogram_by_sample/histogram_by_user_hmean"  #TODO
+plotDirUserHMean = "plots"
 
 [Overlay]
 run_make2Overlays_toml_py = true
 delete_preexisting_overlays = false #only runs if run_make2Overlays_toml_py 
+#overlayDir = "/mnt/g/My Drive/RootPlotOutput/histogram_by_sample/_final" #output_dir = "./_final" #TODO
 overlayDir = "_final" #output_dir = "./_final"
-transphotos_dir_fronts = "./transparent_photos_front"
 transphotos_dir_insides = "./transparent_photos_inside"
+#transphotos_dir_insides = "/mnt/g/.shortcut-targets-by-id/14qBqwQzOC985y8kqdXXi2d5SRutITgmp/transparent_photos_inside"#TODO
+transphotos_dir_fronts = "./transparent_photos_front"
+#transphotos_dir_fronts = "/mnt/g/.shortcut-targets-by-id/1yijRzqC7kODxqq4LRBhHFRyJXqZOMOEO/transparent_photos_front"
+transparent_photos = "./transparent_photos_front"
+#transparent_photos = "/mnt/g/.shortcut-targets-by-id/1v5w6MMw5L-1UBeAvMzp5ltTtR2sYlcwn/_transparent_photos" #TODO
+
 image_size = "400x300" #overlay_size = "400x300" #
 top_location = "+1100+80" # 1000+50
 bottom_location = "+1100+350"
+
+[Montage]
+width = 10 # horizontal # of images in montage, aka # columns
+height = -1 #negative or 0 will use all images and
+max_height = 50 #max limit for the number of image rows.
+tile_sizex = 1024 # pixels 
+tile_sizey = 768  # pixels 
+#picDir = "transparent_photos_front"
+output_file_name = "/mnt/g/My Drive/RootPlotOutput/montage.png"
+usePlus0 = false #whether to use the "+0+0" syntax
+eogAtEnd = true #whether to try and open the montage using the eog image viewer at the end
+blacklist = ["FAKE-3M 9332+ LOT C203561.png","3M 8955J-DS2-01.png"]
 
 [Analysis]
 use_only_analysis_grade = true #bool
@@ -44,10 +67,27 @@ error_flag_file = "error.flag" #string
 skip_first_line_of_tsv_file = true #bool
 maskname_tsv_column_index = 2 #unsigned int
 exer1_tsv_column_index = 3 #unsigned int
-size_column_index = 25 #unsigned int
+headsize_tsv_column_index = 25 #unsigned int, column Z, headSize
 number_of_exercises = 12 # int says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
-analysis_grade_tsv_column_index = 20 #unsigned int
-testerID_tsv_column_index = 16 #unsigned int 
+analysis_grade_tsv_column_index = 20 #unsigned int, col U
+testerID_tsv_column_index = 16 #unsigned int, col Q
+date_tsv_column_index = 17 #uint, col R, "YYYY_MM_DD"
+maxJawCm_tsv_column_index = 18 #uint, col S
+protocol_tsv_column_index = 19 #uint, col T
+queryResult_tsv_column_index = 21 #uint, col V
+
+[Scoring]
+score_file = "scores.txt"
+#score_file = "/mnt/g/My\ Drive/RootPlotOutput/scores.txt" 
+points_2xCrash25_2xOSHA_withGrimaceStored = 50
+points_2xC25_1xOSHA_withGrimaceStored = 25
+points_2xC25 = 20 
+points_1xC25_2xOSHA_withGrimaceStored = 15 
+points_1xCrash25_1xOSHA_withGrimaceStored = 12 
+points_2xOSHA_withGrimaceStored = 10 
+points_1xCrash25 = 5
+points_1xOSHA_withGrimaceStored = 2
+points_1xCrash25short = 0.6 
 
 [Histogram_Graphics]
 sizePixelsX = 1660
@@ -87,11 +127,14 @@ histSize = 3
 entryTextAll = "All sizes"
 entryTextLg = "Known Lg Heads"
 entryTextSm = "Known Sm Heads"
+entryTextIQR = "Known IQR Heads"
 colorAll = 600 #=kBlue
 colorLg = 432 #=kCyan
 colorSm = 616 #=kMagenta
+colorIQR = 516 #temp
 fillStyleLg = 1001 #1001 = solid, #4050=translucent fill
 fillStyleSm = 0 #0 = hollow
+fillStyleIQR = 0 #0 = hollow
     #See "Fill Area style" https://root.cern.ch/doc/master/classTAttFill.html
 sizeHistDrawOption = "samehist"
 

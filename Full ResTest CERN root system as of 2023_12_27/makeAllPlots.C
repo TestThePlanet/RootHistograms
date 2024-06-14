@@ -1,6 +1,16 @@
 #ifdef __CLING__
 #pragma cling optimize(0)
 #endif
+
+/* 
+#TOC
+#TomlDeclare
+#TomlGet
+#StructHist
+#Prototypes
+#READFILE
+*/ 
+
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -53,11 +63,25 @@ enum FeatureState { enable = true, disable = false };
 enum SigmoidOption{S_abs,S_erf,S_tanh, S_gd, S_algeb, S_atan, S_absalgeb};
 enum ColorScheme { trafficLight, trafficLightFaded, blueberry, LUT1, LUT2, grayGreen, blackWhite};
 enum BkgColorScheme { White, OffWhite, Dark };
-enum sizeCode{Lg=0,Sm,NOSIZE,SIZEMAX};
+enum sizeCode{Lg=0,Sm,IQR,NOSIZE,SIZEMAX};
+//IQR
 enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
 
-struct Settings{
+struct ScoreWeights{
+    float points_2xCrash25_2xOSHA_withGrimaceStored;
+    float points_2xC25_1xOSHA_withGrimaceStored;
+    float points_2xC25;
+    float points_1xC25_2xOSHA_withGrimaceStored;
+    float points_1xCrash25_1xOSHA_withGrimaceStored;
+    float points_2xOSHA_withGrimaceStored;
+    float points_1xCrash25;
+    float points_1xOSHA_withGrimaceStored;
+    float points_1xCrash25short;
+};
+struct Settings{    // #TomlDeclare
+
     bool load(std::string tomlfile);
+    void debug(int thresh,std::string msg);
 
     //[SinglePlotMode]
     bool single_plot_mode_enabled;
@@ -66,7 +90,9 @@ struct Settings{
     //[Output]
     bool save_plots_enabled;
     bool save_with_HMFF_prefix;
+    std::string low_contrib_count_prefix;
     bool X11_persistence;
+    int output_print_level;
 
     //[Analysis]
     bool use_only_analysis_grade;
@@ -78,10 +104,18 @@ struct Settings{
     bool skip_first_line_of_tsv_file;
     unsigned int maskname_tsv_column_index;
     unsigned int exer1_tsv_column_index;
-    unsigned int size_column_index;
+    unsigned int headSize_tsv_column_index;
     int number_of_exercises;
     unsigned int analysis_grade_tsv_column_index;
     unsigned int testerID_tsv_column_index;
+    unsigned int date_tsv_column_index;
+    unsigned int maxJawCm_tsv_column_index;
+    unsigned int protocol_tsv_column_index;
+    unsigned int queryResult_tsv_column_index;
+
+    //[Scoring]
+    std::string score_file_name = "scores.txt";
+    ScoreWeights sw;
 
     //[Histogram_Graphics]
     int sizePixelsX;
@@ -121,11 +155,14 @@ struct Settings{
     std::string Legend_entryTextAll;
     std::string Legend_entryTextLg;
     std::string Legend_entryTextSm;
+    std::string Legend_entryTextIQR;
     int Legend_colorAll;
     int Legend_colorLg;
     int Legend_colorSm;
+    int Legend_colorIQR;
     int Legend_fillStyleLg;
     int Legend_fillStyleSm;
+    int Legend_fillStyleIQR;
     std::string Legend_sizeHistDrawOption;
 
     //[Arrow]
@@ -226,12 +263,19 @@ bool Settings::load(std::string tomlfile){
         return ret;
     }
 
+    // #TomlGet
     single_plot_mode_enabled=cfg.at_path("SinglePlotMode.single_plot_mode_enabled").value_or( false );  
     which_one 			    =cfg.at_path("SinglePlotMode.which_one").value_or( "3M Aura 9210+"sv ); 
 
     save_plots_enabled 		=cfg.at_path("Output.save_plots_enabled").value_or( true ); 
     save_with_HMFF_prefix 	=cfg.at_path("Output.save_with_HMFF_prefix").value_or( true ); 
+    low_contrib_count_prefix =cfg.at_path("Output.low_contrib_count_prefix").value_or( "L_" ); 
+    if(low_contrib_count_prefix.length() > 7) 
+        low_contrib_count_prefix = low_contrib_count_prefix .substr(0,7);
+
     X11_persistence  		=cfg.at_path("Output.X11_persistence").value_or( true );  
+    output_print_level      = cfg.at_path("Output.print_level").value_or( 0 );  
+
 
     use_only_analysis_grade	=cfg.at_path("Analysis.use_only_analysis_grade").value_or( true ); 
     use_sizes 			    =cfg.at_path("Analysis.use_sizes").value_or( true ); 
@@ -240,11 +284,16 @@ bool Settings::load(std::string tomlfile){
     skip_first_line_of_tsv_file 	=cfg.at_path("TSV.skip_first_line_of_tsv_file").value_or( true ); 
     maskname_tsv_column_index 		=cfg.at_path("TSV.maskname_tsv_column_index").value_or( 2 ); 
     exer1_tsv_column_index 			=cfg.at_path("TSV.exer1_tsv_column_index").value_or( 3 ); 
-    size_column_index 			    =cfg.at_path("TSV.size_column_index").value_or( 25 ); 
+    headSize_tsv_column_index 		=cfg.at_path("TSV.headSize_tsv_column_index").value_or( 25 ); 
     number_of_exercises 			=cfg.at_path("TSV.number_of_exercises").value_or( 12 ); 
     analysis_grade_tsv_column_index	=cfg.at_path("TSV.analysis_grade_tsv_column_index").value_or( 20 ); 
     testerID_tsv_column_index 		=cfg.at_path("TSV.testerID_tsv_column_index").value_or( 16 );  
     protocol_tsv_column_index		=cfg.at_path("TSV.protocol_tsv_column_index").value_or( 19 );  
+
+    
+    date_tsv_column_index =cfg.at_path("TSV.date_tsv_column_index").value_or( 17 );  
+    maxJawCm_tsv_column_index = cfg.at_path("TSV.maxJawCm_tsv_column_index").value_or(18);
+    queryResult_tsv_column_index = cfg.at_path("TSV.queryResult_tsv_column_index").value_or(21);
     error_flag_file 			    =cfg.at_path("TSV.error_flag_file").value_or( "error.flag"sv ); 
 
     Legend_HMSideSwitchThresh  = cfg.at_path("Legend.HMSideSwitchThresh").value_or(5000.0);
@@ -262,11 +311,14 @@ bool Settings::load(std::string tomlfile){
     Legend_entryTextAll  = cfg.at_path("Legend.entryTextAll").value_or("All sizes");
     Legend_entryTextLg  = cfg.at_path("Legend.entryTextLg").value_or("Known Lg Heads");
     Legend_entryTextSm  = cfg.at_path("Legend.entryTextSm").value_or("Known Sm Heads");
+    Legend_entryTextIQR  = cfg.at_path("Legend.entryTextIQR").value_or("Known IQR Heads");
     Legend_colorAll = cfg.at_path("Legend.colorAll").value_or(600);//600=kBlue
     Legend_colorLg = cfg.at_path("Legend.colorLg").value_or(432);//432=kCyan
     Legend_colorSm = cfg.at_path("Legend.colorSm").value_or(616);//616=kMagenta
+    Legend_colorIQR = cfg.at_path("Legend.colorIQR").value_or(516);//616=kMagenta
     Legend_fillStyleLg = cfg.at_path("Legend.fillStyleLg").value_or(1001); // #1001 = solid, #4050
     Legend_fillStyleSm = cfg.at_path("Legend.fillStyleSm").value_or(0); //0 = hollow
+    Legend_fillStyleIQR = cfg.at_path("Legend.fillStyleIQR").value_or(0); //0 = hollow
     Legend_sizeHistDrawOption  = cfg.at_path("Legend.sizeHistDrawOption").value_or("samehist");
 
     Arrow_useHarmMean=cfg.at_path("Arrow.useHarmMean ").value_or( true);
@@ -283,6 +335,18 @@ bool Settings::load(std::string tomlfile){
     ArrowText_upperNDC 	=cfg.at_path("ArrowText.upperNDC ").value_or( 0.910788);
     ArrowText_leftOffset	=cfg.at_path("ArrowText.leftOffset ").value_or( -0.015);
     ArrowText_rightOffset=cfg.at_path("ArrowText.rightOffset ").value_or( 0.15);
+
+    //[Scoring]
+    score_file_name =cfg.at_path("Scoring.score_file").value_or( "scores.txt");
+    sw.points_2xCrash25_2xOSHA_withGrimaceStored = cfg.at_path("Scoring.points_2xCrash25_2xOSHA_withGrimaceStored").value_or(50);
+    sw.points_2xC25_1xOSHA_withGrimaceStored = cfg.at_path("Scoring.points_2xC25_1xOSHA_withGrimaceStored").value_or(25);
+    sw.points_2xC25 = cfg.at_path("Scoring.points_2xC25").value_or(20);
+    sw.points_1xC25_2xOSHA_withGrimaceStored = cfg.at_path("Scoring.points_1xC25_2xOSHA_withGrimaceStored").value_or(15);
+    sw.points_1xCrash25_1xOSHA_withGrimaceStored = cfg.at_path("Scoring.points_1xCrash25_1xOSHA_withGrimaceStored").value_or(12);
+    sw.points_2xOSHA_withGrimaceStored = cfg.at_path("Scoring.points_2xOSHA_withGrimaceStored").value_or(10);
+    sw.points_1xCrash25 = cfg.at_path("Scoring.points_1xCrash25").value_or(5);
+    sw.points_1xOSHA_withGrimaceStored = cfg.at_path("Scoring.points_1xOSHA_withGrimaceStored").value_or(2);
+    sw.points_1xCrash25short = cfg.at_path("Scoring.points_1xCrash25short").value_or(0.6);
 
     sizePixelsX =cfg.at_path("Histogram_Graphics.sizePixelsX").value_or( 1660); 
     sizePixelsY =cfg.at_path("Histogram_Graphics.sizePixelsY").value_or( 989); 
@@ -531,11 +595,16 @@ bool Settings::load(std::string tomlfile){
 
     return ret;
 } //load toml
+
+void Settings::debug(int thresh,std::string msg){
+    if(output_print_level >= thresh)
+        std::cout<<msg<<std::endl;
+}
 ///////////////////////////////////////////////////////////////////
 ///////////////////////// End Settings /////////////////////////////
 ///////////////////////////////////////////////////////////////////
 
-struct Hist{
+struct Hist{ // #StructHist
     bool is_sorted;
     bool has_cdf;
     float cdf[nbins+1];
@@ -555,11 +624,157 @@ struct Hist{
     float Get_Median(){ return Percentile2X(0.5f); }
     float Get_HarmonicMean();
 };
+struct MaskUserCombo{
+    float harMean;
+    float _harMeanTally = 0.0f;
+    float n = 0.0f;
+    std::string holdDate = "";
+    std::unordered_map<std::string, int> protocol_counts; //index with protocol
+    std::unordered_map<std::string, int> protocol_counts_cpy; //a copy consumed by scoreCombo
+    void Fill(float x){
+        _harMeanTally += 1.0f/x;
+        n += 1.0f;
+        harMean = n/_harMeanTally;
+    }
+    void copyProtocolCounts(){ protocol_counts_cpy.insert(protocol_counts.begin(), protocol_counts.end()); }
+    float scoreCombo(const ScoreWeights& sw); //produce a score for this combo.
+    void increment_protocol(std::string protocol, bool hold);
+
+};
+float MaskUserCombo::scoreCombo(const ScoreWeights& sw){
+    //Score a combination of user and mask
+    static const std::string OG  = "OSHAwGrimaceStored";
+    static const std::string C25 = "Crash2.5";
+    static const std::string F25s= "FTtP2.5 short";
+    static const std::string C25s = "Crash2.5short";
+    //static const OnoG= "OSHAwNoGrimaceRecord";
+    //static const CU = "CrashUM";
+    //static const C40 = "Crash4.0";
+    //static const CSA = "CSA";
+    //static const CSAz= "CSA Z94.4-2018";
+    //static const CUKa = "CrashUMkids adversarial";
+    //static const xxx = "CUSTOM - lying in bed";
+    //static const GT = "Ground Truth"; //hold
+    //static const CJ = "Crown Jewel";//hold
+
+    if(protocol_counts_cpy[C25] >= 2){
+        protocol_counts_cpy[C25] -= 2;
+        if(protocol_counts_cpy[OG] >= 2){
+            protocol_counts_cpy[OG] -= 2;
+            return sw.points_2xCrash25_2xOSHA_withGrimaceStored + scoreCombo(sw);
+        } else if(protocol_counts_cpy[OG] == 1){
+            protocol_counts_cpy[OG] -= 1;
+            return sw.points_2xC25_1xOSHA_withGrimaceStored + scoreCombo(sw);
+        }
+        else{
+            return sw.points_2xC25+ scoreCombo(sw);
+        }
+    } else if(protocol_counts_cpy[C25] >= 1){
+        protocol_counts_cpy[C25] -= 1;
+        if(protocol_counts_cpy[OG] >= 2){
+            protocol_counts_cpy[OG] -= 2;
+            return sw.points_1xC25_2xOSHA_withGrimaceStored + scoreCombo(sw);
+        } else if(protocol_counts_cpy[OG] == 1){
+            protocol_counts_cpy[OG] -= 1;
+            return sw.points_1xCrash25_1xOSHA_withGrimaceStored + scoreCombo(sw);
+        }
+        else{
+            return sw.points_1xCrash25 + scoreCombo(sw);
+        }
+    } else if(protocol_counts_cpy[OG] >= 2){
+        protocol_counts_cpy[OG] -= 2;
+        return sw.points_2xOSHA_withGrimaceStored+ scoreCombo(sw);
+    } else if(protocol_counts_cpy[OG] == 1){
+        protocol_counts_cpy[OG] -= 1;
+        return sw.points_1xOSHA_withGrimaceStored + scoreCombo(sw);
+    }
+    else if(protocol_counts_cpy[C25s] >= 1){
+        protocol_counts_cpy[C25s] -= 1;
+        return sw.points_1xCrash25short + scoreCombo(sw);
+    }
+    else return 0.0f;
+     //need to truncate out " extended*", followe by maybe a comma at the end., or ", Extended"
+     //or if the name ends in " ##", exclude that. 
+     //hold needs to be at the loop level since it is not tied to any particular protocol   .
+}
+struct User{
+    float score = 0.0f;
+    std::unordered_map<std::string, MaskUserCombo*> maskUserComboMap; //index with mask name
+    float scoreUser(const ScoreWeights& sw);
+    void include(std::string maskname, std::string protocol, bool hold);
+    ~User(){ 
+        for (const auto& pair : maskUserComboMap) 
+            delete pair.second; 
+    }
+};
+void User::include(std::string maskname, std::string protocol, bool hold){
+    if ( std::unordered_map<std::string, MaskUserCombo*>::iterator it = maskUserComboMap.find(maskname);
+            it != maskUserComboMap.end()) { //This mask has been seen already. Fill the existing 
+        maskUserComboMap[maskname]->increment_protocol(protocol, hold);
+    } else {//New mask, create a new combo
+        MaskUserCombo* combo = new MaskUserCombo();
+        combo->protocol_counts[protocol] = 1;
+        maskUserComboMap[maskname] = combo;
+    }
+}
+void MaskUserCombo::increment_protocol(std::string protocol, bool hold){
+    if ( std::unordered_map<std::string, int>::iterator it = protocol_counts.find(protocol);
+            it != protocol_counts.end()) { //This protocol has been seen already. Fill the existing 
+        if( not hold) protocol_counts[protocol] += 1;
+    } else {//New mask, create a new combo
+        protocol_counts[protocol] = 1;
+    }
+}
+
+
+float User::scoreUser(const ScoreWeights& sw){
+    for (const auto& pair : maskUserComboMap) {
+        pair.second->copyProtocolCounts();
+        score += pair.second->scoreCombo(sw);
+    }
+    return score;
+}
+
+struct HoldStateMachine{
+    bool is_continuation = false;
+    int dateState= -1;
+    std::string maskNameState  = "";
+    std::string testerIDSstate = "";
+    std::string protocolState  = "";
+    void reset(){ 
+        is_continuation = false;
+        dateState = -1;
+        maskNameState  = "";
+        testerIDSstate = "";
+        protocolState  = "";
+    }
+    void set(int dateJ2000, std::string maskname, std::string testerID, std::string protocol) {
+        if(dateJ2000 < 0){ //blank or invalid date, reset.
+            reset();
+        } else{ 
+            is_continuation = (dateState > 0 and 
+                    dateState == dateJ2000 and 
+                    maskNameState == maskname and 
+                    testerIDSstate == testerID and
+                    protocolState == protocol);
+            dateState = dateJ2000;
+            maskNameState = maskname;
+            testerIDSstate = testerID;
+            protocolState = protocol;
+        }
+    }
+
+};
+
+
+// #Prototypes
 std::vector<std::string> parseTSVLine(const std::string& tsv_line);
 float Str2float(std::string& token);
 int   Str2int(std::string& token);
 bool  Str2bool(std::string& token);
 sizeCode Str2size(std::string s);
+float dateTimeStr_to_J2000(std::string dateTimeStr);
+int dateStr_to_J2000(std::string dateStr);
 float* generateLinBinning();
 float* generateLogBinning();
 TF2* makeGrad(float ymax);
@@ -580,6 +795,9 @@ Hist::Hist(string title, float* linbinning, const Settings& cfg): is_sorted(fals
             nbins,linbinning);
     histBySize[Sm] = new TH1F((title+" Sm").c_str(), 
             (title+" Sm;"+cfg.x_axis_title+";"+cfg.y_axis_title).c_str(), 
+            nbins,linbinning);
+    histBySize[IQR] = new TH1F((title+" IQR").c_str(), 
+            (title+" IQR;"+cfg.x_axis_title+";"+cfg.y_axis_title).c_str(), 
             nbins,linbinning);
     histBySize[NOSIZE] = new TH1F((title+" no size").c_str(), 
             (title+" no size;"+cfg.x_axis_title+";"+cfg.y_axis_title).c_str(), 
@@ -646,6 +864,7 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
         return;
     }
 
+    cfg.debug(3,"start makeAllPlots");
     { //Check if there's an error flag, and if so, don't run.
         std::ifstream flag_file(cfg.error_flag_file);
         if (flag_file.good()){
@@ -676,6 +895,7 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
                      
     if( cfg.single_plot_mode_enabled) std::cout<<"Single Plot Mode ENABLED, see single_plot_mode_enabled"<<std::endl;
     std::unordered_map<std::string, Hist*> hMap;
+    std::unordered_map<std::string, User*> users;
 	CMSStyle(); 
 	float* linbinning = generateLinBinning();
     static const float grad_height = max(75.f,cfg.histogram_ymax+1.f);//the float argument (75) is the height that the gradient will go up to. anything pretty big is ok
@@ -687,53 +907,104 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
         return;
     }
 
+    cfg.debug(4,"start readfile");
+
     //      ____  _________    ____     ____________
     //     / __ \/ ____/   |  / __ \   / ____/  _/ /__
     //    / /_/ / __/ / /| | / / / /  / /_   / // / _ \
     //   / _, _/ /___/ ___ |/ /_/ /  / __/ _/ // /  __/
     //  /_/ |_/_____/_/  |_/_____/  /_/   /___/_/\___/
-    //  READFILE
+    //  #READFILE
+    { //while namespace
     std::string tsv_line;
     int jline=0; //tsv line number counter.
+    HoldStateMachine hold;
+    //bool hold = false;
+    //int holdState = -1; //-1 means continue, >0 represents a J2000 date
+    int dateJ2000;
+    size_t pos;
+    bool is_analysis_grade;
+    string dateStr;
+    string maskname;
+    string testerID;
+    string protocol;
     while (std::getline(inputFile, tsv_line)) { //for every line
         jline++; 
         if(cfg.skip_first_line_of_tsv_file and jline == 1) continue;
         // Parse the line into tokens
         tsv_line.erase(std::remove(tsv_line.begin(), tsv_line.end(), ','), tsv_line.end());
-
         std::vector<std::string> tokens = parseTSVLine(tsv_line);
 
-	//Guard against invalid lines
+        cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   jline "+std::to_string(jline)+" top of while.");
+
+        //Guard against invalid lines
         if(tokens.size() <= cfg.exer1_tsv_column_index){
             std::cerr<<"ERROR nogo line "<<jline<<std::endl;
-        } else if(cfg.use_sizes and tokens.size() <= cfg.size_column_index ){
+        } else if(cfg.use_sizes and tokens.size() <= cfg.headSize_tsv_column_index ){
             std::cerr<<"Warning Unable to access sizes due to line "<<jline<<std::endl;
         } else if(tokens.size() < cfg.exer1_tsv_column_index + cfg.number_of_exercises) {
             std::cerr<<"ERROR weird length line "<<jline<<std::endl;
         } else{ //line not obviously invalid
-            if(jline % 100 == 0) std::cout<<"readln "<<jline<<std::endl;
+            if(jline % 10 == 0) std::cout<<"readln "<<jline<<std::endl;
 
+            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   readln");
             if(cfg.use_only_analysis_grade and tokens.size() < cfg.analysis_grade_tsv_column_index){
                 std::cerr<<"Warning line too short for analysis grade "<<jline<<std::endl;
                 continue;
             }
             sizeCode s = NOSIZE;
-            if(cfg.use_sizes and tokens.size() > cfg.size_column_index ){
-                s = Str2size(tokens[cfg.size_column_index]);
+            if(cfg.use_sizes and tokens.size() > cfg.headSize_tsv_column_index ){
+                s = Str2size(tokens[cfg.headSize_tsv_column_index]);
             }
-            bool is_analysis_grade = Str2bool(tokens[cfg.analysis_grade_tsv_column_index]);
+
+            //Get all the data 
+            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   getdata");
+            is_analysis_grade = Str2bool(tokens[cfg.analysis_grade_tsv_column_index]);
             if(cfg.use_only_analysis_grade and not is_analysis_grade){
                 //std::cout<<"line rejected for non-analysis grade tag "<<jline<<std::endl;
                 continue;
             }
+            dateStr = tokens[cfg.date_tsv_column_index]; //string, blank or YYYY_MM_DD
+            dateJ2000 = dateStr_to_J2000(dateStr);
+            testerID = tokens[cfg.testerID_tsv_column_index];
+            protocol = tokens[cfg.protocol_tsv_column_index];
+            //string queryResult = tokens[cfg.queryResult_tsv_column_index];
+            //in the set of {"","FFP3","P2","N95","R95","KN95","ASTM F3502-21", "GB19083-2010", "KF94", "N100","water vapor","N99","FFP3, N95"...others
+            //string maxJawCm = tokens[cfg.maxJawCm_tsv_column_index]; //blank or float
+            maskname = tokens[cfg.maskname_tsv_column_index];
 
-            //if the mask on this line has been seen before, find its entry in map. 
-            string maskname = tokens[cfg.maskname_tsv_column_index];
+            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   finish getdata");
+
+            //Clean the mask name
             std::replace(maskname.begin(), maskname.end(),'/','_'); //Guard names against /
             std::replace(maskname.begin(), maskname.end(),'\'','_'); //Guard names against '
-            std::unordered_map<std::string, Hist*>::iterator it = hMap.find(maskname);
 
-            if (it != hMap.end()) { //This mask has been seen already. Fill the existing histogram
+            if( (pos = maskname.find(" extended")) != std::string::npos){
+                maskname.erase(pos);
+                hold.set(dateJ2000, maskname, testerID, protocol);
+            } 
+            else if( (pos = maskname.find(" Extended")) != std::string::npos){
+                maskname.erase(pos);
+                hold.set(dateJ2000, maskname, testerID, protocol);
+            } 
+            else if (maskname.size() >= 3 && 
+                    maskname[maskname.size() - 3] == ' ' && 
+                    isdigit(maskname[maskname.size() - 2]) && 
+                    isdigit(maskname[maskname.size() - 1]) && 
+                    maskname != "Breathe 99") {
+                maskname.pop_back(); 
+                maskname.pop_back(); 
+                maskname.pop_back(); 
+                hold.set(dateJ2000, maskname, testerID, protocol);
+            } 
+            else hold.reset(); 
+            //end clean the mask name
+
+
+            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   end mess with mask name: "+maskname);
+
+            if ( std::unordered_map<std::string, Hist*>::iterator it = hMap.find(maskname);
+                    it != hMap.end()) { //This mask has been seen already. Fill the existing histogram
                 //int i=0;
                 //for (;i<cfg.number_of_exercises;i++){
                 for (int i=0;i<cfg.number_of_exercises;i++){
@@ -756,14 +1027,63 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
                 hMap[maskname] = newHistogram;
             } //end else 
 
-            string testerID = tokens[cfg.testerID_tsv_column_index];
             if(not isALlWhiteSpace(testerID))
                 hMap[maskname]->unique_testers.insert(testerID);
-	    string protocol = tokens[cfg.protocol_tsv_column_index];
+
+            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   start user-mask combos "+testerID+" "+protocol);
+            //Fill in users and user-mask combos
+            if ( std::unordered_map<std::string, User*>::iterator uit = users.find(testerID);
+                    uit != users.end()) { //This user has been seen already. Fill the existing 
+                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      user already seen");
+                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      reach for user");
+                users[testerID]->include(maskname, protocol, hold.is_continuation);
+
+                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      start filling");
+                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      user score:");
+                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"        "+std::to_string(users[testerID]->score));
+                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      user-mask n:");
+                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"        "+std::to_string(users[testerID]->maskUserComboMap[maskname]->n));
+                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      survived!:");
+                //mask fakes a digit counter, no new date, and new tester.
+                //situation: not new user, but is new mask. 
+
+                for (int i=0;i<cfg.number_of_exercises;i++){
+                    float x = Str2float(tokens[cfg.exer1_tsv_column_index + i]);
+                    if(x>=0.f) users[testerID]->maskUserComboMap[maskname]->Fill(x);
+                    else break;
+                }
+                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      end filling");
+            } else {//New user, create a new User
+                cfg.debug(5,"    new user "+testerID);
+                User* user = new User();
+                user->include(maskname, protocol, false);
+                for (int i=0;i<cfg.number_of_exercises;i++){
+                    float x = Str2float(tokens[cfg.exer1_tsv_column_index + i]);
+                    if(x>=0.f) user->maskUserComboMap[maskname]->Fill(x);
+                    else break;
+                }
+                users[testerID] = user;
+            }
+            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   tail of while, end user-mask combos ");
 
         } //end else ok line
     } //end while every tsv line
+
+    }//end while namespace
     inputFile.close();
+
+    cfg.debug(4,"end readfile");
+
+    if ( std::ofstream score_file(cfg.score_file_name);
+            score_file.is_open()) {
+        for (const auto& pair : users) {
+            score_file << pair.first << " " << pair.second->scoreUser(cfg.sw) << std::endl;
+        }
+        score_file.close();
+    } else {
+        std::cout<<"Error! Unable to write score file due to a file IO problem"<<std::endl;
+    }
+    cfg.debug(4,"end scoring");
 
     if(cfg.ymax_setting >= global_full_auto){
         static const float ymax_margin = 1.10f;//CFGTODO
@@ -1154,30 +1474,32 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
         PrettyHist(Aoutline, kBlack, cfg.Legend_histSize,0);
         PrettyHist(Alegendfill, kBlack, cfg.Legend_histSize,0);*/
         PrettyFillColor(hist->histBySize[Lg], cfg.Legend_colorLg);
-
         hist->histBySize[Lg]->SetFillStyle(cfg.Legend_fillStyleLg);//Experimental
-
-
-        
         hist->histBySize[Lg]->Draw(cfg.Legend_sizeHistDrawOption.c_str());
 
         //Small size histogram
         PrettyHist(  hist->histBySize[Sm],cfg.Legend_colorSm, cfg.Legend_histSize,0);
         PrettyMarker(hist->histBySize[Sm],cfg.Legend_colorSm, cfg.Legend_markerSize,0);
-
         //PrettyFillColor(hist->histBySize[Sm], cfg.Legend_colorSm);//Experimental
-
         //hist->histBySize[Lg]->SetFillStyle(cfg.Legend_fillStyleSm);//Experimental
         hist->histBySize[Sm]->Draw(cfg.Legend_sizeHistDrawOption.c_str());
 
+        //IQR size histograms
+        PrettyHist(  hist->histBySize[IQR],cfg.Legend_colorIQR, cfg.Legend_histSize,0);
+        PrettyMarker(hist->histBySize[IQR],cfg.Legend_colorIQR, cfg.Legend_markerSize,0);
+        hist->histBySize[IQR]->SetFillStyle(cfg.Legend_fillStyleIQR);//Experimental
+        hist->histBySize[IQR]->Draw(cfg.Legend_sizeHistDrawOption.c_str());
+
+        //Draw the legend.
         leg->AddEntry(hist->histBySize[Lg],cfg.Legend_entryTextLg.c_str() );
+        leg->AddEntry(hist->histBySize[IQR],cfg.Legend_entryTextSm.c_str() );
         leg->AddEntry(hist->histBySize[Sm],cfg.Legend_entryTextSm.c_str() );
         leg->Draw("same");
         gPad->RedrawAxis();
     }
 
     //CODE TO SHOW THE ARROW and "HM"
-    Double_t arrowX = std::max(0,TMath::Log10(hist->Get_HarmonicMean()));
+    Double_t arrowX = std::max(0.0,TMath::Log10(hist->Get_HarmonicMean()));
     Double_t ytop = hist->hist->GetMaximum()/0.95; //Top of the y-axis. TH1->GetYaxis()->GetXmax() incorrectly returns 1 //CFGTODO
     Double_t ymin = ytop*cfg.Arrow_ymin;
     //std::cout<<"ymax_init "<< ymax<<std::endl; //comes out 1 every time F*CK
@@ -1242,8 +1564,11 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
     PrettyPaveText(lowCountWarning);
     lowCountWarning->SetTextAlign(12); //CFGTODO
     lowCountWarning->SetTextColor(kGray+1);//CFGTODO
-    if (hist->unique_testers.size() < 4)//CFGTODO
+    bool apply_lowTester_prefix = false;
+    if (hist->unique_testers.size() < 4){//CFGTODO
+        apply_lowTester_prefix = true;
         lowCountWarning->AddText("Very Low Adversarial Contributor Count");//CFGTODO
+    } 
     lowCountWarning->Draw();
 
     gPad->RedrawAxis();
@@ -1251,10 +1576,19 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
     string fname;
     if(cfg.save_with_HMFF_prefix){
         std::ostringstream prefix;
-        prefix << std::fixed << std::setw(7) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean()*10);
+        if( apply_lowTester_prefix){
+            size_t len_prefix = cfg.low_contrib_count_prefix.length();
+            prefix << cfg.low_contrib_count_prefix << std::fixed << std::setw(7-len_prefix) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean()*10);
+        }else{
+            prefix << std::fixed << std::setw(7) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean()*10);
+        }
+
         fname = "plots/"+prefix.str()+"_"+fname_noext + ".png";//CFGTODO
     } else{
-        fname = "plots/"+fname_noext + ".png";
+        if( apply_lowTester_prefix)
+            fname = "plots/"+cfg.low_contrib_count_prefix+fname_noext + ".png";
+        else
+            fname = "plots/"+fname_noext + ".png";
     }
 	canv->SaveAs(fname.c_str());
 
@@ -1325,6 +1659,81 @@ std::string getCurrentDateTime(const Settings& cfg) {
 sizeCode Str2size(std::string s){
     if(s == "A") return sizeCode::Lg;//CFGTODO
     else if(s == "B") return sizeCode::Sm;//CFGTODO
+    else if(s == "IQR") return sizeCode::IQR;//CFGTODO
     else return sizeCode::NOSIZE;
 }
 
+float dateTimeStr_to_J2000(std::string dateTimeStr){
+    /*
+     * Empty dates yield -1.0
+     * expect dateTimeStr in any of the following formats 
+     * YYYY      //Defaults to Jan 1, 00:00
+     * YYYY_MM 
+     * YYYY_MM_DD 
+     * YYYY_MM_DDTHH 
+     * YYYY_MM_DDTHH:mm
+     * YYYY_MM_DDTHH:mm:ss.ssss
+     * 0123456789012345678 index
+     * 1234567890123456789 len
+     * _,T,:, etc are ignored and can be anything. Interpretation is positional only
+     * JD = 367Y - INT(7(Y + INT((M + 9)/12))/4) - INT(3(INT((7*Y + (M - 9))/700) + 1)/4) + INT(275M/9) + D + 1721028.5 + TIME/24
+     * where all ints can be ignored as long as the division is truncating.
+     * J2000 = JD - 2451545.0
+     */
+    size_t len; 
+    int Y,M = 1, D=1; //Year, month (default is January), day (default is 1st)
+    float H = 0.f, m=0.f, s=0.f;//hour (0-23), min, sec
+    static const float def = -1.f;
+    if((len= dateTimeStr.size()) < 4) return def;
+    try{
+        Y = std::stoi(dateTimeStr.substr(0,4));
+        if(len >= 7){  M = std::stoi(dateTimeStr.substr( 5,2));
+        if(len >= 10){ D = std::stoi(dateTimeStr.substr( 8,2));
+        if(len >= 13){ H = std::stof(dateTimeStr.substr(11,2));
+        if(len >= 16){ m = std::stof(dateTimeStr.substr(14,2));
+        if(len >= 19){ s = std::stof(dateTimeStr.substr(17)); }
+        }}}}
+    } 
+    catch(const std::invalid_argument){ return def; }
+    catch(const std::out_of_range){ return def; }
+
+    return float(367*Y - 
+            (7*(Y + ((M + 9)/12))/4) - 
+            (3*(((7*Y + M - 9)/700) + 1)/4) + 
+            (275*M/9) + D)
+            -730516.5f + (H/24.f) + (m/1440.f) + (s/86400.f);
+}//end dateTimeStr_to_J2000
+int dateStr_to_J2000(std::string dateStr){
+    /*
+     * Due to integer restriction, this will produce a date 0.5 higher than the equivalent date from dateTimeStr.
+     *
+     * Empty dates yield -1
+     * expect dateStr in any of the following formats 
+     * YYYY      //Defaults to Jan 1, 00:00
+     * YYYY_MM 
+     * YYYY_MM_DD 
+     * 0123456789 index
+     * 1234567890 len
+     * _,T,:, etc are ignored and can be anything. Interpretation is positional only
+     * JD = 367Y - INT(7(Y + INT((M + 9)/12))/4) - INT(3(INT((7*Y + (M - 9))/700) + 1)/4) + INT(275M/9) + D + 1721028.5 + TIME/24
+     * where all ints can be ignored as long as the division is truncating.
+     * J2000 = JD - 2451545.0
+     */
+    size_t len; 
+    int Y,M = 1, D=1; //Year, month (default is January), day (default is 1st)
+    static const int def = -1;
+    if((len= dateStr.size()) < 4) return def;
+    try{
+        Y = std::stoi(dateStr.substr(0,4));
+        if(len >= 7){  M = std::stoi(dateStr.substr( 5,2));
+        if(len >= 10){ D = std::stoi(dateStr.substr( 8,2)); }
+        }
+    } 
+    catch(const std::invalid_argument){ return def; }
+    catch(const std::out_of_range){ return def; }
+
+    return 367*Y - 
+            (7*(Y + ((M + 9)/12))/4) - 
+            (3*(((7*Y + M - 9)/700) + 1)/4) + 
+            (275*M/9) + D -730516; 
+}//end dateStr_to_J2000

@@ -32,6 +32,9 @@ output_dir = "_final"
 Overlay_image_size = "400x300" 
 Overlay_top_location = "+1100+80" # 1000+50
 Overlay_bottom_location = "+1100+350" 
+
+SinglePlotMode_enabled = False #bool #Turns on root editor 
+SinglePlotMode_which_one = "3M Aura 9210+" 
 ####################################################
 inlen = len(sys.argv)
 #set ouput_dir
@@ -60,12 +63,15 @@ transphotos_dir2 = os.path.join('.',transphotos_dir2)
 
 plots_dir, ok, all_ok = ut.tomlGetSeq(data, ["Output","plotDir"], all_ok, default_val=plots_dir)
 plots_dir = os.path.join('.',plots_dir)
+
+SinglePlotMode_enabled, ok, all_ok = ut.tomlGetSeq(data, ["SinglePlotMode","single_plot_mode_enabled"], all_ok, default_val=SinglePlotMode_enabled)
+SinglePlotMode_which_one , ok, all_ok = ut.tomlGetSeq(data, ["SinglePlotMode","which_one"], all_ok, default_val=SinglePlotMode_which_one)
 ######################################################################################
 #Check that the directories exist.
 ut.assert_failExits(os.path.exists(plots_dir), f"Error! The plots directory does not exist {plots_dir}")
 ut.assert_failExits(os.path.exists(transphotos_dir), f"Error! The first transparent plots directory does not exist {transphotos_dir}")
 ut.assert_failExits(os.path.exists(transphotos_dir2),f"Error! The second transparent plots directory does not exist {transphotos_dir2}")
-ut.assert_failExits(os.path.exists(output_dir),f"Output directory {output_dir} not found, creating it.")
+ut.ensure_dir(output_dir)
 
 ut.assert_failPrints(all_ok, f"Warning! Unable to read some paramters from the TOML file. Resorting to hard-coded backups")
 
@@ -92,6 +98,11 @@ cnt_1st = 0
 cnt_2nd = 0
 for plot in plots:
     plot_stem = plot[len(plots_dir)+9:]
+    if SinglePlotMode_enabled and SinglePlotMode_which_one != plot_stem:
+        continue
+    elif SinglePlotMode_enabled:
+        print("found",SinglePlotMode_which_one)
+
     plotmorph = os.path.join(transphotos_dir, plot_stem) 
     plotmorph2 = os.path.join(transphotos_dir2, plot_stem) 
     plotmorphout = os.path.join(output_dir, plot[len(plots_dir)+1:] )
