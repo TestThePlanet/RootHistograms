@@ -1074,11 +1074,26 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
 
     cfg.debug(4,"end readfile");
 
+    //Write Scores File.
     if ( std::ofstream score_file(cfg.score_file_name);
             score_file.is_open()) {
-        for (const auto& pair : users) {
-            score_file << pair.first << " " << pair.second->scoreUser(cfg.sw) << std::endl;
+
+        std::vector<std::string> testerIDs;
+        for (const auto& pair : users){
+            testerIDs.push_back(pair.first);
+            pair.second->scoreUser(cfg.sw);
         }
+
+        std::sort(testerIDs.begin(), testerIDs.end(), 
+                [&users](std::string a, std::string b) { return users[a]->score > users[b]->score; });
+
+        for (const auto& testerID : testerIDs) {
+            //std::cout << name << ": " << nameToStruct[name].score << std::endl;
+            score_file << testerID << " " << users[testerID]->score << std::endl;
+        }
+        /*for (const auto& pair : users) {
+            score_file << pair.first << " " << pair.second->scoreUser(cfg.sw) << std::endl;
+        }*/
         score_file.close();
     } else {
         std::cout<<"Error! Unable to write score file due to a file IO problem"<<std::endl;
