@@ -117,9 +117,9 @@ textAlignment = 12
 HMSideSwitchThresh = 100.0
 fontSize = 0.03 
 lowX1 = 0.493969
-Y1 = 0.794606
+Y1 = 0.764523 #0.794606
 lowX2 = 0.595296
-Y2 = 0.891079 
+Y2 = 0.892116 #0.891079 
 highX1 = 0.136912
 highX2 = 0.238239
 markerSize = 20
@@ -131,7 +131,7 @@ entryTextIQR = "Known IQR Heads"
 colorAll = 600 #=kBlue
 colorLg = 432 #=kCyan
 colorSm = 616 #=kMagenta
-colorIQR = 516 #temp
+colorIQR = 417 #=kGreen+1
 fillStyleLg = 1001 #1001 = solid, #4050=translucent fill
 fillStyleSm = 0 #0 = hollow
 fillStyleIQR = 0 #0 = hollow

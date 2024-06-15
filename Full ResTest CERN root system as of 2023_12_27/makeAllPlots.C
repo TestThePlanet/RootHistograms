@@ -1498,7 +1498,7 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
 
         //Draw the legend.
         leg->AddEntry(hist->histBySize[Lg],cfg.Legend_entryTextLg.c_str() );
-        leg->AddEntry(hist->histBySize[IQR],cfg.Legend_entryTextSm.c_str() );
+        leg->AddEntry(hist->histBySize[IQR],cfg.Legend_entryTextIQR.c_str() );
         leg->AddEntry(hist->histBySize[Sm],cfg.Legend_entryTextSm.c_str() );
         leg->Draw("same");
         gPad->RedrawAxis();
