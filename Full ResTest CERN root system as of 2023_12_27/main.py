@@ -60,6 +60,7 @@ def display_latest_eog(plots_dir:str):
     except FileNotFoundError:
         print("eog is not installed. On WSLg, install it with sudo apt-get -y install eog")
         return
+    os.makedirs(plots_dir, exist_ok=True)
     files = [os.path.join(plots_dir, file) for file in os.listdir(plots_dir)]
     if files:
         latest_file = sorted(files, key=os.path.getmtime)[-1]
