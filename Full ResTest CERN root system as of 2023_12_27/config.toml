@@ -19,7 +19,7 @@ which_one = "3M Aura 9210+" #string
 [Output]
 print_level = 5
 run_makeAllPlots_C = true
-delete_preexisting_plots = false #only runs if run_makeAllPlots_C 
+delete_preexisting_plots = true #only runs if run_makeAllPlots_C 
 save_plots_enabled = true
 save_with_HMFF_prefix = true
 low_contrib_count_prefix = "L_"

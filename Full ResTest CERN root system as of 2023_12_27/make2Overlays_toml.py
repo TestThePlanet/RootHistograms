@@ -45,27 +45,27 @@ if inlen > 1:
 if inlen > 2:
     print(f"Warning! This takes at most 1 input. {inlen-1} inputs were specified")
 #############Load params from TOML#######################################
-data,ok = ut.tomlLoad(toml_config_file) 
+tomlData,ok = ut.tomlLoad(toml_config_file) 
 
 all_ok = True
-Overlay_image_size, _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=Overlay_image_size)
-Overlay_top_location, _, all_ok = ut.tomlGetSeq(data, ["Overlay","top_location"], all_ok, default_val=Overlay_top_location)
-Overlay_bottom_location, _, all_ok = ut.tomlGetSeq(data, ["Overlay","bottom_location"], all_ok, default_val=Overlay_bottom_location)
+Overlay_image_size, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","image_size"], all_ok, default_val=Overlay_image_size)
+Overlay_top_location, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","top_location"], all_ok, default_val=Overlay_top_location)
+Overlay_bottom_location, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","bottom_location"], all_ok, default_val=Overlay_bottom_location)
 
-output_dir, ok, all_ok = ut.tomlGetSeq(data, ["Overlay","overlayDir"], all_ok, default_val=output_dir)
+output_dir, ok, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","overlayDir"], all_ok, default_val=output_dir)
 output_dir = os.path.join('.', output_dir)
 
-transphotos_dir, ok, all_ok = ut.tomlGetSeq(data, ["Overlay","transphotos_dir_fronts"], all_ok, default_val=transphotos_dir)
+transphotos_dir, ok, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","transphotos_dir_fronts"], all_ok, default_val=transphotos_dir)
 transphotos_dir = os.path.join('.', transphotos_dir)
 
-transphotos_dir2, ok, all_ok = ut.tomlGetSeq(data, ["Overlay","transphotos_dir_insides"], all_ok, default_val=transphotos_dir2)
+transphotos_dir2, ok, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","transphotos_dir_insides"], all_ok, default_val=transphotos_dir2)
 transphotos_dir2 = os.path.join('.',transphotos_dir2)
 
-plots_dir, ok, all_ok = ut.tomlGetSeq(data, ["Output","plotDir"], all_ok, default_val=plots_dir)
+plots_dir, ok, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDir"], all_ok, default_val=plots_dir)
 plots_dir = os.path.join('.',plots_dir)
 
-SinglePlotMode_enabled, ok, all_ok = ut.tomlGetSeq(data, ["SinglePlotMode","single_plot_mode_enabled"], all_ok, default_val=SinglePlotMode_enabled)
-SinglePlotMode_which_one , ok, all_ok = ut.tomlGetSeq(data, ["SinglePlotMode","which_one"], all_ok, default_val=SinglePlotMode_which_one)
+SinglePlotMode_enabled, ok, all_ok = ut.tomlGetSeq(tomlData, ["SinglePlotMode","single_plot_mode_enabled"], all_ok, default_val=SinglePlotMode_enabled)
+SinglePlotMode_which_one , ok, all_ok = ut.tomlGetSeq(tomlData, ["SinglePlotMode","which_one"], all_ok, default_val=SinglePlotMode_which_one)
 ######################################################################################
 #Check that the directories exist.
 ut.assert_failExits(os.path.exists(plots_dir), f"Error! The plots directory does not exist {plots_dir}")
@@ -75,13 +75,15 @@ ut.ensure_dir(output_dir)
 
 ut.assert_failPrints(all_ok, f"Warning! Unable to read some paramters from the TOML file. Resorting to hard-coded backups")
 
-def backslashify_brackets(fname): #str -> str
+def backslashify_brackets(fname, backslashSpaces = False): #str -> str
     fname = fname.replace(')', '\)')
     fname = fname.replace('(', '\(')
     fname = fname.replace('[', '\[')
     fname = fname.replace(']', '\]')
     fname = fname.replace('{', '\{')
     fname = fname.replace('}', '\}')
+    if backslashSpaces:
+        fname = fname.replace(' ', '\ ')
     return fname 
 
 #Read in lists of images in the plots and transphotos dirs
@@ -91,6 +93,7 @@ plots      = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {
 #plot_stems  = [backslashify_brackets(plot.strip()[8:]) for plot in ls_result]
 transphotos = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir}/*.png")]
 transphotos2 = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir2}/*.png")]
+SinglePlotMode_which_one = backslashify_brackets(SinglePlotMode_which_one.strip(), backslashSpaces = True) + ".png"
 
 i = 0
 cnt_both= 0
@@ -98,6 +101,7 @@ cnt_1st = 0
 cnt_2nd = 0
 for plot in plots:
     plot_stem = plot[len(plots_dir)+9:]
+
     if SinglePlotMode_enabled and SinglePlotMode_which_one != plot_stem:
         continue
     elif SinglePlotMode_enabled:
