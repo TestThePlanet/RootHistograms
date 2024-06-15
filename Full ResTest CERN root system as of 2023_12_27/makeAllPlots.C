@@ -658,38 +658,47 @@ float MaskUserCombo::scoreCombo(const ScoreWeights& sw){
     //static const CJ = "Crown Jewel";//hold
 
     if(protocol_counts_cpy[C25] >= 2){
-        protocol_counts_cpy[C25] -= 2;
+        protocol_counts_cpy[C25] = 0;
+        //protocol_counts_cpy[C25] -= 2;
         if(protocol_counts_cpy[OG] >= 2){
-            protocol_counts_cpy[OG] -= 2;
+            protocol_counts_cpy[OG] = 0;
+            //protocol_counts_cpy[OG] -= 2;
             return sw.points_2xCrash25_2xOSHA_withGrimaceStored + scoreCombo(sw);
         } else if(protocol_counts_cpy[OG] == 1){
-            protocol_counts_cpy[OG] -= 1;
+            protocol_counts_cpy[OG] = 0;
+            //protocol_counts_cpy[OG] -= 1;
             return sw.points_2xC25_1xOSHA_withGrimaceStored + scoreCombo(sw);
         }
         else{
             return sw.points_2xC25+ scoreCombo(sw);
         }
     } else if(protocol_counts_cpy[C25] >= 1){
-        protocol_counts_cpy[C25] -= 1;
+        protocol_counts_cpy[C25] = 0;
+        //protocol_counts_cpy[C25] -= 1;
         if(protocol_counts_cpy[OG] >= 2){
-            protocol_counts_cpy[OG] -= 2;
+            protocol_counts_cpy[OG] = 0;
+            //protocol_counts_cpy[OG] -= 2;
             return sw.points_1xC25_2xOSHA_withGrimaceStored + scoreCombo(sw);
         } else if(protocol_counts_cpy[OG] == 1){
-            protocol_counts_cpy[OG] -= 1;
+            protocol_counts_cpy[OG] = 0;
+            //protocol_counts_cpy[OG] -= 1;
             return sw.points_1xCrash25_1xOSHA_withGrimaceStored + scoreCombo(sw);
         }
         else{
             return sw.points_1xCrash25 + scoreCombo(sw);
         }
     } else if(protocol_counts_cpy[OG] >= 2){
-        protocol_counts_cpy[OG] -= 2;
+        protocol_counts_cpy[OG] = 0;
+        //protocol_counts_cpy[OG] -= 2;
         return sw.points_2xOSHA_withGrimaceStored+ scoreCombo(sw);
     } else if(protocol_counts_cpy[OG] == 1){
-        protocol_counts_cpy[OG] -= 1;
+        protocol_counts_cpy[OG] = 0;
+        //protocol_counts_cpy[OG] -= 1;
         return sw.points_1xOSHA_withGrimaceStored + scoreCombo(sw);
     }
     else if(protocol_counts_cpy[C25s] >= 1){
-        protocol_counts_cpy[C25s] -= 1;
+        protocol_counts_cpy[C25s] = 0;
+        //protocol_counts_cpy[C25s] -= 1;
         return sw.points_1xCrash25short + scoreCombo(sw);
     }
     else return 0.0f;
@@ -935,8 +944,6 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
         tsv_line.erase(std::remove(tsv_line.begin(), tsv_line.end(), ','), tsv_line.end());
         std::vector<std::string> tokens = parseTSVLine(tsv_line);
 
-        cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   jline "+std::to_string(jline)+" top of while.");
-
         //Guard against invalid lines
         if(tokens.size() <= cfg.exer1_tsv_column_index){
             std::cerr<<"ERROR nogo line "<<jline<<std::endl;
@@ -945,9 +952,8 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
         } else if(tokens.size() < cfg.exer1_tsv_column_index + cfg.number_of_exercises) {
             std::cerr<<"ERROR weird length line "<<jline<<std::endl;
         } else{ //line not obviously invalid
-            if(jline % 10 == 0) std::cout<<"readln "<<jline<<std::endl;
+            if(jline % 100 == 0) std::cout<<"readln "<<jline<<std::endl;
 
-            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   readln");
             if(cfg.use_only_analysis_grade and tokens.size() < cfg.analysis_grade_tsv_column_index){
                 std::cerr<<"Warning line too short for analysis grade "<<jline<<std::endl;
                 continue;
@@ -958,7 +964,6 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
             }
 
             //Get all the data 
-            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   getdata");
             is_analysis_grade = Str2bool(tokens[cfg.analysis_grade_tsv_column_index]);
             if(cfg.use_only_analysis_grade and not is_analysis_grade){
                 //std::cout<<"line rejected for non-analysis grade tag "<<jline<<std::endl;
@@ -973,7 +978,6 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
             //string maxJawCm = tokens[cfg.maxJawCm_tsv_column_index]; //blank or float
             maskname = tokens[cfg.maskname_tsv_column_index];
 
-            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   finish getdata");
 
             //Clean the mask name
             std::replace(maskname.begin(), maskname.end(),'/','_'); //Guard names against /
@@ -1001,7 +1005,6 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
             //end clean the mask name
 
 
-            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   end mess with mask name: "+maskname);
 
             if ( std::unordered_map<std::string, Hist*>::iterator it = hMap.find(maskname);
                     it != hMap.end()) { //This mask has been seen already. Fill the existing histogram
@@ -1030,20 +1033,11 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
             if(not isALlWhiteSpace(testerID))
                 hMap[maskname]->unique_testers.insert(testerID);
 
-            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   start user-mask combos "+testerID+" "+protocol);
             //Fill in users and user-mask combos
             if ( std::unordered_map<std::string, User*>::iterator uit = users.find(testerID);
                     uit != users.end()) { //This user has been seen already. Fill the existing 
-                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      user already seen");
-                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      reach for user");
                 users[testerID]->include(maskname, protocol, hold.is_continuation);
 
-                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      start filling");
-                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      user score:");
-                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"        "+std::to_string(users[testerID]->score));
-                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      user-mask n:");
-                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"        "+std::to_string(users[testerID]->maskUserComboMap[maskname]->n));
-                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      survived!:");
                 //mask fakes a digit counter, no new date, and new tester.
                 //situation: not new user, but is new mask. 
 
@@ -1052,9 +1046,7 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
                     if(x>=0.f) users[testerID]->maskUserComboMap[maskname]->Fill(x);
                     else break;
                 }
-                cfg.debug(6 - (jline>630 and jline<650 ? 2:0),"      end filling");
             } else {//New user, create a new User
-                cfg.debug(5,"    new user "+testerID);
                 User* user = new User();
                 user->include(maskname, protocol, false);
                 for (int i=0;i<cfg.number_of_exercises;i++){
@@ -1064,7 +1056,6 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
                 }
                 users[testerID] = user;
             }
-            cfg.debug(5 - (jline>630 and jline<650 ? 2:0),"   tail of while, end user-mask combos ");
 
         } //end else ok line
     } //end while every tsv line
