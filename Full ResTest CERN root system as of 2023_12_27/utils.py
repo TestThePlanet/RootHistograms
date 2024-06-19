@@ -2,7 +2,7 @@ import os,sys
 import subprocess
 import urllib.request
 import time
-
+from inspect import currentframe, getframeinfo
 try:
     import toml
 except ImportError:
@@ -10,7 +10,39 @@ except ImportError:
     import toml
 
 #######################################################################################################################
+#######################################################################################################################
+def check_config_file_version(toml_config_file, config_file_version:int):
+    #Check that the supplied config file has a version that is compatibe with this codebase
+    required_min_config_file_version = 3
 
+    if config_file_version < required_min_config_file_version:
+        print(f"Error! Config file {toml_config_file} is version {config_file_version } which is requires at least version {required_min_config_file_version}")
+        sys.exit()
+
+#######################################################################################################################
+class DebugPrinter:
+    def __init__(self,print_level: int = 3):
+        self.print_level = print_level 
+    def debug(self, thresh:int, message:str = "", indent:int = 0) -> None:
+        frameinfo = getframeinfo(currentframe())
+        #frame = inspect.currentframe().f_back
+        #filename = frame.f_globals.get('__file__', '')
+        filename = frameinfo.filename
+        line_number = frameinfo.lineno
+        #line_number = frame.f_lineno
+        indentStr="    "*indent
+        if self.print_level >= thresh:
+            print(f"{indentStr}{filename} line {line_number}. {message}")
+
+#######################################################################################################################
+def getDebugPrinter(tomlData):
+    print_level, ok, _  = tomlGetSeq(tomlData, ["Output","print_level"], True, default_val=3)
+    if(not ok and print_level > 1):
+        tomlConfigFileName = tomlData["tomlConfigFileName"]
+        print(f"Error Unable to fetch print level from config file {tomlConfigFileName}")
+    return DebugPrinter(print_level)
+
+#######################################################################################################################
 def tomlGet(tomlLoadData, key:str, all_ok = None, default_val = -1):
     #single key
     #tomlLoadData is a nested dictionary, default_val doesn't have to be a int and should match the expected value type.
@@ -31,7 +63,6 @@ def tomlGet(tomlLoadData, key:str, all_ok = None, default_val = -1):
             return default_val, False, False
 
 #######################################################################################################################
-
 def tomlGetSeq(tomlLoadData, key_list, all_ok = None, default_val = -1):
     #list of keys, otherwise just like tomlGet
     if len(key_list) <= 0:
@@ -49,7 +80,6 @@ def tomlGetSeq(tomlLoadData, key_list, all_ok = None, default_val = -1):
                 return default_val, False, False
 
 #######################################################################################################################
-
 def tomlLoad(toml_config_file:str, exit_on_fail:bool = True):
     #Loads the toml config file
     #Takes in the config file path, and a bool exit_on_failure telling whether to crash if there's a problem loading
@@ -74,16 +104,15 @@ def tomlLoad(toml_config_file:str, exit_on_fail:bool = True):
             sys.exit() 
         else:
             print("Warning! Type Error for TOML config file {toml_config_file}: non-string passed.")
-    except TomlDecodeError:
+    except toml.TomlDecodeError:
         if exit_on_fail:
-            print("Error! Unable to decode the TOML config file {toml_config_file}. Exiting!")
+            print(f"Error! Unable to decode the TOML config file {toml_config_file}. Exiting!")
             sys.exit() 
         else:
             print("Warning! Unable to decode the TOML config file {toml_config_file}.")
     return {},False
 
 #######################################################################################################################
-
 def tomlLoadAll(list_of_config_file_names):
     #takes a list of config file names
     #returns a list of dictionaries corresponding to those toml 
@@ -98,17 +127,44 @@ def tomlLoadAll(list_of_config_file_names):
 
 #######################################################################################################################
 #######################################################################################################################
-
-def assert_failPrints(ok, message):
+def assert_failPrints(ok:bool, message:str)->bool:
     if not ok:
         print(message)
+    return ok
 
-def assert_failExits(ok, message):
+#######################################################################################################################
+def assert_failExits(ok:bool, message:str)->None:
     if not ok:
         print(message)
         sys.exit()
 
 #######################################################################################################################
+def ensure_dir(directory_path: str, error_msg = ""):
+    """
+    Makes sure the directory exists. If not creates it. If it can't creat it, crash.
+    """
+    if error_msg == "":
+        error_msg = f"Error, Could not find or create directory {directory_path}"
+    ok = True
+    try:
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+            print(f"    Info: Directory {directory_path} not found. Creating it.")
+    except Exception as e:
+        print(f"Error creating directory: {e}")
+        ok = False
+    assert_failExits(ok, error_msg)
+
+#######################################################################################################################
+
+def is_online() -> bool:
+    try:
+        # Ping Google's DNS server (8.8.8.8) with a single packet
+        subprocess.check_output(["ping", "-c", "1", "8.8.8.8"])
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
 #######################################################################################################################
 
 def Download_Google_Sheet(toml_data):
@@ -122,6 +178,8 @@ def Download_Google_Sheet(toml_data):
     #TOML imputs
     all_ok = True
     GoogleSheet_CSV_URL = "https://docs.google.com/spreadsheets/d/1arv8PObW_O4HMpScei3KAlt0zj1C55v_/gviz/tq?tqx=out:csv&sheet=Main"
+
+    GoogleSheet_redownload , _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","redownload"], all_ok, default_val=True)
     GoogleSheet_CSV_URL, _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","CSV_URL"], all_ok, default_val=GoogleSheet_CSV_URL)
     output_TSV_file_name, _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","output_TSV_file_name"], all_ok, default_val="Main.tsv")
     download_timeout_sec, _, all_ok = tomlGetSeq(toml_data, ["GoogleSheet","download_timeout_sec"], all_ok, default_val=120)
@@ -130,6 +188,10 @@ def Download_Google_Sheet(toml_data):
     if os.path.exists(error_flag_file):
         print("Clearing previous error flag")
         os.remove(error_flag_file) #os.system(f"rm {error_flag_file}")
+
+    if not GoogleSheet_redownload:
+        print("Not downloading the google sheet because toml config has redownload = true.")
+        return True
     
     #Download the file
     print("Downloading the Google Sheet")
@@ -161,4 +223,5 @@ def Download_Google_Sheet(toml_data):
         with open(error_flag_file, 'w') as file:
             file.write('1')
         return False
+
 

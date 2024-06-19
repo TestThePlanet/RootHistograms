@@ -88,11 +88,13 @@ struct Settings{    // #TomlDeclare
     std::string which_one;
 
     //[Output]
-    bool save_plots_enabled;
-    bool save_with_HMFF_prefix;
-    std::string low_contrib_count_prefix;
-    bool X11_persistence;
-    int output_print_level;
+    bool Output_save_plots_enabled;
+    bool Output_save_with_HMFF_prefix;
+    std::string Output_low_contrib_count_prefix;
+    bool Output_X11_persistence;
+    int Output_print_level;
+    std::string Output_plotDir;
+    std::string Output_plotDirUserHMean;
 
     //[Analysis]
     bool use_only_analysis_grade;
@@ -267,15 +269,16 @@ bool Settings::load(std::string tomlfile){
     single_plot_mode_enabled=cfg.at_path("SinglePlotMode.single_plot_mode_enabled").value_or( false );  
     which_one 			    =cfg.at_path("SinglePlotMode.which_one").value_or( "3M Aura 9210+"sv ); 
 
-    save_plots_enabled 		=cfg.at_path("Output.save_plots_enabled").value_or( true ); 
-    save_with_HMFF_prefix 	=cfg.at_path("Output.save_with_HMFF_prefix").value_or( true ); 
-    low_contrib_count_prefix =cfg.at_path("Output.low_contrib_count_prefix").value_or( "L_" ); 
-    if(low_contrib_count_prefix.length() > 7) 
-        low_contrib_count_prefix = low_contrib_count_prefix .substr(0,7);
+    Output_save_plots_enabled 		=cfg.at_path("Output.Output_save_plots_enabled").value_or( true ); 
+    Output_save_with_HMFF_prefix 	=cfg.at_path("Output.Output_save_with_HMFF_prefix").value_or( true ); 
+    Output_low_contrib_count_prefix =cfg.at_path("Output.Output_low_contrib_count_prefix").value_or( "L_" ); 
+    if(Output_low_contrib_count_prefix.length() > 7) 
+        Output_low_contrib_count_prefix = Output_low_contrib_count_prefix .substr(0,7);
 
-    X11_persistence  		=cfg.at_path("Output.X11_persistence").value_or( true );  
-    output_print_level      = cfg.at_path("Output.print_level").value_or( 0 );  
-
+    Output_X11_persistence  		=cfg.at_path("Output.Output_X11_persistence").value_or( true );  
+    Output_print_level      = cfg.at_path("Output.print_level").value_or( 0 );  
+    Output_plotDir = cfg.at_path("Output.plotDir").value_or( "plots" );  
+    Output_plotDirUserHMean = cfg.at_path("Output.plotDirUserHMean").value_or( "plots" );  
 
     use_only_analysis_grade	=cfg.at_path("Analysis.use_only_analysis_grade").value_or( true ); 
     use_sizes 			    =cfg.at_path("Analysis.use_sizes").value_or( true ); 
@@ -597,7 +600,7 @@ bool Settings::load(std::string tomlfile){
 } //load toml
 
 void Settings::debug(int thresh,std::string msg){
-    if(output_print_level >= thresh)
+    if(Output_print_level >= thresh)
         std::cout<<msg<<std::endl;
 }
 ///////////////////////////////////////////////////////////////////
@@ -628,14 +631,17 @@ struct MaskUserCombo{
     float harMean;
     float _harMeanTally = 0.0f;
     float n = 0.0f;
+    std::string maskname;
     std::string holdDate = "";
     std::unordered_map<std::string, int> protocol_counts; //index with protocol
-    std::unordered_map<std::string, int> protocol_counts_cpy; //a copy consumed by scoreCombo
+    //std::unordered_map<std::string, int> protocol_counts_cpy;
     void Fill(float x){
         _harMeanTally += 1.0f/x;
         n += 1.0f;
         harMean = n/_harMeanTally;
     }
+    MaskUserCombo(std::string _maskname): maskname(_maskname){}
+
     void copyProtocolCounts(){ protocol_counts_cpy.insert(protocol_counts.begin(), protocol_counts.end()); }
     float scoreCombo(const ScoreWeights& sw); //produce a score for this combo.
     void increment_protocol(std::string protocol, bool hold);
@@ -644,7 +650,7 @@ struct MaskUserCombo{
 float MaskUserCombo::scoreCombo(const ScoreWeights& sw){
     //Score a combination of user and mask
     static const std::string OG  = "OSHAwGrimaceStored";
-    static const std::string C25 = "Crash2.5";
+    static const std::string C25 = "Crash2.5"; 
     static const std::string F25s= "FTtP2.5 short";
     static const std::string C25s = "Crash2.5short";
     //static const OnoG= "OSHAwNoGrimaceRecord";
@@ -657,60 +663,44 @@ float MaskUserCombo::scoreCombo(const ScoreWeights& sw){
     //static const GT = "Ground Truth"; //hold
     //static const CJ = "Crown Jewel";//hold
 
-    if(protocol_counts_cpy[C25] >= 2){
-        protocol_counts_cpy[C25] = 0;
-        //protocol_counts_cpy[C25] -= 2;
-        if(protocol_counts_cpy[OG] >= 2){
-            protocol_counts_cpy[OG] = 0;
-            //protocol_counts_cpy[OG] -= 2;
-            return sw.points_2xCrash25_2xOSHA_withGrimaceStored + scoreCombo(sw);
-        } else if(protocol_counts_cpy[OG] == 1){
-            protocol_counts_cpy[OG] = 0;
-            //protocol_counts_cpy[OG] -= 1;
-            return sw.points_2xC25_1xOSHA_withGrimaceStored + scoreCombo(sw);
+    float retscore = 0.f;
+
+    if(protocol_counts[C25] >= 2){
+        if(protocol_counts[OG] >= 2){
+            retscore += sw.points_2xCrash25_2xOSHA_withGrimaceStored;
+        } else if(protocol_counts[OG] == 1){
+            retscore += sw.points_2xC25_1xOSHA_withGrimaceStored;
         }
         else{
-            return sw.points_2xC25+ scoreCombo(sw);
+            retscore += sw.points_2xC25;
         }
-    } else if(protocol_counts_cpy[C25] >= 1){
-        protocol_counts_cpy[C25] = 0;
-        //protocol_counts_cpy[C25] -= 1;
-        if(protocol_counts_cpy[OG] >= 2){
-            protocol_counts_cpy[OG] = 0;
-            //protocol_counts_cpy[OG] -= 2;
-            return sw.points_1xC25_2xOSHA_withGrimaceStored + scoreCombo(sw);
-        } else if(protocol_counts_cpy[OG] == 1){
-            protocol_counts_cpy[OG] = 0;
-            //protocol_counts_cpy[OG] -= 1;
-            return sw.points_1xCrash25_1xOSHA_withGrimaceStored + scoreCombo(sw);
+    } else if(protocol_counts[C25] >= 1){
+        if(protocol_counts[OG] >= 2){
+            retscore += sw.points_1xC25_2xOSHA_withGrimaceStored;
+        } else if(protocol_counts[OG] == 1){
+            retscore += sw.points_1xCrash25_1xOSHA_withGrimaceStored;
         }
         else{
-            return sw.points_1xCrash25 + scoreCombo(sw);
+            retscore += sw.points_1xCrash25;
         }
-    } else if(protocol_counts_cpy[OG] >= 2){
-        protocol_counts_cpy[OG] = 0;
-        //protocol_counts_cpy[OG] -= 2;
-        return sw.points_2xOSHA_withGrimaceStored+ scoreCombo(sw);
-    } else if(protocol_counts_cpy[OG] == 1){
-        protocol_counts_cpy[OG] = 0;
-        //protocol_counts_cpy[OG] -= 1;
-        return sw.points_1xOSHA_withGrimaceStored + scoreCombo(sw);
+    } else if(protocol_counts[OG] >= 2){
+        retscore += sw.points_2xOSHA_withGrimaceStored;
+    } else if(protocol_counts[OG] == 1){
+        retscore += sw.points_1xOSHA_withGrimaceStored;
     }
-    else if(protocol_counts_cpy[C25s] >= 1){
-        protocol_counts_cpy[C25s] = 0;
-        //protocol_counts_cpy[C25s] -= 1;
-        return sw.points_1xCrash25short + scoreCombo(sw);
+
+    if(protocol_counts[C25s] >= 1){
+        retscore += sw.points_1xCrash25short;
     }
-    else return 0.0f;
-     //need to truncate out " extended*", followe by maybe a comma at the end., or ", Extended"
-     //or if the name ends in " ##", exclude that. 
-     //hold needs to be at the loop level since it is not tied to any particular protocol   .
+    return retscore;
 }
 struct User{
     float score = 0.0f;
+    std::string ID;
     std::unordered_map<std::string, MaskUserCombo*> maskUserComboMap; //index with mask name
     float scoreUser(const ScoreWeights& sw);
     void include(std::string maskname, std::string protocol, bool hold);
+    User(std::string testerID): ID(testerID){}
     ~User(){ 
         for (const auto& pair : maskUserComboMap) 
             delete pair.second; 
@@ -721,7 +711,7 @@ void User::include(std::string maskname, std::string protocol, bool hold){
             it != maskUserComboMap.end()) { //This mask has been seen already. Fill the existing 
         maskUserComboMap[maskname]->increment_protocol(protocol, hold);
     } else {//New mask, create a new combo
-        MaskUserCombo* combo = new MaskUserCombo();
+        MaskUserCombo* combo = new MaskUserCombo(maskname);
         combo->protocol_counts[protocol] = 1;
         maskUserComboMap[maskname] = combo;
     }
@@ -734,7 +724,6 @@ void MaskUserCombo::increment_protocol(std::string protocol, bool hold){
         protocol_counts[protocol] = 1;
     }
 }
-
 
 float User::scoreUser(const ScoreWeights& sw){
     for (const auto& pair : maskUserComboMap) {
@@ -1047,7 +1036,7 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
                     else break;
                 }
             } else {//New user, create a new User
-                User* user = new User();
+                User* user = new User(testerID);
                 user->include(maskname, protocol, false);
                 for (int i=0;i<cfg.number_of_exercises;i++){
                     float x = Str2float(tokens[cfg.exer1_tsv_column_index + i]);
@@ -1082,9 +1071,6 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
             //std::cout << name << ": " << nameToStruct[name].score << std::endl;
             score_file << testerID << " " << users[testerID]->score << std::endl;
         }
-        /*for (const auto& pair : users) {
-            score_file << pair.first << " " << pair.second->scoreUser(cfg.sw) << std::endl;
-        }*/
         score_file.close();
     } else {
         std::cout<<"Error! Unable to write score file due to a file IO problem"<<std::endl;
@@ -1111,7 +1097,7 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
         if( cfg.single_plot_mode_enabled and mask != cfg.which_one ) continue;
         something_was_found = true;
 
-        if(cfg.save_plots_enabled){
+        if(cfg.Output_save_plots_enabled){
             if(cfg.single_plot_mode_enabled){
                 std::cout<<"Plot and save "<<mask<<" single_plot_mode_enabled = true so no other plot get generated."<<std::endl;
             } 
@@ -1123,7 +1109,7 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
         std::cout<<"Warning! No plot found that matched name which_one = "<<cfg.which_one<<std::endl;
     }
     
-    if(not (cfg.single_plot_mode_enabled and cfg.X11_persistence)){
+    if(not (cfg.single_plot_mode_enabled and cfg.Output_X11_persistence)){
         for (auto& pair : hMap) {
             delete pair.second;
         }
@@ -1265,9 +1251,9 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
                 nbins,linbinning);
     }
 
-    std::cout<<"unique testers: "<<hist->unique_testers.size()<<" #samples "<<hist->hist->Integral()<<std::endl;
+    //std::cout<<"unique testers: "<<hist->unique_testers.size()<<" #samples "<<hist->hist->Integral()<<std::endl;
 
- //   UnitNorm(hist->hist);
+    //UnitNorm(hist->hist);
     double mean = hist->hist->GetMean();
     double stddev = hist->hist->GetStdDev();
     //cout<<"    integral: "<<hist->hist->Integral()<< " mean: "<<mean<<" stdev: "<<stddev<<endl;
@@ -1580,25 +1566,25 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
     gPad->RedrawAxis();
 	//leg->Draw("same");
     string fname;
-    if(cfg.save_with_HMFF_prefix){
+    if(cfg.Output_save_with_HMFF_prefix){
         std::ostringstream prefix;
         if( apply_lowTester_prefix){
-            size_t len_prefix = cfg.low_contrib_count_prefix.length();
-            prefix << cfg.low_contrib_count_prefix << std::fixed << std::setw(7-len_prefix) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean()*10);
+            size_t len_prefix = cfg.Output_low_contrib_count_prefix.length();
+            prefix << cfg.Output_low_contrib_count_prefix << std::fixed << std::setw(7-len_prefix) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean()*10);
         }else{
             prefix << std::fixed << std::setw(7) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean()*10);
         }
 
-        fname = "plots/"+prefix.str()+"_"+fname_noext + ".png";//CFGTODO
+        fname = cfg.Output_plotDir+"/" + prefix.str()+"_"+fname_noext + ".png";//CFGTODO
     } else{
         if( apply_lowTester_prefix)
-            fname = "plots/"+cfg.low_contrib_count_prefix+fname_noext + ".png";
+            fname = cfg.Output_plotDir+"/" + cfg.Output_low_contrib_count_prefix+fname_noext + ".png";
         else
-            fname = "plots/"+fname_noext + ".png";
+            fname = cfg.Output_plotDir+"/" + fname_noext + ".png";
     }
 	canv->SaveAs(fname.c_str());
 
-    if(not (cfg.single_plot_mode_enabled and cfg.X11_persistence)){ //This memory leaks, but who cares.
+    if(not (cfg.single_plot_mode_enabled and cfg.Output_X11_persistence)){ //This memory leaks, but who cares.
         for(int i=0;i<nbins;i++){
             delete histarr[i];
         }

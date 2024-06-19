@@ -87,9 +87,7 @@ def make2Overlays_tomldata(tomlData) -> None:
     
     #Read in lists of images in the plots and transphotos dirs
     #ls_result = os.popen(f"ls -b {plots_dir}/*.png").read().splitlines()
-    #plots      = [backslashify_brackets(plot.strip()) for plot in ls_result]
     plots      = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {plots_dir}/*.png")]
-    #plot_stems  = [backslashify_brackets(plot.strip()[8:]) for plot in ls_result]
     transphotos = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir}/*.png")]
     transphotos2 = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir2}/*.png")]
     SinglePlotMode_which_one = backslashify_brackets(SinglePlotMode_which_one.strip(), backslashSpaces = True) + ".png"

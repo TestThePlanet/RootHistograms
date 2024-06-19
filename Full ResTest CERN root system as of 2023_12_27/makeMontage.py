@@ -14,6 +14,7 @@ tile_sizex = 1024
 tile_sizey = 768
 picDir = "transparent_photos_front"
 output_file_name = "montage.png"
+output_file_name_GDrive = "montage.png"
 usePlus0 = False
 eogAtEnd = True
 
@@ -23,15 +24,18 @@ blacklist = ["FAKE-3M 9332+ LOT C203561.png","3M 8955J-DS2-01.png"]
 data,ok = ut.tomlLoad(toml_config_file)
 all_ok = True
 
-width , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=width )
-height , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=height )
-max_height , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=max_height )
-tile_sizex , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=tile_sizex )
-tile_sizey , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=tile_sizey )
-picDir , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=picDir )
-output_file_name , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=output_file_name )
-usePlus0 , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=usePlus0 )
-eogAtEnd , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=eogAtEnd )
+width , _, all_ok = ut.tomlGetSeq(data, ["Overlay","width"], all_ok, default_val=width )
+height , _, all_ok = ut.tomlGetSeq(data, ["Overlay","height"], all_ok, default_val=height )
+max_height , _, all_ok = ut.tomlGetSeq(data, ["Overlay","max_height"], all_ok, default_val=max_height )
+tile_sizex , _, all_ok = ut.tomlGetSeq(data, ["Overlay","tile_sizex"], all_ok, default_val=tile_sizex )
+tile_sizey , _, all_ok = ut.tomlGetSeq(data, ["Overlay","tile_sizey"], all_ok, default_val=tile_sizey )
+#picDir , _, all_ok = ut.tomlGetSeq(data, ["Overlay","image_size"], all_ok, default_val=picDir )
+copy_to_google_drive, _, all_ok = ut.tomlGetSeq(data, ["ProcessCtrl","copy_to_google_drive"], all_ok, default_val=False )
+output_file_name , _, all_ok = ut.tomlGetSeq(data, ["Overlay","output_file_name"], all_ok, default_val=output_file_name )
+output_file_name_GDrive , _, all_ok = ut.tomlGetSeq(data, ["Overlay","output_file_name_GDrive"], all_ok, default_val=output_file_name )
+usePlus0 , _, all_ok = ut.tomlGetSeq(data, ["Overlay","usePlus0"], all_ok, default_val=usePlus0 )
+eogAtEnd , _, all_ok = ut.tomlGetSeq(data, ["Overlay","eogAtEnd"], all_ok, default_val=eogAtEnd )
+#blacklist , _, all_ok = ut.tomlGetSeq(data, ["Overlay","blacklist"], all_ok, default_val=blacklist) #TODO connect this correctly
 
 ############# Validate params from TOML #######################################
 ut.ensure_dir(picDir)
@@ -86,6 +90,10 @@ print(f"Making the main montage. Sit tight, this takes a couple minutes.")
 st = time.time()
 #print(sub_run_list)
 subprocess.run(sub_run_list)
+
+if copy_to_google_drive:
+    subprocess.run(["cp", output_file_name, output_file_name_GDrive])
+
 et = time.time()
 
 #delete intermediate temp files

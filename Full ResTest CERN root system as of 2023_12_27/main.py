@@ -5,14 +5,8 @@ import string
 import urllib.request
 import time
 import utils as ut
-
-def check_config_file_version(toml_config_file, config_file_version:int):
-    #Check that the supplied config file has a version that is compatibe with this codebase 
-    required_min_config_file_version = 2
-    ut.assert_failExits( config_file_version >= required_min_config_file_version,\
-            f"Error! Config file {toml_config_file} is version {config_file_version } which is requires at least version {required_min_config_file_version}")
-
-#######################################################################################################################
+import make2Overlays_toml
+import copyToGoogleDrive as cgd
 
 def check_config_files(tomlConfigDataList):
     #return same_dir_conflict, deletion_conflict 
@@ -25,17 +19,17 @@ def check_config_files(tomlConfigDataList):
     for tomlData in tomlConfigDataList:
         this_config_file_name = tomlData["tomlConfigFileName"]
         if ut.tomlGetSeq(tomlData, ["Output","run_makeAllPlots_C"], None, default_val=True)[0]:
-            plots_dir, _ = ut.tomlGetSeq(tomlData, ["Output","plotDir"], None, default_val="plots")
-            if plots_dir in plots_dir_dict:
+            plotsDir, _ = ut.tomlGetSeq(tomlData, ["Output","plotDir"], None, default_val="plots")
+            if plotsDir in plots_dir_dict:
 
                 if ut.tomlGetSeq(tomlData, ["Output","delete_preexisting_plots"], None, default_val=False)[0]: #if deleting preivous output
-                    print(f"Error! Config file deletion conflict: calling {this_config_file_name} will **delete** the plots in {plots_dir} created by {plots_dir_dict[plots_dir]}")
+                    print(f"Error! Config file deletion conflict: calling {this_config_file_name} will **delete** the plots in {plotsDir} created by {plots_dir_dict[plotsDir]}")
                     deletion_conflict = True
                 else:
-                    print(f"Warning! Config file overwrite conflict: calling {this_config_file_name} will write plots in {plots_dir} likely overwriting plots created by {plots_dir_dict[plots_dir]}")
+                    print(f"Warning! Config file overwrite conflict: calling {this_config_file_name} will write plots in {plotsDir} likely overwriting plots created by {plots_dir_dict[plotsDir]}")
                     same_dir_conflict = True
             else: 
-                plots_dir_dict[plots_dir] = this_config_file_name 
+                plots_dir_dict[plotsDir] = this_config_file_name 
 
         if ut.tomlGetSeq(tomlData, ["Overlay","run_make2Overlays_toml_py"], None, default_val=True)[0]:
             overlayDir, _ = ut.tomlGetSeq(tomlData, ["Overlay","overlayDir"], None, default_val="_final")
@@ -52,7 +46,6 @@ def check_config_files(tomlConfigDataList):
     return same_dir_conflict, deletion_conflict 
 
 #######################################################################################################################
-
 def display_latest_eog(plots_dir:str):
     try:
         # Check if eog is installed
@@ -64,65 +57,80 @@ def display_latest_eog(plots_dir:str):
     files = [os.path.join(plots_dir, file) for file in os.listdir(plots_dir)]
     if files:
         latest_file = sorted(files, key=os.path.getmtime)[-1]
-        subprocess.Popen(["eog", latest_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, start_new_session=True)
-    
-#######################################################################################################################
+        subprocess.Popen(["eog", latest_file, "&"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, start_new_session=True)
 
+#######################################################################################################################
 def process_config(tomlData):
     #Takes the parsed nested dictionary from the toml config file
-    print("DEBUG: running process_config()") 
-        
+
     this_config_file_name = tomlData["tomlConfigFileName"]
+
     all_ok = True
+    Output_print_level, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","print_level"], all_ok, default_val=3)
+    dp = ut.DebugPrinter(Output_print_level)
+    dp.debug(1,"running process_config()") 
+
     config_file_version, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","config_file_version"], all_ok, default_val=-1)
-    check_config_file_version(this_config_file_name, config_file_version)
+    ut.check_config_file_version(this_config_file_name, config_file_version)
+
+    copy_to_google_drive, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","copy_to_google_drive"], all_ok, default_val=False)
 
     delete_preexisting_plots, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","delete_preexisting_plots"], all_ok, default_val=False)
-    plots_dir, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDir"], all_ok, default_val="plots")
+
+    plotsDir, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDir"], all_ok, default_val="plots")
+    #plotDirGDrive, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDirGDrive"], all_ok, default_val="plots")
 
     delete_preexisting_overlays, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","delete_preexisting_overlays"], all_ok, default_val=False)
     overlayDir, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","overlayDir"], all_ok, default_val="_final")
+    #overlayDirGDrive, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","overlayDirGDrive"], all_ok, default_val="_final")
     single_plot_mode_enabled, _, all_ok = ut.tomlGetSeq(tomlData, ["SinglePlotMode","single_plot_mode_enabled"], all_ok, default_val=False)
     run_makeAllPlots_C, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","run_makeAllPlots_C"], all_ok, default_val=True)
     run_make2Overlays_toml_py, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","run_make2Overlays_toml_py"], all_ok, default_val=True)
     open_main_eog, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","open_main_eog"], all_ok, default_val=True)
     open_overlay_eog, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","open_overlay_eog"], all_ok, default_val=True)
+
+    #score_file, _, all_ok = ut.tomlGetSeq(tomlData, ["Scoring","score_file"], all_ok, default_val="scores.txt")
+    #score_file_GDrive, _, all_ok = ut.tomlGetSeq(tomlData, ["Scoring","score_file_GDrive"], all_ok, default_val="scores.txt")
     if not all_ok:
         print(f"Warning: Problems were encountered while loading toml config file {this_config_file_name}")
 
     ##########################
-    os.makedirs(plots_dir, exist_ok=True)
+    dp.debug(4,f"Making dirs: {plotsDir}")
+    os.makedirs(plotsDir, exist_ok=True)
 
     if run_makeAllPlots_C:
         if delete_preexisting_plots:
-            print(f"Deleting contents of {plots_dir} since Output.delete_preexisting_plots = true in {this_config_file_name}")
-            for file_name in os.listdir(plots_dir):
-                if file_name.endswith(".png"):
-                    os.remove(os.path.join(plots_dir, file_name) )
+            dp.debug(2,f"Deleting contents of {plotsDir} since Output.delete_preexisting_plots = true in {this_config_file_name}")
+            os.system(f"rm {plotsDir}/*.png 2>/dev/null")
+            db.debug(4,f"finished deleting plots in {plotsDir}",1)
 
-        print( "Making Plots" )
+        dp.debug(3,"Making Plots") 
         if single_plot_mode_enabled:
             subprocess.run( ["root", "-l", f'makeAllPlots.C+(\"{this_config_file_name}\")'] )
         else: 
             subprocess.run( ["root", "-l", "-b", "-q", f'makeAllPlots.C+(\"{this_config_file_name}\")'] )
     
         time.sleep(1)
-        print("Plots made")
+        dp.debug(3,"Plots made")
     
         if open_main_eog:
-            display_latest_eog(plots_dir)
+            display_latest_eog(plotsDir)
+
+        cgd.copy_plotsdir(tomlData)
+        cgd.copy_scores(tomlData)
 
     if run_make2Overlays_toml_py:
         if delete_preexisting_overlays:
-            print(f"Deleting contents of {overlayDir} since Overlay.delete_preexisting_overlays = true in {this_config_file_name}")
-            for file_name in os.listdir(overlayDir):
-                if file_name.endswith(".png"):
-                    os.remove(os.path.join(plots_dir, file_name) )
+            db.debug(2,f"Deleting contents of {overlayDir} since Overlay.delete_preexisting_overlays = true in {this_config_file_name}")
+            os.system(f"rm {overlayDir}/*.png 2>/dev/null")
+            db.debug(4,f"finished deleting plots in {overlayDir}",1)
 
-        print( "Making Overlays" )
-        subprocess.run( [sys.executable, "make2Overlays_toml.py", this_config_file_name] ) #TODO this is stupid, make it a funciton
+        db.debug(1,"Making Overlays")
+        make2Overlays_toml.make2Overlays_tomldata(tomlData)
         if open_overlay_eog:
             display_latest_eog(overlayDir)
+
+        cgd.copy_overlays(tomlData)
 
 #######################################################################################################################
 #######################################################################################################################
@@ -159,25 +167,26 @@ if not all_exist:
 tomlData, all_ok = ut.tomlLoad(toml_config_files_active[0], exit_on_fail = True) 
 all_load_ok = all_ok
 
-config_file_version, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","config_file_version"], all_ok, default_val=-1)
-check_config_file_version(toml_config_files_active[0], config_file_version)
+config_file_version,  _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","config_file_version"], all_ok, default_val=-1)
+ut.check_config_file_version(toml_config_files_active[0], config_file_version)
 
-do_git_pull, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","do_git_pull"], all_ok, default_val=True)
-ask_on_git_diff, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","ask_on_git_diff"], all_ok, default_val=True)
-git_diff_verbosity, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","ask_on_git_diff"], all_ok, default_val="info")
-
-GoogleSheet_redownload, _, all_ok = ut.tomlGetSeq(tomlData, ["GoogleSheet","redownload"], all_ok, default_val=True)
-
+do_git_pull,          _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","do_git_pull"], all_ok, default_val=True)
+ask_on_git_diff,      _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","ask_on_git_diff"], all_ok, default_val=True)
+git_diff_verbosity,   _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","ask_on_git_diff"], all_ok, default_val="info")
+GoogleSheet_redownload,_,all_ok = ut.tomlGetSeq(tomlData, ["GoogleSheet","redownload"], all_ok, default_val=True)
 
 ut.assert_failPrints(all_ok, "Warning! Unable to read some paramters from the TOML file. Resorting to hard-coded backups")
 
 ######## Manage Git Pull ##########################
-if do_git_pull:
+is_online = ut.is_online()
+if do_git_pull and is_online:
     print( "Doing git pull" )
     subprocess.run(["git", "stash","-q"])
     subprocess.check_call(["git", "pull", "-q"])
-else:
+elif is_online:
     print("Skipping git pull")
+else:
+    print("No web connection -> skipping git pull")
 
 ########## Note what the git pull changed, #############################################
 for i, (orig, active) in enumerate(zip(toml_config_files, toml_config_files_active)):
@@ -201,7 +210,7 @@ for i, (orig, active) in enumerate(zip(toml_config_files, toml_config_files_acti
                         #Reload the current file as the git-pulled file
                         tomlData, all_ok2 = ut.tomlLoad(toml_config_files_active[0], exit_on_fail = True) 
                         config_file_version, _, all_ok2 = ut.tomlGetSeq(tomlData, ["ProcessCtrl","config_file_version"], all_ok2, default_val=-1)
-                        check_config_file_version(toml_config_files_active[0], config_file_version)
+                        ut.check_config_file_version(toml_config_files_active[0], config_file_version)
                         GoogleSheet_redownload, _, _ = ut.tomlGetSeq(tomlData, ["GoogleSheet","redownload"], all_ok2, default_val=True)
                         if not all_ok2:
                             print("Warning! Unable to read some paramters from the pulled file. Reverting to as-run config file.")
@@ -210,7 +219,7 @@ for i, (orig, active) in enumerate(zip(toml_config_files, toml_config_files_acti
                             #Reload the current file as actively used file
                             tomlData, all_ok3 = ut.tomlLoad(toml_config_files_active[0], exit_on_fail = True) 
                             config_file_version, _, _ = ut.tomlGetSeq(tomlData, ["ProcessCtrl","config_file_version"], all_ok3, default_val=-1)
-                            check_config_file_version(toml_config_files_active[0], config_file_version)
+                            ut.check_config_file_version(toml_config_files_active[0], config_file_version)
                             GoogleSheet_redownload, _, _ = ut.tomlGetSeq(tomlData, ["GoogleSheet","redownload"], all_ok3, default_val=True)
                             if not all_ok3:
                                 print(f"Ok, I quit, the as-run file {active} is now not readable. Exiting")
@@ -255,4 +264,3 @@ elif same_dir_conflict:
 #Process all config files
 for tomlDat in tomlConfigDataList: 
     process_config(tomlDat)
-
