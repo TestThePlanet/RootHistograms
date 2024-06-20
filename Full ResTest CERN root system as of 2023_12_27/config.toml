@@ -1,5 +1,5 @@
 [ProcessCtrl]
-config_file_version = 3  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
+config_file_version = 4  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
 do_git_pull = false
 ask_on_git_diff = true #when true, uses git_diff_verbose
 git_diff_verbosity = "info" #options: "verbose", "info" (default), "silent", tells how verbose to be when ask_on_git_diff = false 
@@ -8,7 +8,7 @@ open_overlay_eog = true
 copy_to_google_drive = true
 
 [SinglePlotMode]
-single_plot_mode_enabled = false #bool #Only make 1 plot, use for debugging. This also turns on the root editor.
+single_plot_mode_enabled = true #bool #Only make 1 plot, use for debugging. This also turns on the root editor.
 which_one = "3M Aura 9210+" #string 
 
 [Output]
@@ -30,20 +30,27 @@ redownload = false
 CSV_URL = "https://docs.google.com/spreadsheets/d/1arv8PObW_O4HMpScei3KAlt0zj1C55v_/gviz/tq?tqx=out:csv&sheet=Main"
 output_TSV_file_name = "Main.tsv"
 download_timeout_sec = 120
-
-[Overlay]
-run_make2Overlays_toml_py = true
-delete_preexisting_overlays = false #only runs if run_make2Overlays_toml_py 
-overlayDir = "_final" #output_dir = "./_final"
-overlayDirGDrive = "/home/abarker/gapi/RootPlotOutput/_final"
 transphotos_dir_insides = "/home/abarker/gapi/.shared/transparent_photos_inside"
 #transphotos_dir_insides = "./transparent_photos_inside"
 transphotos_dir_fronts = "/home/abarker/gapi/.shared/transparent_photos_front"
 #transphotos_dir_fronts = "./transparent_photos_front"
-#transphotos_dir_fronts = "/mnt/g/.shortcut-targets-by-id/1yijRzqC7kODxqq4LRBhHFRyJXqZOMOEO/transparent_photos_front"
 transparent_photos = "/home/abarker/gapi/.shared/_transparent_photos"
 #transparent_photos = "./transparent_photos_front"
 
+[Overlay]
+runOverlays = true
+delete_preexisting_overlays = true #only runs if runOverlays 
+overlayDir = "_final" #output_dir = "./_final"
+overlayDirGDrive = "/home/abarker/gapi/RootPlotOutput/_final"
+image_size = "400x300" #overlay_size = "400x300" #
+top_location = "+1100+80" # 1000+50
+bottom_location = "+1100+350"
+
+[OverlayTR]
+runOverlays = true
+delete_preexisting_overlays = false #only runs if runOverlays 
+overlayDir = "_final_TR" #output_dir = "./_final"
+overlayDirGDrive = "/home/abarker/gapi/RootPlotOutput/_final_TR"
 image_size = "400x300" #overlay_size = "400x300" #
 top_location = "+1100+80" # 1000+50
 bottom_location = "+1100+350"
@@ -82,16 +89,29 @@ queryResult_tsv_column_index = 21 #uint, col V
 
 [Scoring]
 score_file = "scores.txt"
-score_file_GDrive = "/home/abarker/gapi/RootPlotOutput/scores.txt"
+#score_file_GDrive = "/home/abarker/gapi/RootPlotOutput/scores.txt"
+score_dir = "scores"
+score_dir_GDrive = "/home/abarker/gapi/RootPlotOutput/scores"
+explainScores = true
 points_2xCrash25_2xOSHA_withGrimaceStored = 50
+slabel_2xCrash25_2xOSHA_withGrimaceStored = "two Crash2.5 tests and two OSHA tests with grimace stored"
 points_2xC25_1xOSHA_withGrimaceStored = 25
+slabel_2xC25_1xOSHA_withGrimaceStored = "two Crash2.5 tests and an OSHA test with grimace stored"
 points_2xC25 = 20 
+slabel_2xC25 = "two Crash2.5 tests"
 points_1xC25_2xOSHA_withGrimaceStored = 15 
+slabel_1xC25_2xOSHA_withGrimaceStored = "a Crash2.5 tests and two OSHA tests with grimace stored"
 points_1xCrash25_1xOSHA_withGrimaceStored = 12 
+slabel_1xCrash25_1xOSHA_withGrimaceStored = "a Crash2.5 tests and an OSHA test with grimace stored"
 points_2xOSHA_withGrimaceStored = 10 
+slabel_2xOSHA_withGrimaceStored = "two OSHA tests with grimace stored"
 points_1xCrash25 = 5
+slabel_1xCrash25 = "a Crash2.5"
 points_1xOSHA_withGrimaceStored = 2
+slabel_1xOSHA_withGrimaceStored = "an OSHA with grimace stored"
 points_1xCrash25short = 0.6 
+slabel_1xCrash25short = "a Crash 2.5 short"
+slabel_nada = "no qualifying Crash2.5 or OSHA tests"
 
 [Histogram_Graphics]
 sizePixelsX = 1660

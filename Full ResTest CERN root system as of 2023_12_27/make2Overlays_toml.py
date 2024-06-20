@@ -20,9 +20,13 @@ In that case, config.toml is assumed.
 See default directories below. 
 If plots and transphotos directories must exist, terminate early. 
 If the output directory doesn't exist, it is created.
+
+If you already have a toml config file loaded, call as 
+import make2Overlays
+make2Overlays.makeOverlay(tomlData)
 """
 
-def make2Overlays_tomldata(tomlData) -> None:
+def makeOverlay(tomlData) -> None:
     ####################################################
     #Hard coded backup default values:
 
@@ -47,24 +51,26 @@ def make2Overlays_tomldata(tomlData) -> None:
     
     all_ok = True
     dp = ut.getDebugPrinter(tomlData)
-    Overlay_image_size, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","image_size"], all_ok, default_val=Overlay_image_size)
-    Overlay_top_location, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","top_location"], all_ok, default_val=Overlay_top_location)
-    Overlay_bottom_location, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","bottom_location"], all_ok, default_val=Overlay_bottom_location)
+    tomlOverlayCategory = "Overlay"
+
+    Overlay_image_size, _, all_ok = ut.tomlGetSeq(tomlData, [tomlOverlayCategory,"image_size"], all_ok, default_val=Overlay_image_size)
+    Overlay_top_location, _, all_ok = ut.tomlGetSeq(tomlData, [tomlOverlayCategory,"top_location"], all_ok, default_val=Overlay_top_location)
+    Overlay_bottom_location, _, all_ok = ut.tomlGetSeq(tomlData, [tomlOverlayCategory,"bottom_location"], all_ok, default_val=Overlay_bottom_location)
     
-    output_dir, ok, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","overlayDir"], all_ok, default_val=output_dir)
+    output_dir, _, all_ok = ut.tomlGetSeq(tomlData, [tomlOverlayCategory,"overlayDir"], all_ok, default_val=output_dir)
     output_dir = os.path.join('.', output_dir)
     
-    transphotos_dir, ok, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","transphotos_dir_fronts"], all_ok, default_val=transphotos_dir)
+    transphotos_dir, _, all_ok = ut.tomlGetSeq(tomlData, ["GoogleSheet","transphotos_dir_fronts"], all_ok, default_val=transphotos_dir)
     transphotos_dir = os.path.join('.', transphotos_dir)
     
-    transphotos_dir2, ok, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","transphotos_dir_insides"], all_ok, default_val=transphotos_dir2)
+    transphotos_dir2, _, all_ok = ut.tomlGetSeq(tomlData, ["GoogleSheet","transphotos_dir_insides"], all_ok, default_val=transphotos_dir2)
     transphotos_dir2 = os.path.join('.',transphotos_dir2)
     
-    plots_dir, ok, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDir"], all_ok, default_val=plots_dir)
+    plots_dir, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDir"], all_ok, default_val=plots_dir)
     plots_dir = os.path.join('.',plots_dir)
     
-    SinglePlotMode_enabled, ok, all_ok = ut.tomlGetSeq(tomlData, ["SinglePlotMode","single_plot_mode_enabled"], all_ok, default_val=SinglePlotMode_enabled)
-    SinglePlotMode_which_one , ok, all_ok = ut.tomlGetSeq(tomlData, ["SinglePlotMode","which_one"], all_ok, default_val=SinglePlotMode_which_one)
+    SinglePlotMode_enabled, _, all_ok = ut.tomlGetSeq(tomlData, ["SinglePlotMode","single_plot_mode_enabled"], all_ok, default_val=SinglePlotMode_enabled)
+    SinglePlotMode_which_one , _, all_ok = ut.tomlGetSeq(tomlData, ["SinglePlotMode","which_one"], all_ok, default_val=SinglePlotMode_which_one)
     ######################################################################################
     #Check that the directories exist.
     ut.assert_failExits(os.path.exists(plots_dir), f"Error! The plots directory does not exist {plots_dir}")
@@ -87,9 +93,7 @@ def make2Overlays_tomldata(tomlData) -> None:
     
     #Read in lists of images in the plots and transphotos dirs
     #ls_result = os.popen(f"ls -b {plots_dir}/*.png").read().splitlines()
-    #plots      = [backslashify_brackets(plot.strip()) for plot in ls_result]
     plots      = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {plots_dir}/*.png")]
-    #plot_stems  = [backslashify_brackets(plot.strip()[8:]) for plot in ls_result]
     transphotos = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir}/*.png")]
     transphotos2 = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir2}/*.png")]
     SinglePlotMode_which_one = backslashify_brackets(SinglePlotMode_which_one.strip(), backslashSpaces = True) + ".png"
@@ -104,7 +108,7 @@ def make2Overlays_tomldata(tomlData) -> None:
         if SinglePlotMode_enabled and SinglePlotMode_which_one != plot_stem:
             continue
         elif SinglePlotMode_enabled:
-            print("found",SinglePlotMode_which_one)
+            dp.debug(2,"found",SinglePlotMode_which_one)
     
         plotmorph = os.path.join(transphotos_dir, plot_stem) 
         plotmorph2 = os.path.join(transphotos_dir2, plot_stem) 
@@ -125,43 +129,43 @@ def make2Overlays_tomldata(tomlData) -> None:
         if plotmorph in transphotos and plotmorph2 in transphotos2:
             make_command = make_command_part1 + make_command_part2 + make_command_part3 + make_command_part4 
             #make_command = f"convert -quiet {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}"
-            print("Making overlay",plotmorphout)
-            #print(make_command)
+            dp.print(3,"Making overlay",plotmorphout)
+            dp.print(5,make_command)
             subprocess.run(make_command, shell=True) #os.system(make_command)
             cnt_both += 1
         elif plotmorph in transphotos:
             #make_command = f"convert -quiet {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite {plotmorphout}" 
             #make_command = f"convert {plot} \( {plotmorph} -resize {Overlay_image_size} \) -geometry {Overlay_top_location} -compose over -composite {plotmorphout}" 
             make_command = make_command_part1 + make_command_part2 + make_command_part4 
-            print("Making overlay",plotmorphout)
-            print(f"    no interior image for {plot_stem} found in {transphotos_dir2}")
-            #print(make_command)
+            dp.print(3,"Making overlay",plotmorphout)
+            dp.print(3,f"    no interior image for {plot_stem} found in {transphotos_dir2}")
+            dp.print(5,make_command)
             subprocess.run(make_command, shell=True) #os.system(make_command)
             cnt_1st  += 1
         elif plotmorph2 in transphotos2:
             #make_command = f"convert -quiet {plot} \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}" 
             make_command = make_command_part1 + make_command_part3 + make_command_part4 
             #make_command = f"convert {plot} \( {plotmorph2} -resize {Overlay_image_size} \) -geometry {Overlay_bottom_location} -compose over -composite {plotmorphout}" 
-            print("Making overlay",plotmorphout)
-            print(f"    no front image for {plot_stem} found in {transphotos_dir}")
-            #print(make_command)
+            dp.print(3,"Making overlay",plotmorphout)
+            dp.print(3,f"    no front image for {plot_stem} found in {transphotos_dir}")
+            dp.print(5,make_command)
             subprocess.run(make_command, shell=True) #os.system(make_command)
             cnt_2nd += 1
         i += 1
     
-    print(f"\nOverlay Process Report")
-    print(f"    Out of {len(plots)} histograms in {plots_dir}")
-    print(f"    {cnt_both} had matches for both overlays")
-    print(f"    {cnt_1st} only had a match in {transphotos_dir}")
-    print(f"    {cnt_2nd} only had a match in {transphotos_dir2}")
-    print(f"    {len(plots) - cnt_both - cnt_1st - cnt_2nd} had no matches anywhere.")
-    print(f"    {len(transphotos) - cnt_both - cnt_1st} unused files in {transphotos_dir}")
-    print(f"    {len(transphotos2) -cnt_both - cnt_2nd} unused files in {transphotos_dir2}")
+    dp.print(2,f"\nOverlay Process Report")
+    dp.print(2,f"    Out of {len(plots)} histograms in {plots_dir}")
+    dp.print(2,f"    {cnt_both} had matches for both overlays")
+    dp.print(2,f"    {cnt_1st} only had a match in {transphotos_dir}")
+    dp.print(2,f"    {cnt_2nd} only had a match in {transphotos_dir2}")
+    dp.print(2,f"    {len(plots) - cnt_both - cnt_1st - cnt_2nd} had no matches anywhere.")
+    dp.print(2,f"    {len(transphotos) - cnt_both - cnt_1st} unused files in {transphotos_dir}")
+    dp.print(2,f"    {len(transphotos2) -cnt_both - cnt_2nd} unused files in {transphotos_dir2}")
 
-def make2Overlays_toml(toml_config_file_path:str) -> None:
+def makeOverlay_toml(toml_config_file_path:str) -> None:
     tomlData,ok = ut.tomlLoad(toml_config_file_path) 
     ut.assert_failExits(ok, f"Error! Failed to load toml config file {toml_config_file_path}")
-    make2Overlays_tomldata(tomlData) 
+    makeOverlay(tomlData) 
 
 if __name__ == "__main__":
     inlen = len(sys.argv)
@@ -172,4 +176,4 @@ if __name__ == "__main__":
     if inlen > 2:
         print(f"Warning! This takes at most 1 input. {inlen-1} inputs were specified")
 
-    make2Overlays_toml(toml_config_file_path)
+    makeOverlay_toml(toml_config_file_path)
