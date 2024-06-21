@@ -4,6 +4,7 @@ import subprocess
 import string
 import utils as ut
 from inspect import currentframe as here
+import time
 
 def copyPlotsToDir(from_dir:str, to_dir:str, delete_preexisting_plots:bool, dp)->None:
     #make sure these directories exist.
@@ -16,8 +17,10 @@ def copyPlotsToDir(from_dir:str, to_dir:str, delete_preexisting_plots:bool, dp)-
         dp.debug(here(),3,f"Deleting contents of {to_dir} before moving new files into it.") 
         os.system(f"rm {to_dir}/*.png 2>/dev/null")
     dp.debug(here(),4,f"Copying png files from {to_dir} to {to_dir}.") 
+    st = time.time()
     os.system(f"cp {from_dir}/*.png {to_dir}/")
-    dp.debug(here(),4,f"    finished copying.") 
+    et = time.time()
+    dp.debug(here(),3,f"    finished copying, completed in {et-st:.2f} seconds") 
 
 #######################################################################################################################
 def copy_plotsdir(tomlData) -> None:
@@ -30,6 +33,7 @@ def copy_plotsdir(tomlData) -> None:
         plotDirGDrive, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDirGDrive"], all_ok, default_val="plots")
         delete_preexisting_plots, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","delete_preexisting_plots"], all_ok, default_val=False)
         if all_ok:
+            ut.ensure_dir(plotDirGDrive)
             copyPlotsToDir(plotsDir, plotDirGDrive, delete_preexisting_plots, dp)
         else:
             db.debug(here(),1,"Error, config errors prevent copy_overlays")
@@ -44,8 +48,12 @@ def copy_scores(tomlData) -> None:
         score_dir_GDrive, _, all_ok = ut.tomlGetSeq(tomlData, ["Scoring","score_dir_GDrive"], all_ok, default_val="")
 
         if all_ok:
+            st = time.time()
+            ut.ensure_dir(score_dir_GDrive)
             subprocess.run(["cp", os.path.join(score_dir, score_file), os.path.join(score_dir_GDrive, score_file)])
+            et = time.time()
             #todo make this *.txt
+            dp.debug(here(),3,f"    finished copying score file, completed in {et-st:.2f} seconds") 
         else:
             db.debug(here(),1,"Error, config errors prevent copy_overlays")
 
