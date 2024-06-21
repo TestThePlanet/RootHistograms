@@ -3,6 +3,7 @@ import os,sys
 import subprocess
 import string
 import utils as ut
+from inspect import currentframe as here
 
 """
 This version relies on the input toml config file 
@@ -95,7 +96,7 @@ def makeOverlay(tomlData) -> None:
         if SinglePlotMode_enabled and SinglePlotMode_which_one != plot_stem:
             continue
         elif SinglePlotMode_enabled:
-            dp.debug(2,"found",SinglePlotMode_which_one)
+            dp.debug(here(),2,"found",SinglePlotMode_which_one)
     
         plotmorph = os.path.join(transphotos_dir, plot_stem) 
 

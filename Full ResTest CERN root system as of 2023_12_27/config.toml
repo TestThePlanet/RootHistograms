@@ -8,7 +8,7 @@ open_overlay_eog = true
 copy_to_google_drive = true
 
 [SinglePlotMode]
-single_plot_mode_enabled = true #bool #Only make 1 plot, use for debugging. This also turns on the root editor.
+single_plot_mode_enabled = false #bool #Only make 1 plot, use for debugging. This also turns on the root editor.
 which_one = "3M Aura 9210+" #string 
 
 [Output]
@@ -21,12 +21,12 @@ low_contrib_count_prefix = "L_"
 X11_persistence  = true #bool 
 plotDir = "plots" #NEW #plots_dir = "./plots"
 plotDirGDrive = "/home/abarker/gapi/RootPlotOutput/histogram_by_sample" #NEW #plots_dir = "./plots"
-plotDirUserHMean = "/home/abarker/gapi/RootPlotOutput/histogram_by_user_hmean"
+plotDirUserHMean = "plots_hmean"
 plotDirUserHMeanGDrive = "/home/abarker/gapi/RootPlotOutput/histogram_by_user_hmean"
 #plotDirUserHMean = "plots"
 
 [GoogleSheet]
-redownload = false 
+redownload = true 
 CSV_URL = "https://docs.google.com/spreadsheets/d/1arv8PObW_O4HMpScei3KAlt0zj1C55v_/gviz/tq?tqx=out:csv&sheet=Main"
 output_TSV_file_name = "Main.tsv"
 download_timeout_sec = 120
@@ -42,18 +42,19 @@ runOverlays = true
 delete_preexisting_overlays = true #only runs if runOverlays 
 overlayDir = "_final" #output_dir = "./_final"
 overlayDirGDrive = "/home/abarker/gapi/RootPlotOutput/_final"
-image_size = "400x300" #overlay_size = "400x300" #
-top_location = "+1100+80" # 1000+50
-bottom_location = "+1100+350"
+image_size = "400x300" #overlay_size, pixels
+top_location = "+1100+80" # 1000+50 pixels from top right corner
+bottom_location = "+1100+350" # pixels from top right corner
 
 [OverlayTR]
 runOverlays = true
 delete_preexisting_overlays = false #only runs if runOverlays 
 overlayDir = "_final_TR" #output_dir = "./_final"
 overlayDirGDrive = "/home/abarker/gapi/RootPlotOutput/_final_TR"
-image_size = "400x300" #overlay_size = "400x300" #
-top_location = "+1100+80" # 1000+50
-bottom_location = "+1100+350"
+image_size = "512x384" #25%: 0.25*(2048x1536) pixels
+#image_size = "410x308" #20%: 0.20*(2048x1536) pixels
+top_location = "+1536+0" #+x+y pixels from top right corner = (1-0.25)*2048,0
+#top_location = "+1638+0" #+x+y distance from top right corner #20%: (1-0.20)*2048,0
 
 [Montage]
 width = 10 # horizontal # of images in montage, aka # columns
@@ -88,6 +89,7 @@ protocol_tsv_column_index = 19 #uint, col T
 queryResult_tsv_column_index = 21 #uint, col V
 
 [Scoring]
+make_scores = true
 score_file = "scores.txt"
 #score_file_GDrive = "/home/abarker/gapi/RootPlotOutput/scores.txt"
 score_dir = "scores"

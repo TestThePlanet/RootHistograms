@@ -3,6 +3,7 @@ import os,sys
 import subprocess
 import string
 import utils as ut
+from inspect import currentframe as here
 
 """
 This version relies on the input toml config file 
@@ -44,10 +45,8 @@ def makeOverlay(tomlData) -> None:
     SinglePlotMode_which_one = "3M Aura 9210+" 
     Output_print_level = 3
     ####################################################
-    #set ouput_dir
-    
+
     #############Load params from TOML#######################################
-    #tomlData,ok = ut.tomlLoad(toml_config_file_path) 
     
     all_ok = True
     dp = ut.getDebugPrinter(tomlData)
@@ -93,9 +92,13 @@ def makeOverlay(tomlData) -> None:
     
     #Read in lists of images in the plots and transphotos dirs
     #ls_result = os.popen(f"ls -b {plots_dir}/*.png").read().splitlines()
+    dp.debug(here(),5)
     plots      = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {plots_dir}/*.png")]
+    dp.debug(here(),5)
     transphotos = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir}/*.png")]
+    dp.debug(here(),5)
     transphotos2 = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir2}/*.png")]
+    dp.debug(here(),5)
     SinglePlotMode_which_one = backslashify_brackets(SinglePlotMode_which_one.strip(), backslashSpaces = True) + ".png"
     
     i = 0
@@ -108,7 +111,7 @@ def makeOverlay(tomlData) -> None:
         if SinglePlotMode_enabled and SinglePlotMode_which_one != plot_stem:
             continue
         elif SinglePlotMode_enabled:
-            dp.debug(2,"found",SinglePlotMode_which_one)
+            dp.debug(here(),2,"found "+SinglePlotMode_which_one)
     
         plotmorph = os.path.join(transphotos_dir, plot_stem) 
         plotmorph2 = os.path.join(transphotos_dir2, plot_stem) 

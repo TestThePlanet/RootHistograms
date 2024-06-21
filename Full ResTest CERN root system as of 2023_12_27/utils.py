@@ -2,7 +2,7 @@ import os,sys
 import subprocess
 import urllib.request
 import time
-from inspect import currentframe, getframeinfo
+from inspect import getframeinfo
 try:
     import toml
 except ImportError:
@@ -13,7 +13,7 @@ except ImportError:
 #######################################################################################################################
 def check_config_file_version(toml_config_file, config_file_version:int):
     #Check that the supplied config file has a version that is compatibe with this codebase
-    required_min_config_file_version = 3
+    required_min_config_file_version = 4
 
     if config_file_version < required_min_config_file_version:
         print(f"Error! Config file {toml_config_file} is version {config_file_version } which is requires at least version {required_min_config_file_version}")
@@ -23,16 +23,43 @@ def check_config_file_version(toml_config_file, config_file_version:int):
 class DebugPrinter:
     def __init__(self,print_level: int = 3):
         self.print_level = print_level 
-    def debug(self, thresh:int, message:str = "", indent:int = 0) -> None:
-        frameinfo = getframeinfo(currentframe())
-        #frame = inspect.currentframe().f_back
-        #filename = frame.f_globals.get('__file__', '')
-        filename = frameinfo.filename
-        line_number = frameinfo.lineno
-        #line_number = frame.f_lineno
-        indentStr="    "*indent
+    #-----------------------------------------------------------------------
+    def print(self, thresh:int, *args) -> None:
+        """
+        Use: 
+            import utils as ut
+            from inspect import currentframe as here
+            dp = ut.DebugPrinter(3)
+            dp.print(3,"anything",55,"you",["want","to"])
+        """
         if self.print_level >= thresh:
-            print(f"{indentStr}{filename} line {line_number}. {message}")
+            if len(args) > 0:
+                for item in args[:-1]:
+                    print(item,end=' ')
+                print(args[-1])
+            else:
+                print()
+    #-----------------------------------------------------------------------
+    def debug(self, currentFrame, thresh:int, *args) -> None:
+        """
+        Use: 
+            import utils as ut
+            from inspect import currentframe as here
+            dp = ut.DebugPrinter(3)
+            dp.debug(here(), 3, "hello","world",42)
+        That prints:
+            /mnt/d/abarker/Documents_Local/code/test.py line 10:
+            hello world 42
+        """
+        if self.print_level >= thresh:
+            frameinfo = getframeinfo(currentFrame)
+            if len(args) > 0:
+                print(f"{frameinfo.filename} line {frameinfo.lineno}:")
+                for item in args[:-1]:
+                    print(item,end=' ')
+                print(args[-1])
+            else:
+                print(f"{frameinfo.filename} line {frameinfo.lineno}")
 
 #######################################################################################################################
 def getDebugPrinter(tomlData):
@@ -139,7 +166,7 @@ def assert_failExits(ok:bool, message:str)->None:
         sys.exit()
 
 #######################################################################################################################
-def ensure_dir(directory_path: str, error_msg = ""):
+def ensure_dir(directory_path: str, error_msg = "")->None:
     """
     Makes sure the directory exists. If not creates it. If it can't creat it, crash.
     """

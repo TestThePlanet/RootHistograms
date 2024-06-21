@@ -5,7 +5,9 @@ import string
 import urllib.request
 import time
 import utils as ut
+from inspect import currentframe as here
 import make2Overlays_toml
+import makeTROverlay
 import copyToGoogleDrive as cgd
 
 def check_config_files(tomlConfigDataList):
@@ -16,8 +18,10 @@ def check_config_files(tomlConfigDataList):
     deletion_conflict = False
     plots_dir_dict = {}  #maps dirs to config file names
     overlay_dir_dict = {}#maps dirs to config file names
+    overlayTR_dir_dict = {}#maps dirs to config file names
     for tomlData in tomlConfigDataList:
         this_config_file_name = tomlData["tomlConfigFileName"]
+
         if ut.tomlGetSeq(tomlData, ["Output","run_makeAllPlots_C"], None, default_val=True)[0]:
             plotsDir, _ = ut.tomlGetSeq(tomlData, ["Output","plotDir"], None, default_val="plots")
             if plotsDir in plots_dir_dict:
@@ -31,7 +35,7 @@ def check_config_files(tomlConfigDataList):
             else: 
                 plots_dir_dict[plotsDir] = this_config_file_name 
 
-        if ut.tomlGetSeq(tomlData, ["Overlay","run_make2Overlays_toml_py"], None, default_val=True)[0]:
+        if ut.tomlGetSeq(tomlData, ["Overlay","runOverlays"], None, default_val=True)[0]:
             overlayDir, _ = ut.tomlGetSeq(tomlData, ["Overlay","overlayDir"], None, default_val="_final")
             if overlayDir in overlay_dir_dict:
                 this_config_file_name = tomlData["tomlConfigFileName"]
@@ -40,6 +44,19 @@ def check_config_files(tomlConfigDataList):
                     deletion_conflict = True
                 else:
                     print(f"Warning! Config file overwrite conflict: calling {this_config_file_name} will write plots in {overlayDir} likely overwriting plots created by {overlay_dir_dict[overlayDir]}")
+                    same_dir_conflict = True
+            else:
+                overlay_dir_dict[overlayDir] = this_config_file_name 
+
+        if ut.tomlGetSeq(tomlData, ["OverlayTR","runOverlays"], None, default_val=True)[0]:
+            overlayDir, _ = ut.tomlGetSeq(tomlData, ["OverlayTR","overlayDir"], None, default_val="_final")
+            if overlayDir in overlay_dir_dict:
+                this_config_file_name = tomlData["tomlConfigFileName"]
+                if ut.tomlGetSeq(tomlData, ["OverlayTR","delete_preexisting_overlays"], None, default_val=False)[0]: #if deleting preivous output
+                    print(f"Error! Config file deletion conflict: calling {this_config_file_name} will **delete** the plots in {overlayDir} created by {overlayTR_dir_dict[overlayDir]}")
+                    deletion_conflict = True
+                else:
+                    print(f"Warning! Config file overwrite conflict: calling {this_config_file_name} will write plots in {overlayDir} likely overwriting plots created by {overlayTR_dir_dict[overlayDir]}")
                     same_dir_conflict = True
             else:
                 overlay_dir_dict[overlayDir] = this_config_file_name 
@@ -68,69 +85,82 @@ def process_config(tomlData):
     all_ok = True
     Output_print_level, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","print_level"], all_ok, default_val=3)
     dp = ut.DebugPrinter(Output_print_level)
-    dp.debug(1,"running process_config()") 
+    dp.debug(here(),1,"running process_config()") 
 
     config_file_version, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","config_file_version"], all_ok, default_val=-1)
     ut.check_config_file_version(this_config_file_name, config_file_version)
 
+    single_plot_mode_enabled, _, all_ok = ut.tomlGetSeq(tomlData, ["SinglePlotMode","single_plot_mode_enabled"], all_ok, default_val=False)
     copy_to_google_drive, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","copy_to_google_drive"], all_ok, default_val=False)
 
     delete_preexisting_plots, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","delete_preexisting_plots"], all_ok, default_val=False)
 
-    plotsDir, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDir"], all_ok, default_val="plots")
-    #plotDirGDrive, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDirGDrive"], all_ok, default_val="plots")
-
-    delete_preexisting_overlays, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","delete_preexisting_overlays"], all_ok, default_val=False)
-    overlayDir, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","overlayDir"], all_ok, default_val="_final")
-    #overlayDirGDrive, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","overlayDirGDrive"], all_ok, default_val="_final")
-    single_plot_mode_enabled, _, all_ok = ut.tomlGetSeq(tomlData, ["SinglePlotMode","single_plot_mode_enabled"], all_ok, default_val=False)
     run_makeAllPlots_C, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","run_makeAllPlots_C"], all_ok, default_val=True)
-    run_make2Overlays_toml_py, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","run_make2Overlays_toml_py"], all_ok, default_val=True)
+    make_scores, _, all_ok = ut.tomlGetSeq(tomlData, ["Scoring","make_scores"], all_ok, default_val=False)
+    plotsDir, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","plotDir"], all_ok, default_val="plots")
     open_main_eog, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","open_main_eog"], all_ok, default_val=True)
+
+    run_make2Overlays_toml_py, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","runOverlays"], all_ok, default_val=True)
+    overlayDir, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","overlayDir"], all_ok, default_val="_final")
+    delete_preexisting_overlays, _, all_ok = ut.tomlGetSeq(tomlData, ["Overlay","delete_preexisting_overlays"], all_ok, default_val=False)
+
+    run_makeTROverlays_py, _, all_ok = ut.tomlGetSeq(tomlData, ["OverlayTR","runOverlays"], all_ok, default_val=True)
+    overlayDirTR, _, all_ok = ut.tomlGetSeq(tomlData, ["OverlayTR","overlayDir"], all_ok, default_val="_final")
+    delete_preexisting_overlaysTR, _, all_ok = ut.tomlGetSeq(tomlData, ["OverlayTR","delete_preexisting_overlays"], all_ok, default_val=False)
+
     open_overlay_eog, _, all_ok = ut.tomlGetSeq(tomlData, ["ProcessCtrl","open_overlay_eog"], all_ok, default_val=True)
 
-    #score_file, _, all_ok = ut.tomlGetSeq(tomlData, ["Scoring","score_file"], all_ok, default_val="scores.txt")
-    #score_file_GDrive, _, all_ok = ut.tomlGetSeq(tomlData, ["Scoring","score_file_GDrive"], all_ok, default_val="scores.txt")
     if not all_ok:
         print(f"Warning: Problems were encountered while loading toml config file {this_config_file_name}")
 
     ##########################
-    dp.debug(4,f"Making dirs: {plotsDir}")
+    dp.debug(here(),4,f"Making dirs: {plotsDir}")
     os.makedirs(plotsDir, exist_ok=True)
 
     if run_makeAllPlots_C:
         if delete_preexisting_plots:
-            dp.debug(2,f"Deleting contents of {plotsDir} since Output.delete_preexisting_plots = true in {this_config_file_name}")
+            dp.debug(here(),2,f"Deleting contents of {plotsDir} since Output.delete_preexisting_plots = true in {this_config_file_name}")
             os.system(f"rm {plotsDir}/*.png 2>/dev/null")
-            db.debug(4,f"finished deleting plots in {plotsDir}",1)
+            dp.debug(here(),4,f"    finished deleting plots in {plotsDir}")
 
-        dp.debug(3,"Making Plots") 
+        dp.debug(here(),3,"Making Plots") 
         if single_plot_mode_enabled:
             subprocess.run( ["root", "-l", f'makeAllPlots.C+(\"{this_config_file_name}\")'] )
         else: 
             subprocess.run( ["root", "-l", "-b", "-q", f'makeAllPlots.C+(\"{this_config_file_name}\")'] )
     
         time.sleep(1)
-        dp.debug(3,"Plots made")
+        dp.debug(here(),3,"Plots made")
     
         if open_main_eog:
             display_latest_eog(plotsDir)
 
-        cgd.copy_plotsdir(tomlData)
-        cgd.copy_scores(tomlData)
-
     if run_make2Overlays_toml_py:
         if delete_preexisting_overlays:
-            db.debug(2,f"Deleting contents of {overlayDir} since Overlay.delete_preexisting_overlays = true in {this_config_file_name}")
+            dp.debug(here(),2,f"Deleting contents of {overlayDir} since Overlay.delete_preexisting_overlays = true in {this_config_file_name}")
             os.system(f"rm {overlayDir}/*.png 2>/dev/null")
-            db.debug(4,f"finished deleting plots in {overlayDir}",1)
+            dp.debug(here(),4,f"    finished deleting plots in {overlayDir}")
 
-        db.debug(1,"Making Overlays")
-        make2Overlays_toml.make2Overlays_tomldata(tomlData)
-        if open_overlay_eog:
+        dp.debug(here(),1,"Making Overlays")
+        make2Overlays_toml.makeOverlay(tomlData)
+
+    if run_makeTROverlays_py:
+        if delete_preexisting_overlaysTR:
+            dp.debug(here(),2,f"Deleting contents of {overlayDirTR} since OverlayTR.delete_preexisting_overlays = true in {this_config_file_name}")
+            os.system(f"rm {overlayDirTR}/*.png 2>/dev/null")
+            dp.debug(here(),4,f"    finished deleting plots in {overlayDirTR}")
+        makeTROverlay.makeOverlay(tomlData)
+        if open_overlay_eog: #TODO put this inside makeOverlay
             display_latest_eog(overlayDir)
 
+    if run_makeAllPlots_C:
+        cgd.copy_plotsdir(tomlData)
+        if make_scores:
+            cgd.copy_scores(tomlData)
+    if run_make2Overlays_toml_py:
         cgd.copy_overlays(tomlData)
+    if run_makeTROverlays_py:
+        cgd.copy_overlaysTR(tomlData)
 
 #######################################################################################################################
 #######################################################################################################################
