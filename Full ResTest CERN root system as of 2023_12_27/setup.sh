@@ -1,3 +1,4 @@
+#!/bin/bash
     chmod +x ./go.sh
     chmod +x ./makeAllPlots_nocrop.sh
     chmod +x ./makeAllPlots.sh
