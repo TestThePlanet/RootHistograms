@@ -11,6 +11,7 @@
 #READFILE
 */ 
 
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -67,7 +68,11 @@ enum sizeCode{Lg=0,Sm,IQR,NOSIZE,SIZEMAX};
 //IQR
 enum Ymax_state{auto_fit_each_histogram=0, manual=1, global_full_auto=2, global_auto_with_manual_min_ymax=3};
 
-struct ScoreWeights{
+struct ScoreConfig{
+    bool explainScores = false;
+    std::string score_dir;
+    std::string score_file_path;
+
     float points_2xCrash25_2xOSHA_withGrimaceStored;
     float points_2xC25_1xOSHA_withGrimaceStored;
     float points_2xC25;
@@ -77,6 +82,18 @@ struct ScoreWeights{
     float points_1xCrash25;
     float points_1xOSHA_withGrimaceStored;
     float points_1xCrash25short;
+
+    std::string slabel_2xCrash25_2xOSHA_withGrimaceStored;
+    std::string slabel_2xC25_1xOSHA_withGrimaceStored;
+    std::string slabel_2xC25;
+    std::string slabel_1xC25_2xOSHA_withGrimaceStored;
+    std::string slabel_1xCrash25_1xOSHA_withGrimaceStored;
+    std::string slabel_2xOSHA_withGrimaceStored;
+    std::string slabel_1xCrash25;
+    std::string slabel_1xOSHA_withGrimaceStored;
+    std::string slabel_1xCrash25short;
+    std::string slabel_nada;
+
 };
 struct Settings{    // #TomlDeclare
 
@@ -116,8 +133,8 @@ struct Settings{    // #TomlDeclare
     unsigned int queryResult_tsv_column_index;
 
     //[Scoring]
-    std::string score_file_name = "scores.txt";
-    ScoreWeights sw;
+    bool make_scores;
+    ScoreConfig sw;
 
     //[Histogram_Graphics]
     int sizePixelsX;
@@ -279,7 +296,6 @@ bool Settings::load(std::string tomlfile){
     Output_print_level      = cfg.at_path("Output.print_level").value_or( 0 );  
     Output_plotDir = cfg.at_path("Output.plotDir").value_or( "plots" );  
     Output_plotDirUserHMean = cfg.at_path("Output.plotDirUserHMean").value_or( "plots" );  
-
     use_only_analysis_grade	=cfg.at_path("Analysis.use_only_analysis_grade").value_or( true ); 
     use_sizes 			    =cfg.at_path("Analysis.use_sizes").value_or( true ); 
 
@@ -340,7 +356,10 @@ bool Settings::load(std::string tomlfile){
     ArrowText_rightOffset=cfg.at_path("ArrowText.rightOffset ").value_or( 0.15);
 
     //[Scoring]
-    score_file_name =cfg.at_path("Scoring.score_file").value_or( "scores.txt");
+    make_scores = cfg.at_path("Scoring.make_scores").value_or(false);
+    sw.explainScores = cfg.at_path("Scoring.explainScores").value_or(false);
+    sw.score_dir =cfg.at_path("Scoring.score_dir").value_or( "scores");
+    sw.score_file_path = sw.score_dir+"/"+ cfg.at_path("Scoring.score_file").value_or( "scores.txt");
     sw.points_2xCrash25_2xOSHA_withGrimaceStored = cfg.at_path("Scoring.points_2xCrash25_2xOSHA_withGrimaceStored").value_or(50);
     sw.points_2xC25_1xOSHA_withGrimaceStored = cfg.at_path("Scoring.points_2xC25_1xOSHA_withGrimaceStored").value_or(25);
     sw.points_2xC25 = cfg.at_path("Scoring.points_2xC25").value_or(20);
@@ -350,6 +369,16 @@ bool Settings::load(std::string tomlfile){
     sw.points_1xCrash25 = cfg.at_path("Scoring.points_1xCrash25").value_or(5);
     sw.points_1xOSHA_withGrimaceStored = cfg.at_path("Scoring.points_1xOSHA_withGrimaceStored").value_or(2);
     sw.points_1xCrash25short = cfg.at_path("Scoring.points_1xCrash25short").value_or(0.6);
+    sw.slabel_2xCrash25_2xOSHA_withGrimaceStored = cfg.at_path("Scoring.slabel_2xCrash25_2xOSHA_withGrimaceStored").value_or("");
+    sw.slabel_2xC25_1xOSHA_withGrimaceStored = cfg.at_path("Scoring.slabel_2xC25_1xOSHA_withGrimaceStored").value_or("");
+    sw.slabel_2xC25 = cfg.at_path("Scoring.slabel_2xC25").value_or("");
+    sw.slabel_1xC25_2xOSHA_withGrimaceStored = cfg.at_path("Scoring.slabel_1xC25_2xOSHA_withGrimaceStored").value_or("");
+    sw.slabel_1xCrash25_1xOSHA_withGrimaceStored = cfg.at_path("Scoring.slabel_1xCrash25_1xOSHA_withGrimaceStored").value_or("");
+    sw.slabel_2xOSHA_withGrimaceStored = cfg.at_path("Scoring.slabel_2xOSHA_withGrimaceStored").value_or("");
+    sw.slabel_1xCrash25 = cfg.at_path("Scoring.slabel_1xCrash25").value_or("");
+    sw.slabel_1xOSHA_withGrimaceStored = cfg.at_path("Scoring.slabel_1xOSHA_withGrimaceStored").value_or("");
+    sw.slabel_1xCrash25short = cfg.at_path("Scoring.slabel_1xCrash25short").value_or("");
+    sw.slabel_nada = cfg.at_path("Scoring.slabel_nada").value_or("");
 
     sizePixelsX =cfg.at_path("Histogram_Graphics.sizePixelsX").value_or( 1660); 
     sizePixelsY =cfg.at_path("Histogram_Graphics.sizePixelsY").value_or( 989); 
@@ -415,7 +444,7 @@ bool Settings::load(std::string tomlfile){
     if(r_TArr and r_TArr->is_homogeneous(toml::node_type::integer) ){ 
         size_t i = 0;
         for (auto it = r_TArr->cbegin(); it != r_TArr->cend() and i<lut1_len; ++it) 
-            r[i++] = it->value_or(-1);
+            r[i++] = it->value_or(-1); //TODOauto
         //if anything ends up -1, complain.
         bool neg1 = false;
         for(int j=0;j<lut1_len;j++) if( r[j] == -1 ) neg1 = true;
@@ -435,7 +464,7 @@ bool Settings::load(std::string tomlfile){
     if(g_TArr and g_TArr->is_homogeneous(toml::node_type::integer) ){ 
         size_t i = 0;
         for (auto it = g_TArr->cbegin(); it != g_TArr->cend() and i<lut1_len; ++it) 
-            g[i++] = it->value_or(-1);
+            g[i++] = it->value_or(-1); //TODOauot
         //if anything ends up -1, complain.
         bool neg1 = false;
         for(int j=0;j<lut1_len;j++) if( g[j] == -1 ) neg1 = true;
@@ -634,7 +663,7 @@ struct MaskUserCombo{
     std::string maskname;
     std::string holdDate = "";
     std::unordered_map<std::string, int> protocol_counts; //index with protocol
-    //std::unordered_map<std::string, int> protocol_counts_cpy;
+
     void Fill(float x){
         _harMeanTally += 1.0f/x;
         n += 1.0f;
@@ -642,12 +671,21 @@ struct MaskUserCombo{
     }
     MaskUserCombo(std::string _maskname): maskname(_maskname){}
 
-    void copyProtocolCounts(){ protocol_counts_cpy.insert(protocol_counts.begin(), protocol_counts.end()); }
-    float scoreCombo(const ScoreWeights& sw); //produce a score for this combo.
+    float scoreCombo(const ScoreConfig& sw, std::ofstream* score_file); //produce a score for this combo.
     void increment_protocol(std::string protocol, bool hold);
 
+    private:
+    void writeln(bool explainScores, std::ofstream* score_file, float scoreDelta, std::string slabel){
+        if(explainScores and score_file != NULL)
+            (*score_file) << 
+                 "| "<< std::setw(15)<<std::to_string(scoreDelta) << 
+                " | " <<std::setw(16)<<maskname << 
+                " | " <<std::setw(19)<<slabel <<" |"<<std::endl;
+    }
 };
-float MaskUserCombo::scoreCombo(const ScoreWeights& sw){
+
+
+float MaskUserCombo::scoreCombo(const ScoreConfig& sw, std::ofstream* score_file ){
     //Score a combination of user and mask
     static const std::string OG  = "OSHAwGrimaceStored";
     static const std::string C25 = "Crash2.5"; 
@@ -664,45 +702,77 @@ float MaskUserCombo::scoreCombo(const ScoreWeights& sw){
     //static const CJ = "Crown Jewel";//hold
 
     float retscore = 0.f;
+    bool nada = false;
 
     if(protocol_counts[C25] >= 2){
         if(protocol_counts[OG] >= 2){
             retscore += sw.points_2xCrash25_2xOSHA_withGrimaceStored;
+            writeln(sw.explainScores, score_file,
+                    sw.points_2xCrash25_2xOSHA_withGrimaceStored,
+                    sw.slabel_2xCrash25_2xOSHA_withGrimaceStored);
         } else if(protocol_counts[OG] == 1){
             retscore += sw.points_2xC25_1xOSHA_withGrimaceStored;
+            writeln(sw.explainScores, score_file,
+                    sw.points_2xC25_1xOSHA_withGrimaceStored,
+                    sw.slabel_2xC25_1xOSHA_withGrimaceStored);
         }
         else{
             retscore += sw.points_2xC25;
+            writeln(sw.explainScores, score_file,
+                    sw.points_2xC25,
+                    sw.slabel_2xC25);
         }
     } else if(protocol_counts[C25] >= 1){
         if(protocol_counts[OG] >= 2){
             retscore += sw.points_1xC25_2xOSHA_withGrimaceStored;
+            writeln(sw.explainScores, score_file,
+                    sw.points_1xC25_2xOSHA_withGrimaceStored,
+                    sw.slabel_1xC25_2xOSHA_withGrimaceStored);
         } else if(protocol_counts[OG] == 1){
             retscore += sw.points_1xCrash25_1xOSHA_withGrimaceStored;
+            writeln(sw.explainScores, score_file,
+                    sw.points_1xCrash25_1xOSHA_withGrimaceStored,
+                    sw.slabel_1xCrash25_1xOSHA_withGrimaceStored);
         }
         else{
             retscore += sw.points_1xCrash25;
+            writeln(sw.explainScores, score_file,
+                    sw.points_1xCrash25,
+                    sw.slabel_1xCrash25);
         }
     } else if(protocol_counts[OG] >= 2){
         retscore += sw.points_2xOSHA_withGrimaceStored;
+        writeln(sw.explainScores, score_file,
+                sw.points_2xOSHA_withGrimaceStored,
+                sw.slabel_2xOSHA_withGrimaceStored);
     } else if(protocol_counts[OG] == 1){
         retscore += sw.points_1xOSHA_withGrimaceStored;
-    }
+        writeln(sw.explainScores, score_file,
+                sw.points_1xOSHA_withGrimaceStored,
+                sw.slabel_1xOSHA_withGrimaceStored);
+    } else nada = true;
 
     if(protocol_counts[C25s] >= 1){
         retscore += sw.points_1xCrash25short;
-    }
+        writeln(sw.explainScores, score_file,
+                sw.points_1xCrash25short,
+                sw.slabel_1xCrash25short);
+    } else nada &= true;
+
+    if(nada) writeln(sw.explainScores, score_file, 0.f, sw.slabel_nada);
+       
     return retscore;
 }
 struct User{
     float score = 0.0f;
     std::string ID;
     std::unordered_map<std::string, MaskUserCombo*> maskUserComboMap; //index with mask name
-    float scoreUser(const ScoreWeights& sw);
+    float scoreUser(const ScoreConfig& sw);
     void include(std::string maskname, std::string protocol, bool hold);
     User(std::string testerID): ID(testerID){}
     ~User(){ 
-        for (const auto& pair : maskUserComboMap) 
+        //for (const auto& pair : maskUserComboMap) 
+        for (const std::pair<std::string, MaskUserCombo*>& pair : maskUserComboMap)
             delete pair.second; 
     }
 };
@@ -725,10 +795,31 @@ void MaskUserCombo::increment_protocol(std::string protocol, bool hold){
     }
 }
 
-float User::scoreUser(const ScoreWeights& sw){
-    for (const auto& pair : maskUserComboMap) {
-        pair.second->copyProtocolCounts();
-        score += pair.second->scoreCombo(sw);
+float User::scoreUser(const ScoreConfig& sw){
+    bool do_alternate = true;
+    if( sw.explainScores){
+        if ( std::ofstream score_file(sw.score_dir + "/" + ID + ".txt");
+                score_file.is_open()) {
+            do_alternate = false; 
+
+            score_file << "testerID "<<ID << std::endl;
+            score_file << "| Awarded Points |    Mask Name    |    Award Reason    |"<<std::endl;
+            score_file << "|---------------:|-----------------|--------------------|"<<std::endl;
+
+            //for (const auto& pair : maskUserComboMap) { 
+            for (const std::pair<std::string, MaskUserCombo*>& pair : maskUserComboMap){
+                score += pair.second->scoreCombo(sw, &score_file );
+            }
+            
+            score_file << "total points " << score<< std::endl;
+            score_file.close();
+        } 
+    }
+    if( do_alternate){
+        //for (const auto& pair : maskUserComboMap) { 
+        for (const std::pair<std::string, MaskUserCombo*>& pair : maskUserComboMap){
+            score += pair.second->scoreCombo(sw, nullptr);
+        }
     }
     return score;
 }
@@ -780,6 +871,7 @@ void SetBinLabels(Hist* hist);
 void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg);
 bool isALlWhiteSpace(const std::string& str);
 std::string getCurrentDateTime(const Settings& cfg);
+bool ensure_dir(std::string dirPath);
 
 double sigmoid(double x, SigmoidOption softness);
 
@@ -1053,29 +1145,37 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
     inputFile.close();
 
     cfg.debug(4,"end readfile");
+    
+    if(cfg.make_scores){
+        bool score_path_ok = ensure_dir(cfg.sw.score_dir);
 
-    //Write Scores File.
-    if ( std::ofstream score_file(cfg.score_file_name);
-            score_file.is_open()) {
+        //Write Scores File.
+        if ( std::ofstream score_file(cfg.sw.score_file_path);
+                score_file.is_open()) {
 
-        std::vector<std::string> testerIDs;
-        for (const auto& pair : users){
-            testerIDs.push_back(pair.first);
-            pair.second->scoreUser(cfg.sw);
+            std::vector<std::string> testerIDs;
+            //for (const auto& pair : users){
+            for (const std::pair<std::string, User*>& pair : users) {
+                testerIDs.push_back(pair.first);
+                pair.second->scoreUser(cfg.sw);
+            }
+
+            std::sort(testerIDs.begin(), testerIDs.end(), 
+                    [&users](std::string a, std::string b) { return users[a]->score > users[b]->score; });
+
+            //for (const auto& testerID : testerIDs) {
+            for (const std::string& testerID : testerIDs) {
+                score_file << testerID << " " << users[testerID]->score << std::endl;
+            }
+            score_file.close();
+        } else {
+            if(score_path_ok)
+                std::cout<<"Error! Unable to write score file due to a file IO problem"<<std::endl;
+            else
+                std::cout<<"Error! Unable to write score file due to a failure to make the score directory "<<cfg.sw.score_dir<<std::endl;
         }
-
-        std::sort(testerIDs.begin(), testerIDs.end(), 
-                [&users](std::string a, std::string b) { return users[a]->score > users[b]->score; });
-
-        for (const auto& testerID : testerIDs) {
-            //std::cout << name << ": " << nameToStruct[name].score << std::endl;
-            score_file << testerID << " " << users[testerID]->score << std::endl;
-        }
-        score_file.close();
-    } else {
-        std::cout<<"Error! Unable to write score file due to a file IO problem"<<std::endl;
+        cfg.debug(4,"end scoring");
     }
-    cfg.debug(4,"end scoring");
 
     if(cfg.ymax_setting >= global_full_auto){
         static const float ymax_margin = 1.10f;//CFGTODO
@@ -1088,6 +1188,10 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
                 (cfg.ymax_setting == global_auto_with_manual_min_ymax and global_max_bin > cfg.histogram_ymax*ymax_margin))
             cfg.histogram_ymax = global_max_bin*ymax_margin;
     }
+
+
+    if(cfg.Output_save_plots_enabled) ensure_dir(cfg.Output_plotDir);
+    if(cfg.Output_save_with_HMFF_prefix) ensure_dir(cfg.Output_plotDirUserHMean);
 
     //Now make all plots and save them to file.
     bool something_was_found = false;
@@ -1110,7 +1214,8 @@ void makeAllPlots(std::string tomlfile = "config.toml"){ //main
     }
     
     if(not (cfg.single_plot_mode_enabled and cfg.Output_X11_persistence)){
-        for (auto& pair : hMap) {
+        //for (auto& pair : hMap) {
+        for (const std::pair<const std::string, Hist*>& pair : hMap) {
             delete pair.second;
         }
     }
@@ -1627,7 +1732,8 @@ bool isALlWhiteSpace(const std::string& str) {
 
 std::string getCurrentDateTime(const Settings& cfg) {
     // Get the current time point
-    auto now = std::chrono::system_clock::now();
+    //auto now = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 
     // Convert the time point to a time_t object
     std::time_t now_time = std::chrono::system_clock::to_time_t(now);
@@ -1729,3 +1835,36 @@ int dateStr_to_J2000(std::string dateStr){
             (3*(((7*Y + M - 9)/700) + 1)/4) + 
             (275*M/9) + D -730516; 
 }//end dateStr_to_J2000
+
+bool ensure_dir(std::string dirPath){
+    if (std::filesystem::exists(dirPath) and
+        std::filesystem::is_directory(dirPath)) {
+        return true; //Dir already exists
+    } else {
+        try {
+            std::filesystem::create_directories(dirPath);
+            return true; // Successfully created the directory
+        } catch (const std::exception& e) {
+            std::cerr << "Error creating directory: " << e.what() << std::endl;
+            return false; // Failed to create the directory
+        }
+    }
+}
+
+/*
+def ensure_dir(directory_path: str, error_msg = "")->None:
+    """
+    Makes sure the directory exists. If not creates it. If it can't creat it, crash.
+    """
+    if error_msg == "":
+        error_msg = f"Error, Could not find or create directory {directory_path}"
+    ok = True
+    try:
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+            print(f"    Info: Directory {directory_path} not found. Creating it.")
+    except Exception as e:
+        print(f"Error creating directory: {e}")
+        ok = False
+    assert_failExits(ok, error_msg)
+ * */
