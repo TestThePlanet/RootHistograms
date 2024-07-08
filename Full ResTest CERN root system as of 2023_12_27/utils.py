@@ -13,7 +13,7 @@ except ImportError:
 #######################################################################################################################
 def check_config_file_version(toml_config_file, config_file_version:int):
     #Check that the supplied config file has a version that is compatibe with this codebase
-    required_min_config_file_version = 4
+    required_min_config_file_version = 6
 
     if config_file_version < required_min_config_file_version:
         print(f"Error! Config file {toml_config_file} is version {config_file_version } which is requires at least version {required_min_config_file_version}")
@@ -251,4 +251,59 @@ def Download_Google_Sheet(toml_data):
             file.write('1')
         return False
 
+#######################################################################################################################
 
+def Ensure_mask_images(toml_data):
+    all_ok = True
+    do_git_pull_plotMedia, _, all_ok = tomlGetSeq(toml_data, [ "ProcessCtrl","do_git_pull_plotMedia" ], all_ok, default_val= True)
+    runOverlays, _, all_ok = tomlGetSeq(toml_data, [ "Overlay","runOverlays" ], all_ok, default_val=True)
+
+    if not (runOverlays):
+        return
+
+    all_ok_cpy = all_ok
+    plotMediaGit, pmg_ok, all_ok = tomlGetSeq(toml_data, [ "PlotMedia", "plotMediaGit"], all_ok, default_val = "https://github.com/fiveisgreen/PlotMedia.git")
+    if (not do_git_pull_plotMedia) and (not pmg_ok):
+        all_ok = all_ok_cpy
+
+    plotMediaDir, _, all_ok = tomlGetSeq(toml_data, [ "PlotMedia", "plotMediaDir" ], all_ok, default_val = "../../PlotMedia")
+
+    transphotos_dir_insides, _, all_ok = tomlGetSeq(toml_data, [ "PlotMedia", "transphotos_dir_insides" ], all_ok, default_val = "transparent_photos_inside")
+    transphotos_dir_insides = os.path.join(plotMediaDir,transphotos_dir_insides)
+
+    transphotos_dir_fronts, _, all_ok = tomlGetSeq(toml_data, [ "PlotMedia", "transphotos_dir_fronts" ], all_ok, default_val = "transparent_photos_front")
+    transphotos_dir_fronts= os.path.join(plotMediaDir,transphotos_dir_fronts)
+
+    
+    if os.path.exists(transphotos_dir_fronts) and os.path.exists(transphotos_dir_insides):
+        if do_git_pull_plotMedia:
+            cwd = os.getcwd()
+            try:
+                    os.chdir(plotMediaDir)
+                    subprocess.check_call(['git',"pull"])
+                    os.chdir(cwd)
+            except subprocess.CalledProcessError as e:
+                    print(f"Error executing the command: {e}") # TODO
+            except FileNotFoundError:
+                    print("Well shucks")# TODO
+            except Exception as e:
+                    print("Well shucks",e)# TODO
+            if not (os.path.exists(transphotos_dir_fronts) or os.path.exists(transphotos_dir_insides)):
+                assert_failExits(False, "Even after git pull, at least 1 transphotos directory not found. Check the github and config's PlotMedia section")
+    else:
+        if do_git_pull_plotMedia:
+            cwd = os.getcwd()
+            baseDir = plotMediaDir[:plotMediaDir.rstrip('/').rfind('/') +1]
+            if baseDir != "":
+                try:
+                    os.chdir(baseDie)
+                    subprocess.check_call(['git',"clone",plotMediaGit])
+                    os.chdir(cwd)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error executing the command: {e}")# TODO
+                except FileNotFoundError:
+                    print("Well shucks")# TODO
+                except Exception as e:
+                    print("Well shucks",e)# TODO
+        else:
+            assert_failExits(False, "At least 1 transphotos directory not found. git_pull_plotMedia is off so exiting rather than fetching them.")

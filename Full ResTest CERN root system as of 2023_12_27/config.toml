@@ -1,11 +1,12 @@
 [ProcessCtrl]
-config_file_version = 4  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
+config_file_version = 6  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
 do_git_pull = false
+do_git_pull_plotMedia = true
 ask_on_git_diff = true #when true, uses git_diff_verbose
 git_diff_verbosity = "info" #options: "verbose", "info" (default), "silent", tells how verbose to be when ask_on_git_diff = false 
 open_main_eog = true
 open_overlay_eog = true
-copy_to_google_drive = true
+copy_to_google_drive = false
 
 [SinglePlotMode]
 single_plot_mode_enabled = false #bool #Only make 1 plot, use for debugging. This also turns on the root editor.
@@ -30,9 +31,12 @@ redownload = true
 CSV_URL = "https://docs.google.com/spreadsheets/d/1arv8PObW_O4HMpScei3KAlt0zj1C55v_/gviz/tq?tqx=out:csv&sheet=Main"
 output_TSV_file_name = "Main.tsv"
 download_timeout_sec = 120
-transphotos_dir_insides = "/home/abarker/gapi/.shared/transparent_photos_inside"
+plotMediaGit = "https://github.com/fiveisgreen/PlotMedia.git"
+transphotos_dir_insides = "../../PlotMedia/transparent_photos_inside"
+#transphotos_dir_insides = "/home/abarker/gapi/.shared/transparent_photos_inside"
 #transphotos_dir_insides = "./transparent_photos_inside"
-transphotos_dir_fronts = "/home/abarker/gapi/.shared/transparent_photos_front"
+transphotos_dir_fronts = "../../PlotMedia/transparent_photos_front"
+#transphotos_dir_fronts = "/home/abarker/gapi/.shared/transparent_photos_front"
 #transphotos_dir_fronts = "./transparent_photos_front"
 transparent_photos = "/home/abarker/gapi/.shared/_transparent_photos"
 #transparent_photos = "./transparent_photos_front"
@@ -59,15 +63,18 @@ top_location = "+1536+0" #+x+y pixels from top right corner = (1-0.25)*2048,0
 [Montage]
 width = 10 # horizontal # of images in montage, aka # columns
 height = -1 #negative or 0 will use all images and
-max_height = 50 #max limit for the number of image rows.
+max_height = 22 #max limit for the number of image rows.
 tile_sizex = 1024 # pixels 
 tile_sizey = 768  # pixels 
-#picDir = "transparent_photos_front"
+picDir = "../../PlotMedia/Tests_hm_ordered_tester_7e66ab_and_Tester_67pfar/"
 output_file_name = "montage.png"
 output_file_name_GDrive = "/home/abarker/gapi/RootPlotOutput/montage.png"
 usePlus0 = false #whether to use the "+0+0" syntax
 eogAtEnd = true #whether to try and open the montage using the eog image viewer at the end
 blacklist = ["FAKE-3M 9332+ LOT C203561.png","3M 8955J-DS2-01.png"]
+subsampled_filename = "montage1024.png"
+make_subsample = true
+subsample_xres = 1024
 
 [Analysis]
 use_only_analysis_grade = true #bool
