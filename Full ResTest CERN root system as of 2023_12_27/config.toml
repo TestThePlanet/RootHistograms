@@ -1,5 +1,5 @@
 [ProcessCtrl]
-config_file_version = 6  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
+config_file_version = 7  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
 do_git_pull = false
 do_git_pull_plotMedia = true
 ask_on_git_diff = true #when true, uses git_diff_verbose
@@ -71,7 +71,7 @@ output_file_name = "montage.png"
 output_file_name_GDrive = "/home/abarker/gapi/RootPlotOutput/montage.png"
 usePlus0 = false #whether to use the "+0+0" syntax
 eogAtEnd = true #whether to try and open the montage using the eog image viewer at the end
-blacklist = ["FAKE-3M 9332+ LOT C203561.png","3M 8955J-DS2-01.png"]
+list_of_files_to_exclude = ["FAKE-3M 9332+ LOT C203561.png","3M 8955J-DS2-01.png"]
 subsampled_filename = "montage1024.png"
 make_subsample = true
 subsample_xres = 1024

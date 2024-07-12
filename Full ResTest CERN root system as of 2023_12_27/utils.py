@@ -13,7 +13,7 @@ except ImportError:
 #######################################################################################################################
 def check_config_file_version(toml_config_file, config_file_version:int):
     #Check that the supplied config file has a version that is compatibe with this codebase
-    required_min_config_file_version = 6
+    required_min_config_file_version = 7
 
     if config_file_version < required_min_config_file_version:
         print(f"Error! Config file {toml_config_file} is version {config_file_version } which is requires at least version {required_min_config_file_version}")
