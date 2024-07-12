@@ -64,8 +64,8 @@ top_location = "+1536+0" #+x+y pixels from top right corner = (1-0.25)*2048,0
 width = 10 # horizontal # of images in montage, aka # columns
 height = -1 #negative or 0 will use all images and
 max_height = 22 #max limit for the number of image rows.
-tile_sizex = 1024 # pixels 
-tile_sizey = 768  # pixels 
+tile_sizex = 512 # pixels 
+tile_sizey = 384  # pixels 
 picDir = "../../PlotMedia/Tests_hm_ordered_tester_7e66ab_and_Tester_67pfar/"
 output_file_name = "montage.png"
 output_file_name_GDrive = "/home/abarker/gapi/RootPlotOutput/montage.png"
