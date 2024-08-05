@@ -110,6 +110,7 @@ struct Settings{    // #TomlDeclare
     std::string Output_low_contrib_count_prefix;
     bool Output_X11_persistence;
     int Output_print_level;
+    std::string Output_imgageFormat;
     std::string Output_plotDir;
     std::string Output_plotDirUserHMean;
 
@@ -294,7 +295,11 @@ bool Settings::load(std::string tomlfile){
 
     Output_X11_persistence  		=cfg.at_path("Output.Output_X11_persistence").value_or( true );  
     Output_print_level      = cfg.at_path("Output.print_level").value_or( 0 );  
-    Output_plotDir = cfg.at_path("Output.plotDir").value_or( "plots" );  
+    Output_imgageFormat     = cfg.at_path("Output.imgageFormat").value_or( ".png" );  
+    if(Output_imgageFormat.size() <= 0) Output_imgageFormat = ".png";
+    else if(Output_imgageFormat[0] != '.') Output_imgageFormat = "."+Output_imgageFormat;
+
+    Output_plotDir          = cfg.at_path("Output.plotDir").value_or( "plots" );  
     Output_plotDirUserHMean = cfg.at_path("Output.plotDirUserHMean").value_or( "plots" );  
     use_only_analysis_grade	=cfg.at_path("Analysis.use_only_analysis_grade").value_or( true ); 
     use_sizes 			    =cfg.at_path("Analysis.use_sizes").value_or( true ); 
@@ -678,7 +683,7 @@ struct MaskUserCombo{
     void writeln(bool explainScores, std::ofstream* score_file, float scoreDelta, std::string slabel){
         if(explainScores and score_file != NULL)
             (*score_file) << 
-                 "| "<< std::setw(15)<<std::to_string(scoreDelta) << 
+                 "| "<< std::setw(14)<<std::setprecision(1) << scoreDelta << // std::to_string(scoreDelta) << 
                 " | " <<std::setw(16)<<maskname << 
                 " | " <<std::setw(19)<<slabel <<" |"<<std::endl;
     }
@@ -1680,12 +1685,13 @@ void PlotAndSave(Hist* hist, TF2* grad, string fname_noext, const Settings& cfg)
             prefix << std::fixed << std::setw(7) << std::setfill('0') << static_cast<int>(hist->Get_HarmonicMean()*10);
         }
 
-        fname = cfg.Output_plotDir+"/" + prefix.str()+"_"+fname_noext + ".png";//CFGTODO
+        fname = cfg.Output_plotDir+"/" + prefix.str()+"_"+fname_noext + cfg.Output_imgageFormat;
+//Output_imgageFormat
     } else{
         if( apply_lowTester_prefix)
-            fname = cfg.Output_plotDir+"/" + cfg.Output_low_contrib_count_prefix+fname_noext + ".png";
+            fname = cfg.Output_plotDir+"/" + cfg.Output_low_contrib_count_prefix+fname_noext + cfg.Output_imgageFormat;
         else
-            fname = cfg.Output_plotDir+"/" + fname_noext + ".png";
+            fname = cfg.Output_plotDir+"/" + fname_noext + cfg.Output_imgageFormat;
     }
 	canv->SaveAs(fname.c_str());
 

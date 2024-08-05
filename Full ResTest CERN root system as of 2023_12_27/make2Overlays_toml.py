@@ -40,6 +40,7 @@ def makeOverlay(tomlData) -> None:
     Overlay_image_size = "400x300" 
     Overlay_top_location = "+1100+80" # 1000+50
     Overlay_bottom_location = "+1100+350" 
+    Output_imgageFormat = ".png"
     
     SinglePlotMode_enabled = False #bool #Turns on root editor 
     SinglePlotMode_which_one = "3M Aura 9210+" 
@@ -50,6 +51,11 @@ def makeOverlay(tomlData) -> None:
     
     all_ok = True
     dp = ut.getDebugPrinter(tomlData)
+    Output_imgageFormat, _, all_ok = ut.tomlGetSeq(tomlData, ["Output","imgageFormat"], all_ok, default_val=Output_imgageFormat)
+    if len(Output_imgageFormat) <= 0: 
+        Output_imgageFormat = ".png"
+    elif Output_imgageFormat[0] != '.':
+        Output_imgageFormat = '.' + Output_imgageFormat 
     tomlOverlayCategory = "Overlay"
 
     Overlay_image_size, _, all_ok = ut.tomlGetSeq(tomlData, [tomlOverlayCategory,"image_size"], all_ok, default_val=Overlay_image_size)
@@ -93,13 +99,13 @@ def makeOverlay(tomlData) -> None:
     #Read in lists of images in the plots and transphotos dirs
     #ls_result = os.popen(f"ls -b {plots_dir}/*.png").read().splitlines()
     dp.debug(here(),5)
-    plots      = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {plots_dir}/*.png")]
+    plots      = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {plots_dir}/*{Output_imgageFormat}")]
     dp.debug(here(),5)
     transphotos = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir}/*.png")]
     dp.debug(here(),5)
     transphotos2 = [backslashify_brackets(plot.strip()) for plot in os.popen(f"ls -b {transphotos_dir2}/*.png")]
     dp.debug(here(),5)
-    SinglePlotMode_which_one = backslashify_brackets(SinglePlotMode_which_one.strip(), backslashSpaces = True) + ".png"
+    SinglePlotMode_which_one = backslashify_brackets(SinglePlotMode_which_one.strip(), backslashSpaces = True) + Output_imgageFormat
     
     i = 0
     cnt_both= 0
@@ -113,8 +119,11 @@ def makeOverlay(tomlData) -> None:
         elif SinglePlotMode_enabled:
             dp.debug(here(),2,"found "+SinglePlotMode_which_one)
     
+        plot_stem = plot_stem[:-len(Output_imgageFormat)] + ".png"
         plotmorph = os.path.join(transphotos_dir, plot_stem) 
         plotmorph2 = os.path.join(transphotos_dir2, plot_stem) 
+
+        print("searching for ",plotmorph)
         plotmorphout = os.path.join(output_dir, plot[len(plots_dir)+1:] )
         #plotmorphout = output_dir + '/' + plot_stem 
         make_command_part1 = f"convert -quiet {plot} " #TODO add silencing, -quiet might not be right.

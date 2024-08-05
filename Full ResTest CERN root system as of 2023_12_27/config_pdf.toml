@@ -5,7 +5,7 @@ do_git_pull_plotMedia = true
 ask_on_git_diff = true #when true, uses git_diff_verbose
 git_diff_verbosity = "info" #options: "verbose", "info" (default), "silent", tells how verbose to be when ask_on_git_diff = false 
 open_main_eog = true
-open_overlay_eog = true
+open_overlay_eog = false
 copy_to_google_drive = false
 
 [SinglePlotMode]
@@ -43,7 +43,7 @@ transparent_photos = "/home/abarker/gapi/.shared/_transparent_photos"
 #transparent_photos = "./transparent_photos_front"
 
 [Overlay]
-runOverlays = true
+runOverlays = false
 delete_preexisting_overlays = true #only runs if runOverlays 
 overlayDir = "_final" #output_dir = "./_final"
 overlayDirGDrive = "/home/abarker/gapi/RootPlotOutput/_final"
