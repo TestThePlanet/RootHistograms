@@ -8,7 +8,7 @@ import utils as ut
 def makeMontage(tomlData) -> None:
     #############################################################################################
     #Hard coded constants:
-    blacklist = ["FAKE-3M 9332+ LOT C203561.png","3M 8955J-DS2-01.png"]
+    list_of_files_to_exclude = ["FAKE-3M 9332+ LOT C203561.png","3M 8955J-DS2-01.png"]
     #TODO connect this correctly
 
     #############################################################################################
@@ -41,7 +41,7 @@ def makeMontage(tomlData) -> None:
     output_file_name_GDrive , _, all_ok = ut.tomlGetSeq(tomlData, ["Montage","output_file_name_GDrive"], all_ok, default_val=output_file_name )
     usePlus0 , _, all_ok = ut.tomlGetSeq(tomlData, ["Montage","usePlus0"], all_ok, default_val=usePlus0 )
     eogAtEnd , _, all_ok = ut.tomlGetSeq(tomlData, ["Montage","eogAtEnd"], all_ok, default_val=eogAtEnd )
-    #blacklist , _, all_ok = ut.tomlGetSeq(tomlData, ["Montage","blacklist"], all_ok, default_val=blacklist) #TODO connect this correctly
+    #list_of_files_to_exclude , _, all_ok = ut.tomlGetSeq(tomlData, ["Montage","list_of_files_to_exclude"], all_ok, default_val=list_of_files_to_exclude) #TODO connect this correctly
     
     subsampled_filename , _, all_ok = ut.tomlGetSeq(tomlData, ["Montage","subsampled_filename"], all_ok, default_val=subsampled_filename )
     make_subsample , _, all_ok = ut.tomlGetSeq(tomlData, ["Montage","make_subsample"], all_ok, default_val=make_subsample )
@@ -58,8 +58,8 @@ def makeMontage(tomlData) -> None:
     file_list = [file for file in file_list if file.endswith(".png")]
     file_list.reverse()
     
-    #remove blacklisted files
-    for bl in blacklist:
+    #remove list_of_files_to_excluded files
+    for bl in list_of_files_to_exclude:
         if bl in file_list:
             file_list.remove(bl)
     

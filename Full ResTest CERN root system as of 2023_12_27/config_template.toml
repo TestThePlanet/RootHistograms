@@ -1,38 +1,81 @@
 [ProcessCtrl]
-config_file_version = 1  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
+config_file_version = 8  #For versioning. This must agree with main.py required_min_config_file_version, around line 11
 do_git_pull = false
+do_git_pull_plotMedia = true
 ask_on_git_diff = true #when true, uses git_diff_verbose
 git_diff_verbosity = "info" #options: "verbose", "info" (default), "silent", tells how verbose to be when ask_on_git_diff = false 
 open_main_eog = true
 open_overlay_eog = true
+copy_to_google_drive = false
+
+[SinglePlotMode]
+single_plot_mode_enabled = false #bool #Only make 1 plot, use for debugging. This also turns on the root editor.
+which_one = "3M Aura 9210+" #string 
+
+[Output]
+print_level = 5
+run_makeAllPlots_C = true
+delete_preexisting_plots = true #only runs if run_makeAllPlots_C 
+save_plots_enabled = true
+save_with_HMFF_prefix = true
+low_contrib_count_prefix = "L_"
+X11_persistence  = true #bool 
+imgageFormat = "pdf"
+plotDir = "plots" #NEW #plots_dir = "./plots"
+plotDirGDrive = "/home/abarker/gapi/RootPlotOutput/histogram_by_sample" #NEW #plots_dir = "./plots"
+plotDirUserHMean = "plots_hmean"
+plotDirUserHMeanGDrive = "/home/abarker/gapi/RootPlotOutput/histogram_by_user_hmean"
+#plotDirUserHMean = "plots"
 
 [GoogleSheet]
 redownload = true 
 CSV_URL = "https://docs.google.com/spreadsheets/d/1arv8PObW_O4HMpScei3KAlt0zj1C55v_/gviz/tq?tqx=out:csv&sheet=Main"
 output_TSV_file_name = "Main.tsv"
 download_timeout_sec = 120
-
-[SinglePlotMode]
-single_plot_mode_enabled = true #bool #Turns on root editor TODO apply to make2overlays
-which_one = "3M Aura 9210+" #string 
-
-[Output]
-run_makeAllPlots_C = true
-delete_preexisting_plots = false #only runs if run_makeAllPlots_C 
-save_plots_enabled = true
-save_with_HMFF_prefix = true
-X11_persistence  = true #bool 
-plotDir = "plots" #NEW #plots_dir = "./plots"
+plotMediaGit = "https://github.com/fiveisgreen/PlotMedia.git"
+transphotos_dir_insides = "../../PlotMedia/transparent_photos_inside"
+#transphotos_dir_insides = "/home/abarker/gapi/.shared/transparent_photos_inside"
+#transphotos_dir_insides = "./transparent_photos_inside"
+transphotos_dir_fronts = "../../PlotMedia/transparent_photos_front"
+#transphotos_dir_fronts = "/home/abarker/gapi/.shared/transparent_photos_front"
+#transphotos_dir_fronts = "./transparent_photos_front"
+transparent_photos = "/home/abarker/gapi/.shared/_transparent_photos"
+#transparent_photos = "./transparent_photos_front"
 
 [Overlay]
-run_make2Overlays_toml_py = true
-delete_preexisting_overlays = false #only runs if run_make2Overlays_toml_py 
+runOverlays = true
+delete_preexisting_overlays = true #only runs if runOverlays 
 overlayDir = "_final" #output_dir = "./_final"
-transphotos_dir_fronts = "./transparent_photos_front"
-transphotos_dir_insides = "./transparent_photos_inside"
-image_size = "400x300" #overlay_size = "400x300" #
-top_location = "+1100+80" # 1000+50
-bottom_location = "+1100+350"
+overlayDirGDrive = "/home/abarker/gapi/RootPlotOutput/_final"
+image_size = "400x300" #overlay_size, pixels
+top_location = "+1100+80" # 1000+50 pixels from top right corner
+bottom_location = "+1100+350" # pixels from top right corner
+
+[OverlayTR]
+runOverlays = true
+delete_preexisting_overlays = false #only runs if runOverlays 
+overlayDir = "_final_TR" #output_dir = "./_final"
+overlayDirGDrive = "/home/abarker/gapi/RootPlotOutput/_final_TR"
+image_size = "512x384" #25%: 0.25*(2048x1536) pixels
+#image_size = "410x308" #20%: 0.20*(2048x1536) pixels
+top_location = "+1536+0" #+x+y pixels from top right corner = (1-0.25)*2048,0
+#top_location = "+1638+0" #+x+y distance from top right corner #20%: (1-0.20)*2048,0
+
+[Montage]
+width = 10 # horizontal # of images in montage, aka # columns
+height = -1 #negative or 0 will use all images and
+max_height = 22 #max limit for the number of image rows.
+tile_sizex = 512 # pixels 
+tile_sizey = 384  # pixels 
+picDir = "../../PlotMedia/Tests_hm_ordered_tester_7e66ab_and_Tester_67pfar/"
+output_file_name = "montage.png"
+output_file_name_GDrive = "/home/abarker/gapi/RootPlotOutput/montage.png"
+usePlus0 = false #whether to use the "+0+0" syntax
+eogAtEnd = true #whether to try and open the montage using the eog image viewer at the end
+list_of_files_to_exclude = ["FAKE-3M 9332+ LOT C203561.png","3M 8955J-DS2-01.png"]
+subsampled_filename = "montage1024.png"
+make_subsample = true
+subsample_xres = 1024
 
 [Analysis]
 use_only_analysis_grade = true #bool
@@ -44,10 +87,41 @@ error_flag_file = "error.flag" #string
 skip_first_line_of_tsv_file = true #bool
 maskname_tsv_column_index = 2 #unsigned int
 exer1_tsv_column_index = 3 #unsigned int
-size_column_index = 25 #unsigned int
+headsize_tsv_column_index = 25 #unsigned int, column Z, headSize
 number_of_exercises = 12 # int says that there are 12 exercises going from indicies [exer1_tsv_column_index..exer1_tsv_column_index + number_of_exercises)
-analysis_grade_tsv_column_index = 20 #unsigned int
-testerID_tsv_column_index = 16 #unsigned int 
+analysis_grade_tsv_column_index = 20 #unsigned int, col U
+testerID_tsv_column_index = 16 #unsigned int, col Q
+date_tsv_column_index = 17 #uint, col R, "YYYY_MM_DD"
+maxJawCm_tsv_column_index = 18 #uint, col S
+protocol_tsv_column_index = 19 #uint, col T
+queryResult_tsv_column_index = 21 #uint, col V
+
+[Scoring]
+make_scores = true
+score_file = "scores.txt"
+#score_file_GDrive = "/home/abarker/gapi/RootPlotOutput/scores.txt"
+score_dir = "scores"
+score_dir_GDrive = "/home/abarker/gapi/RootPlotOutput/scores"
+explainScores = true
+points_2xCrash25_2xOSHA_withGrimaceStored = 50
+slabel_2xCrash25_2xOSHA_withGrimaceStored = "two Crash2.5 tests and two OSHA tests with grimace stored"
+points_2xC25_1xOSHA_withGrimaceStored = 25
+slabel_2xC25_1xOSHA_withGrimaceStored = "two Crash2.5 tests and an OSHA test with grimace stored"
+points_2xC25 = 20 
+slabel_2xC25 = "two Crash2.5 tests"
+points_1xC25_2xOSHA_withGrimaceStored = 15 
+slabel_1xC25_2xOSHA_withGrimaceStored = "a Crash2.5 tests and two OSHA tests with grimace stored"
+points_1xCrash25_1xOSHA_withGrimaceStored = 12 
+slabel_1xCrash25_1xOSHA_withGrimaceStored = "a Crash2.5 tests and an OSHA test with grimace stored"
+points_2xOSHA_withGrimaceStored = 10 
+slabel_2xOSHA_withGrimaceStored = "two OSHA tests with grimace stored"
+points_1xCrash25 = 5
+slabel_1xCrash25 = "a Crash2.5"
+points_1xOSHA_withGrimaceStored = 2
+slabel_1xOSHA_withGrimaceStored = "an OSHA with grimace stored"
+points_1xCrash25short = 0.6 
+slabel_1xCrash25short = "a Crash 2.5 short"
+slabel_nada = "no qualifying Crash2.5 or OSHA tests"
 
 [Histogram_Graphics]
 sizePixelsX = 1660
@@ -77,21 +151,25 @@ textAlignment = 12
 HMSideSwitchThresh = 100.0
 fontSize = 0.03 
 lowX1 = 0.493969
-Y1 = 0.794606
-lowX2 = 0.595296
-Y2 = 0.891079 
+Y1 = 0.764523 
+lowX2 = 0.675513
+Y2 = 0.892116 
 highX1 = 0.136912
-highX2 = 0.238239
+highX2 = 0.318456 #0.238239
+
 markerSize = 20
 histSize = 3
 entryTextAll = "All sizes"
 entryTextLg = "Known Lg Heads"
 entryTextSm = "Known Sm Heads"
+entryTextIQR = "Known IQR Heads"
 colorAll = 600 #=kBlue
 colorLg = 432 #=kCyan
 colorSm = 616 #=kMagenta
+colorIQR = 417 #=kGreen+1
 fillStyleLg = 1001 #1001 = solid, #4050=translucent fill
 fillStyleSm = 0 #0 = hollow
+fillStyleIQR = 0 #0 = hollow
     #See "Fill Area style" https://root.cern.ch/doc/master/classTAttFill.html
 sizeHistDrawOption = "samehist"
 

@@ -15,12 +15,15 @@ def copyPlotsToDir(from_dir:str, to_dir:str, delete_preexisting_plots:bool, dp)-
         return
     if delete_preexisting_plots:
         dp.debug(here(),3,f"Deleting contents of {to_dir} before moving new files into it.") 
+        st = time.time()
         os.system(f"rm {to_dir}/*.png 2>/dev/null")
-    dp.debug(here(),4,f"Copying png files from {to_dir} to {to_dir}.") 
+        et = time.time()
+        dp.print(4,f"    finished deleting, completed in {et-st:.2f} seconds") 
+    dp.print(3,f"Copying png files from {to_dir} to {to_dir}.") 
     st = time.time()
     os.system(f"cp {from_dir}/*.png {to_dir}/")
     et = time.time()
-    dp.debug(here(),3,f"    finished copying, completed in {et-st:.2f} seconds") 
+    dp.print(4,f"    finished copying, completed in {et-st:.2f} seconds") 
 
 #######################################################################################################################
 def copy_plotsdir(tomlData) -> None:
@@ -53,7 +56,7 @@ def copy_scores(tomlData) -> None:
             subprocess.run(["cp", os.path.join(score_dir, score_file), os.path.join(score_dir_GDrive, score_file)])
             et = time.time()
             #todo make this *.txt
-            dp.debug(here(),3,f"    finished copying score file, completed in {et-st:.2f} seconds") 
+            dp.print(4,f"    finished copying score file, completed in {et-st:.2f} seconds") 
         else:
             db.debug(here(),1,"Error, config errors prevent copy_overlays")
 
